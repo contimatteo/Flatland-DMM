@@ -4,69 +4,89 @@ import config as Configs
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import random_rail_generator
 from flatland.envs.observations import TreeObsForRailEnv
+from flatland.envs.observations import LocalObsForRailEnv
 from flatland.utils.rendertools import RenderTool
 
-from agent import RandomAgent
+from agents.random import RandomAgent
 
 ###
 
 np.random.seed(Configs.RANDOM_SEED)
 
+N_ATTEMPTS = 1
+N_EPISODES_FOREACH_ATTEMPT = 500
+STATE_SIZE, ACTION_SIZE = (218, 5)
+
+# Initialize the agent with the parameters corresponding to the environment and observation_builder
+agent = RandomAgent(STATE_SIZE, ACTION_SIZE)
+
 ###
 
 
 def create_env():
-    return RailEnv(
+    tree_observator = TreeObsForRailEnv(max_depth=2)
+
+    env = RailEnv(
         width=Configs.WINDOW_WIDTH,
         height=Configs.WINDOW_HEIGHT,
         number_of_agents=Configs.NUMBER_OF_AGENTS,
         rail_generator=random_rail_generator(),
-        # obs_builder_object=TreeObsForRailEnv(max_depth=1),
+        obs_builder_object=tree_observator,
     )
+
+    env_renderer = RenderTool(env)
+
+    return env, env_renderer
 
 
 def main():
-    env = create_env()
-    env_renderer = RenderTool(env)
+    print("")
+    print("")
 
-    # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-    # Initialize the agent with the parameters corresponding to the environment and observation_builder
-    agent = RandomAgent(218, 5)
-    n_trials = 5
+    env, env_renderer = create_env()
 
     # Empty dictionary for all agent action
     action_dict = dict()
     print("Starting Training...")
 
-    for trials in range(1, n_trials + 1):
+    for attempt in range(N_ATTEMPTS):
         # Reset environment and get initial observations for all agents
-        obs, info = env.reset()
+        observations, info = env.reset()
+
+        # Reset environment renderer
         env_renderer.reset()
 
         # Here you can also further enhance the provided observation by means of normalization
         # See training navigation example in the baseline repository
 
         score = 0
+
         # Run episode
-        for step in range(100):
+        for _ in range(N_EPISODES_FOREACH_ATTEMPT):
             # Chose an action for each agent in the environment
             for a in range(env.get_num_agents()):
-                action = agent.act(obs[a])
+                action = agent.act(observations[a])
                 action_dict.update({a: action})
+
             # Environment step which returns the observations for all agents, their corresponding
             # reward and whether their are done
             next_obs, all_rewards, done, _ = env.step(action_dict)
             env_renderer.render_env(show=True, show_observations=True, show_predictions=False)
 
             # Update replay buffer and train agent
-            for a in range(env.get_num_agents()):
-                agent.step((obs[a], action_dict[a], all_rewards[a], next_obs[a], done[a]))
+            for _ in range(env.get_num_agents()):
+                agent.step((observations[a], action_dict[a], all_rewards[a], next_obs[a], done[a]))
                 score += all_rewards[a]
-            obs = next_obs.copy()
+            observations = next_obs.copy()
+
+            # should I stop ?
             if done['__all__']:
                 break
-        print('Episode Nr. {}\t Score = {}'.format(trials, score))
+
+        print('Episode Nr. {}\t Score = {}'.format(attempt + 1, score))
+
+    print("")
+    print("")
 
 
 ###
