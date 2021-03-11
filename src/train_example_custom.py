@@ -7,7 +7,7 @@ import flatland.envs.rail_generators as rail_gen
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from flatland.utils.rendertools import RenderTool, AgentRenderVariant
 
-from src.random_agent import RandomAgent
+from agents.random import RandomAgent
 
 
 # RAIL GENERATION
