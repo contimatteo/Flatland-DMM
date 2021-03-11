@@ -1,9 +1,11 @@
+import json
 import numpy as np
 import config as Configs
 
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import random_rail_generator
 from flatland.envs.observations import TreeObsForRailEnv
+from flatland.envs.observations import GlobalObsForRailEnv
 from flatland.envs.observations import LocalObsForRailEnv
 from flatland.utils.rendertools import RenderTool
 
@@ -25,6 +27,7 @@ agent = RandomAgent(STATE_SIZE, ACTION_SIZE)
 
 def create_env():
     tree_observator = TreeObsForRailEnv(max_depth=2)
+    # tree_observator = GlobalObsForRailEnv()
 
     env = RailEnv(
         width=Configs.WINDOW_WIDTH,
@@ -40,9 +43,6 @@ def create_env():
 
 
 def main():
-    print("")
-    print("")
-
     env, env_renderer = create_env()
 
     # Empty dictionary for all agent action
@@ -85,9 +85,6 @@ def main():
                 break
 
         print('Episode Nr. {}\t Score = {}'.format(attempt + 1, score))
-
-    print("")
-    print("")
 
 
 ###
