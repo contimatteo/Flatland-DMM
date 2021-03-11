@@ -1,4 +1,4 @@
-import json
+import time
 import numpy as np
 import config as Configs
 
@@ -79,6 +79,8 @@ def main():
                 score += all_rewards[a]
 
             observations = next_obs.copy()
+
+            time.sleep(0.3)
 
             # should I stop ?
             if done['__all__']:
