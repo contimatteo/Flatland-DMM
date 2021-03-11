@@ -77,6 +77,7 @@ def main():
             for _ in range(env.get_num_agents()):
                 agent.step((observations[a], action_dict[a], all_rewards[a], next_obs[a], done[a]))
                 score += all_rewards[a]
+
             observations = next_obs.copy()
 
             # should I stop ?
