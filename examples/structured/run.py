@@ -29,6 +29,7 @@ def main():
     while not environment.finished(done) or attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
         score = 0
         attempt += 1
+
         observations, info = environment.reset()
 
         for _ in range(Configs.TRAIN_N_EPISODES):
@@ -39,14 +40,10 @@ def main():
             next_observations, rewards, done, _ = environment.perform_actions(actions)
 
             for i in range(Configs.NUMBER_OF_AGENTS):
-                o = observations[i]
-                a = actions[i]
-                r = rewards[i]
-                no = next_observations[i]
-                d = done[i]
-
+                o, no = observations[i], next_observations[i]
+                a, r, d = actions[i], rewards[i], done[i]
+                score += r
                 agent.step((o, a, r, no, d))
-                score += rewards[i]
 
             observations = next_observations.copy()
 
@@ -57,7 +54,6 @@ def main():
                 break
 
         logger.console.debug("Episode Nr. {}\t Score = {}".format(attempt + 1, score))
-        # print("Episode Nr. {}\t Score = {}".format(attempt + 1, score))
 
 
 ###
