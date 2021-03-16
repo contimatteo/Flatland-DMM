@@ -1,3 +1,5 @@
+#
+
 RANDOM_SEED = 100
 
 WINDOW_WIDTH = 10

@@ -1,9 +1,11 @@
 import numpy as np
 import json
+import logging
 
 import configs as Configs
 
 from agents.random import Agent
+from utils import logger
 from utils.rail_env import Environment
 
 ###
@@ -54,7 +56,8 @@ def main():
             if environment.finished():
                 break
 
-        print('Episode Nr. {}\t Score = {}'.format(attempt + 1, score))
+        logger.console.debug("Episode Nr. {}\t Score = {}".format(attempt + 1, score))
+        # print("Episode Nr. {}\t Score = {}".format(attempt + 1, score))
 
 
 ###
