@@ -15,16 +15,14 @@ np.random.seed(Configs.RANDOM_SEED)
 ###
 
 
-def main():
-    # TODO: automatically compute this.
-    STATE_SIZE = 218
-
-    environment = Environment()
-    agent = Agent(218, Configs.ACTIONS_SIZE)
-
+def train():
+    done = None
     attempt = -1
     actions = dict()
-    done = None
+    STATE_SIZE = 218 # TODO: automatically compute this.
+
+    environment = Environment()
+    agent = Agent(218)
 
     while not environment.finished(done) or attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
         score = 0
@@ -33,22 +31,19 @@ def main():
         observations, info = environment.reset()
 
         for _ in range(Configs.TRAIN_N_EPISODES):
-            for i in range(Configs.NUMBER_OF_AGENTS):
+            for i in environment.get_agents_indexes():
                 action = agent.act(observations[i], info)
                 actions.update({i: action})
 
-            next_observations, rewards, done, _ = environment.perform_actions(actions)
+            next_observations, rewards, done, info = environment.perform_actions(actions)
 
-            for i in range(Configs.NUMBER_OF_AGENTS):
-                o, no = observations[i], next_observations[i]
-                a, r, d = actions[i], rewards[i], done[i]
-                score += r
-                agent.step((o, a, r, no, d))
+            for i in environment.get_agents_indexes():
+                score += rewards[i]
+                agent.step((observations[i], actions[i], rewards[i], next_observations[i], done[i]))
 
             observations = next_observations.copy()
 
             environment.render()
-            environment.sleep(.05)
 
             if environment.finished():
                 break
@@ -59,4 +54,4 @@ def main():
 ###
 
 if __name__ == '__main__':
-    main()
+    train()
