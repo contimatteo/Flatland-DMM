@@ -1,7 +1,8 @@
-import keras
+from tensorflow import keras
 import numpy as np
 
 ###
+
 
 class Model():
     def __init__(self):

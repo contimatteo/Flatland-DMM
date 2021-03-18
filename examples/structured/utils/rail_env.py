@@ -1,13 +1,15 @@
 import time
-
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_env import RailEnvActions
 from flatland.envs.rail_generators import random_rail_generator
 from flatland.envs.observations import TreeObsForRailEnv
 from flatland.envs.observations import LocalObsForRailEnv
 from flatland.utils.rendertools import RenderTool
+from flatland.utils.rendertools import AgentRenderVariant
 
 import configs as Configs
+from utils.observator import SimpleObs
+from utils.observator import SingleAgentNavigationObs
 
 ###
 
@@ -22,12 +24,15 @@ class Environment():
         self.initialize()
 
     def initialize(self):
-        self._observator = TreeObsForRailEnv(max_depth=2)
+        # self._observator = SimpleObs()
+        # self._observator = SingleAgentNavigationObs()
+        self._observator = TreeObsForRailEnv(max_depth=1)
+
         self._rail_generator = random_rail_generator()
 
         self._env = RailEnv(
-            width=Configs.WINDOW_WIDTH,
-            height=Configs.WINDOW_HEIGHT,
+            width=Configs.RAIL_ENV_WIDTH,
+            height=Configs.RAIL_ENV_HEIGHT,
             rail_generator=self._rail_generator,
             # schedule_generator=None,
             number_of_agents=Configs.NUMBER_OF_AGENTS,
@@ -40,7 +45,16 @@ class Environment():
             # close_following=True
         )
 
-        self._emulator = RenderTool(self._env)
+        self._emulator = RenderTool(
+            self._env,
+            # gl="PGL",
+            # jupyter=False,
+            agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
+            show_debug=True,
+            # clear_debug_text=True,
+            screen_width=Configs.EMULATOR_WINDOW_WIDTH,
+            screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
+        )
 
     def perform_actions(self, actions):
         """

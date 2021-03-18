@@ -24,7 +24,7 @@ def train():
     environment = Environment()
     agent = Agent(218)
 
-    while not environment.finished(done) or attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
+    while not environment.finished(done) and attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
         score = 0
         attempt += 1
 
@@ -48,7 +48,7 @@ def train():
             if environment.finished():
                 break
 
-        logger.console.debug("Episode Nr. {}\t Score = {}".format(attempt + 1, score))
+        logger.console.debug("Attempt Nr. {}\t Score = {}".format(attempt + 1, score))
 
 
 ###
