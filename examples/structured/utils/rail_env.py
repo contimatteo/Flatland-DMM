@@ -63,7 +63,7 @@ class Environment():
         next_obs, all_rewards, done, info = self._env.step(actions)
         return next_obs, all_rewards, done, info
 
-    def render(self, sleep_seconds: float = .1):
+    def render(self, sleep_seconds: float = .5):
         self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
         time.sleep(sleep_seconds)
 
