@@ -2,9 +2,9 @@
 https://towardsdatascience.com/reinforcement-learning-w-keras-openai-dqns-1eed3a5338c
 """
 
-from tf.keras.layers import Dense
-from tf.keras.layers import Sequential
-from tf.keras.optimizers import Adam
+from keras.layers import Dense
+from keras import Sequential
+from keras.optimizers import Adam
 from rl.memory import SequentialMemory
 
 ###
