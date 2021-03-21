@@ -4,8 +4,8 @@ import json
 import configs as Configs
 
 from agents.random import Agent
-from utils import logger
-from utils.rail_env import Environment
+from libs import logger
+from libs.environment import Environment
 
 ###
 
@@ -14,8 +14,7 @@ np.random.seed(Configs.RANDOM_SEED)
 ###
 
 
-def train():
-    done = None
+def main():
     attempt = 0
     actions = dict()
     STATE_SIZE = 218  # TODO: automatically compute this.
@@ -23,8 +22,9 @@ def train():
     environment = Environment()
     agent = Agent(218)
 
-    while not environment.finished(done) and attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
+    while attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
         score = 0
+        done = None
         attempt += 1
 
         observations, info = environment.reset()
@@ -54,8 +54,11 @@ def train():
 
         logger.console.debug("score = {}".format(score))
 
+        if environment.finished(done):
+            break
+
 
 ###
 
 if __name__ == '__main__':
-    train()
+    main()
