@@ -8,22 +8,6 @@ from flatland.core.grid.grid4_utils import get_new_position
 ###
 
 
-class SimpleObs(ObservationBuilder):
-    """
-    Simplest observation builder. The object returns observation vectors with 5 identical components,
-    all equal to the ID of the respective agent.
-    """
-    def reset(self):
-        return
-
-    def get(self, handle):
-        observation = handle * np.ones(5)
-        return observation
-
-
-###
-
-
 class SingleAgentNavigationObs(TreeObsForRailEnv):
     """
     We derive our observation builder from TreeObsForRailEnv, to exploit the existing implementation to compute
