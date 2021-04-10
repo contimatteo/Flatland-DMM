@@ -8,8 +8,8 @@ from flatland.utils.rendertools import RenderTool
 from flatland.utils.rendertools import AgentRenderVariant
 
 import configs as Configs
-from utils.observator import SimpleObs
-from utils.observator import SingleAgentNavigationObs
+from observators.simple import SimpleObs
+from observators.tree import SingleAgentNavigationObs
 
 ###
 

@@ -7,7 +7,7 @@ import logging.config
 console = None
 file = None
 
-filename = './examples/structured/logs/out.log'
+filename = './logs/out.log'
 
 ###
 
