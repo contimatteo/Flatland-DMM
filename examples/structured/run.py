@@ -20,7 +20,7 @@ def main():
     STATE_SIZE = 218  # TODO: automatically compute this.
 
     environment = Environment()
-    agent = Agent(218)
+    agent = Agent(218)  # (2^max_depth * tree_obs_features) + 1
 
     while attempt < Configs.TRAIN_N_MAX_ATTEMPTS:
         score = 0
