@@ -45,16 +45,17 @@ class Environment():
             # close_following=True
         )
 
-        self._emulator = RenderTool(
-            self._env,
-            # gl="PGL",
-            # jupyter=False,
-            agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
-            show_debug=True,
-            # clear_debug_text=True,
-            screen_width=Configs.EMULATOR_WINDOW_WIDTH,
-            screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
-        )
+        if Configs.EMULATOR_ACTIVE is True:
+            self._emulator = RenderTool(
+                self._env,
+                # gl="PGL",
+                # jupyter=False,
+                agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
+                show_debug=True,
+                # clear_debug_text=True,
+                screen_width=Configs.EMULATOR_WINDOW_WIDTH,
+                screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
+            )
 
     def perform_actions(self, actions):
         """
@@ -64,11 +65,14 @@ class Environment():
         return next_obs, all_rewards, done, info
 
     def render(self, sleep_seconds: float = .5):
-        self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
-        time.sleep(sleep_seconds)
+        if Configs.EMULATOR_ACTIVE is True:
+            self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
+            time.sleep(sleep_seconds)
 
     def reset(self) -> (dict, dict):
-        self._emulator.reset()
+        if Configs.EMULATOR_ACTIVE is True:
+            self._emulator.reset()
+
         return self._env.reset()
 
     def get_agents_indexes(self) -> range:
