@@ -20,7 +20,7 @@ EPSILON = 1.0
 EPSILON_MIN = 0.01
 EPSILON_DECAY = 0.995
 
-BATCH_SIZE = 25
+BATCH_SIZE = 10
 LEARNING_RATE = 0.01
 
 MEMORY_LIMIT = OBS_TREE_STATE_SIZE * BATCH_SIZE  # TODO: is this right?
@@ -62,12 +62,11 @@ class DQN:
         # return number of {BATCH_SIZE} samples in random order.
         samples = self.memory.sample(BATCH_SIZE)
 
-        if len(samples) > 0:
-            self.model_weights_updated = True
+        self.model_weights_updated = True
 
         for sample in samples:
             observation, action, reward, done, _ = sample
-            observation = np.array(observation)  # .reshape((1, OBS_TREE_STATE_SIZE))
+            observation = np.array(observation)
 
             target = self.target_model.predict(observation)
 

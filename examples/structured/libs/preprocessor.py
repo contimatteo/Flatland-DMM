@@ -109,9 +109,7 @@ class TreeProcessor():
         if not TreeProcessor.__is_valid_Node(raw_obs):
             raise Exception('parameter must be instance of Node class.')
 
-        nodes_as_dict = TreeProcessor.__parse_nodes_recursively(raw_obs)
-
-        return nodes_as_dict
+        return TreeProcessor.__parse_nodes_recursively(raw_obs)
 
     @staticmethod
     def from_nodes_dict_to_memory_record(obs):
@@ -133,7 +131,7 @@ class TreeProcessor():
     def remove_infinity_values(record):
         """
         - @param record (list):
-        - @return (list): 
+        - @return (list):
         """
         record[record == float("inf")] = ENV_N_CELLS / 2
         record[record == float("-inf")] = 0

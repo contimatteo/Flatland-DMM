@@ -58,31 +58,34 @@ def train():
 
         for episode in range(N_MAX_EPISODES):
             actions_taken = dict()
+            weighted_rewards = {}
 
             # the selected agent will return the action to perform.
             for i in environment.get_agents_indexes():
-                action = agents[i].act(current_observations.get(i), info)
+                action = agents[i].act(current_observations.get(i), info, episode)
                 actions_taken.update({i: action})
 
             # get the result of the performed action.
             next_observations, rewards, done, info = environment.perform_actions(actions_taken)
 
+            # weight the rewards obtained.
+            for i in environment.get_agents_indexes():
+                weighted_rewards[i] = .1 if rewards[i] == -1 else (.5 if rewards[i] == 0 else 1)
+                weighted_rewards[i] *= N_CELLS - current_observations.get(i).dist_min_to_target
+
             DEBUG and logger.console.debug(
                 "episode = {:0>3d}      actions = {}      rewards = {}".
-                format(episode, str(actions_taken), json.dumps(rewards))
+                format(episode, str(actions_taken), json.dumps(weighted_rewards))
             )
 
             # train the agent by giving action taken and the result.
             for i in environment.get_agents_indexes():
-                score += rewards[i]  # * current_observations.get(i).dist_min_to_target
+                score += rewards[i]
 
-                current_obs = current_observations.get(i)
-                next_obs = next_observations.get(i)
-
-                weighted_reward = .1 if rewards[i] == -1 else (.5 if rewards[i] == 0 else 1)
-                # weighted_reward = weighted_reward * (N_CELLS - current_obs.dist_min_to_target) / 10
-
-                agents[i].step(current_obs, actions_taken[i], weighted_reward, next_obs, done[i])
+                agents[i].step(
+                    current_observations.get(i), actions_taken[i], weighted_rewards[i],
+                    next_observations.get(i), done[i]
+                )
 
             # save obesrvations for next iteration.
             current_observations = next_observations.copy()

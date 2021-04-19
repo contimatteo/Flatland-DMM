@@ -1,6 +1,6 @@
 #
 
-DEBUG = False
+DEBUG = True
 RANDOM_SEED = 100
 
 #

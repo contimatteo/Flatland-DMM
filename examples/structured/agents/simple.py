@@ -23,7 +23,7 @@ class SimpleAgent(BaseAgent):
 
     ###
 
-    def __preprocessing(self, _, next_obs):
+    def __preprocessing(self, next_obs):
         parsed_obs = TreeProcessor.from_observation_to_nodes_dict(next_obs)
 
         memory_record = TreeProcessor.from_nodes_dict_to_memory_record(parsed_obs)
@@ -41,21 +41,26 @@ class SimpleAgent(BaseAgent):
 
         return self
 
-    def act(self, observation, info):
+    def act(self, current_obs, _, episode):
         """
-        - @param observation: input is the observation of the agent
+        - @param current_obs: input is the observation of the agent
         - @param info: input dict with keys {'action_required', 'malfunction', 'speed', 'status'}
         - @return action: integer related to one specific action
         """
-        # if (np.random.rand() < .5):
-        #     return self.model.predict(observation)
+        # if episode > 11:
+        #     observation = self.__preprocessing(current_obs)
+        #     action_key = np.argmax(self.model.predict(observation)[0])
+        # else:
+        #     action_key = np.random.choice(self.available_actions)
 
-        return np.random.choice(self.available_actions)
+        action_key = np.random.choice(self.available_actions)
+
+        return action_key
 
     def step(self, current_obs, action, reward, next_obs, done):
         if next_obs is None:
             return
 
-        observation = self.__preprocessing(current_obs, next_obs)
+        observation = self.__preprocessing(next_obs)
 
         self.model.remember(observation, action, reward, done, True)
