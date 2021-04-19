@@ -136,7 +136,7 @@ class TreeProcessor():
         - @param record (list):
         - @return (list): 
         """
-        record[record == float("inf")] = ENV_N_CELLS
+        record[record == float("inf")] = ENV_N_CELLS / 2
         record[record == float("-inf")] = 0
 
         return record
@@ -148,4 +148,4 @@ class TreeProcessor():
         - @param rannge (tuple):
         - @return (list): 
         """
-        return MinMaxScaler(feature_range=(0,1)).fit_transform([record])[0]
+        return MinMaxScaler(feature_range=(0, 1)).fit_transform([record])[0]
