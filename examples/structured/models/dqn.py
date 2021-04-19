@@ -88,16 +88,15 @@ class DQN:
 
     ###
 
-    def initialize(self, env, action_space, observation_space):
+    def initialize(self, env, actions_dim, observation_dim):
         self.env = env
-        self.action_space = action_space
-        self.observation_space = observation_space
+        self.action_space = actions_dim
+        self.observation_space = observation_dim
 
-        self.memory = SequentialMemory(limit=MEMORY_LIMIT)
-        # self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
+        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
 
-        input_nodes = self.observation_space.shape[0]  # TODO: check this
-        output_nodes = self.action_space  # TODO: check this
+        input_nodes = self.observation_space  # TODO: check this
+        output_nodes = self.action_space
 
         self.model = DQN.compile_model(input_nodes, output_nodes)
         self.target_model = DQN.compile_model(input_nodes, output_nodes)

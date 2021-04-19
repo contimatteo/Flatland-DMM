@@ -6,15 +6,22 @@ import configs as Configs
 from agents.simple import SimpleAgent
 from libs import logger
 from libs.environment import Environment
-from models.sequential import SequentialModel
 from models.dqn import DQN
+
+###
+
+# TODO: renable this ...
+# np.random.seed(Configs.RANDOM_SEED)
 
 ###
 
 DEBUG = Configs.DEBUG
 
-# TODO: renable this ...
-# np.random.seed(Configs.RANDOM_SEED)
+N_AGENTS = Configs.NUMBER_OF_AGENTS
+N_ATTEMPTS = Configs.TRAIN_N_ATTEMPTS
+N_MAX_EPISODES = Configs.TRAIN_N_MAX_EPISODES
+
+OBS_TREE_STATE_SIZE = Configs.OBSERVATION_TREE_STATE_SIZE
 
 ###
 
@@ -22,26 +29,23 @@ DEBUG = Configs.DEBUG
 def train():
     attempt = 0
 
-    # (2^max_depth * tree_obs_features) + 1
-    STATE_SIZE = (2**(Configs.OBSERVATOR_TREE_MAX_DEPTH * 9)) + 1
-
     # Flatland environemnt.
     environment = Environment()
 
     # Deep Learning model to use.
-    model = SequentialModel()
-    model = model.initialize()
+    model = DQN()
+    model.initialize(env=environment, actions_dim=5, observation_dim=OBS_TREE_STATE_SIZE)
 
-    while attempt < Configs.TRAIN_N_ATTEMPTS:
+    while attempt < N_ATTEMPTS:
         agents = []
 
         DEBUG and print("\n\n")
         DEBUG and logger.console.debug("ATTEMPT = {}".format(attempt))
 
         # instantiation of agents classes.
-        for _ in range(Configs.NUMBER_OF_AGENTS):
+        for _ in range(N_AGENTS):
             random_agent = SimpleAgent()
-            random_agent = random_agent.initialize(STATE_SIZE, model)
+            random_agent = random_agent.initialize(OBS_TREE_STATE_SIZE, model)
             agents.append(random_agent)
 
         score = 0
@@ -51,7 +55,7 @@ def train():
         # get initial observation config.
         current_observations, info = environment.reset()
 
-        for episode in range(Configs.TRAIN_N_MAX_EPISODES):
+        for episode in range(N_MAX_EPISODES):
             actions_taken = dict()
 
             # the selected agent will return the action to perform.

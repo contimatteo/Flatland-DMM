@@ -1,4 +1,6 @@
+import math
 import time
+
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_env import RailEnvActions
 from flatland.envs.rail_generators import random_rail_generator
@@ -8,8 +10,12 @@ from flatland.utils.rendertools import RenderTool
 from flatland.utils.rendertools import AgentRenderVariant
 
 import configs as Configs
-from observators.simple import SimpleObs
-from observators.tree import SingleAgentNavigationObs
+
+from observators.tree import CustomTreeObservator
+
+###
+
+OBS_TREE_N_NODES = Configs.OBSERVATOR_TREE_N_NODES
 
 ###
 
@@ -24,9 +30,8 @@ class Environment():
         self.initialize()
 
     def initialize(self):
-        # self._observator = SimpleObs()
-        # self._observator = SingleAgentNavigationObs()
-        self._observator = TreeObsForRailEnv(max_depth=1)
+        # self._observator = TreeObsForRailEnv(max_depth=int(math.log(OBS_TREE_MEMORY_SIZE - 1, 2)))
+        self._observator = CustomTreeObservator(max_memory=OBS_TREE_N_NODES)
 
         self._rail_generator = random_rail_generator()
 
