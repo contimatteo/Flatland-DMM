@@ -17,6 +17,7 @@ from models.dqn import DQN
 
 DEBUG = Configs.DEBUG
 
+N_CELLS = Configs.RAIL_ENV_N_CELLS
 N_AGENTS = Configs.NUMBER_OF_AGENTS
 N_ATTEMPTS = Configs.TRAIN_N_ATTEMPTS
 N_MAX_EPISODES = Configs.TRAIN_N_MAX_EPISODES
@@ -34,7 +35,7 @@ def train():
 
     # Deep Learning model to use.
     model = DQN()
-    model.initialize(env=environment, actions_dim=5, observation_dim=OBS_TREE_STATE_SIZE)
+    model.initialize(env=environment)
 
     while attempt < N_ATTEMPTS:
         agents = []
@@ -75,10 +76,13 @@ def train():
             for i in environment.get_agents_indexes():
                 score += rewards[i]  # * current_observations.get(i).dist_min_to_target
 
-                agents[i].step(
-                    current_observations.get(i), actions_taken[i], rewards[i],
-                    next_observations.get(i), done[i]
-                )
+                current_obs = current_observations.get(i)
+                next_obs = next_observations.get(i)
+
+                weighted_reward = .1 if rewards[i] == -1 else (.5 if rewards[i] == 0 else 1)
+                weighted_reward = weighted_reward * (N_CELLS - current_obs.dist_min_to_target)
+
+                agents[i].step(current_obs, actions_taken[i], weighted_reward, next_obs, done[i])
 
             # save obesrvations for next iteration.
             current_observations = next_observations.copy()

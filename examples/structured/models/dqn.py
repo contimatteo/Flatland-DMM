@@ -7,7 +7,12 @@ from keras import Sequential
 from keras.optimizers import Adam
 from rl.memory import SequentialMemory
 
+import configs as Configs
+
 ###
+
+ACTIONS_SPACE_SIZE = 5
+OBS_TREE_STATE_SIZE = Configs.OBSERVATION_TREE_STATE_SIZE
 
 GAMMA = 0.95
 EPSILON = 1.0
@@ -17,8 +22,7 @@ EPSILON_DECAY = 0.995
 BATCH_SIZE = 25
 LEARNING_RATE = 0.01
 
-MEMORY_LIMIT = 50000
-MEMORY_WINDOW_LENGTH = 1
+MEMORY_LIMIT = OBS_TREE_STATE_SIZE * BATCH_SIZE  # TODO: is this right?
 
 ###
 
@@ -40,8 +44,8 @@ class DQN:
 
     def __init__(self):
         self.env = None
-        self.action_space = None
-        self.observation_space = None
+        self.action_space = ACTIONS_SPACE_SIZE
+        self.observation_space = OBS_TREE_STATE_SIZE
 
         self.memory = None
 
@@ -60,17 +64,17 @@ class DQN:
             self.model_weights_updated = True
 
         for sample in samples:
-            _, action, reward, next_obs, done, _ = sample
+            observation, action, reward, done, _ = sample
 
-            target = self.target_model.predict(next_obs)
+            target = self.target_model.predict(observation)
 
             if done:
                 target[0][action] = reward
             else:
-                q_future_value = max(self.target_model.predict(next_obs)[0])
-                target[0][action] = reward + q_future_value * GAMMA  # TODO: why `[action]` ?
+                q_future_value = max(self.target_model.predict(observation)[0])
+                target[0][action] = reward + q_future_value * GAMMA
 
-            self.model.fit(next_obs, target, epochs=1, verbose=0)
+            self.model.fit(observation, target, epochs=1, verbose=0)
 
     def __target_model_weights_sync(self):
         if self.model_weights_updated is not True:
@@ -88,14 +92,11 @@ class DQN:
 
     ###
 
-    def initialize(self, env, actions_dim, observation_dim):
+    def initialize(self, env):
         self.env = env
-        self.action_space = actions_dim
-        self.observation_space = observation_dim
+        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=BATCH_SIZE)
 
-        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
-
-        input_nodes = self.observation_space  # TODO: check this
+        input_nodes = self.observation_space
         output_nodes = self.action_space
 
         self.model = DQN.compile_model(input_nodes, output_nodes)
