@@ -25,7 +25,7 @@ class SequentialModel(BaseModel):
     def initialize(self):
         return self
 
-    def train(self):
+    def remember(self):
         pass
 
     ###

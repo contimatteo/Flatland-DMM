@@ -5,10 +5,10 @@ class BaseModel:
     def __init__(self, name='BaseModel'):
         self.name = name
 
-    def initialize(self):
+    def initialize(self, *args, **kwargs):
         raise Exception('not implemented.')
 
-    def train(self):
+    def remember(self, *args, **kwargs):
         raise Exception('not implemented.')
 
     ###

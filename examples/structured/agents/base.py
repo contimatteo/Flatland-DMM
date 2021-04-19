@@ -4,8 +4,8 @@ from flatland.envs.rail_env import RailEnvActions
 
 ###
 
-ACTIONS = set([
-    RailEnvActions.DO_NOTHING,
+ACTIONS = np.unique([
+    RailEnvActions.DO_NOTHING,  # implies change of direction in a dead-end!
     RailEnvActions.MOVE_LEFT,
     RailEnvActions.MOVE_FORWARD,
     RailEnvActions.MOVE_RIGHT,
@@ -17,24 +17,21 @@ ACTIONS = set([
 
 class BaseAgent:
     def __init__(self):
-        self.weights_filename = 'weights'
         self.available_actions = ACTIONS
 
-    def initialize(self, *params):
+    def initialize(self, *args, **kwargs):
         raise Exception('not implemented.')
 
-    def act(self, *params):
+    def act(self, *args, **kwargs):
         raise Exception('not implemented.')
 
-    def step(self, *params):
+    def step(self, *args, **kwargs):
         raise Exception('not implemented.')
 
-    def save(self, *params):
+    def save(self, *args, **kwargs):
         # TODO: store the current policy
-        # self.weights_filename ...
         raise Exception('not implemented.')
 
-    def load(self, *params):
+    def load(self, *args, **kwargs):
         # TODO: load a policy
-        # self.weights_filename ...
         raise Exception('not implemented.')

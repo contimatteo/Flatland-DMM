@@ -69,14 +69,14 @@ class Environment():
             self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
             time.sleep(sleep_seconds)
 
-    def reset(self) -> (dict, dict):
+    def reset(self):
         if Configs.EMULATOR_ACTIVE is True:
             self._emulator.reset()
 
         return self._env.reset()
 
-    def get_agents_indexes(self) -> range:
+    def get_agents_indexes(self):
         return range(self._env.get_num_agents())
 
-    def finished(self, done: dict = None) -> bool:
+    def finished(self, done: dict = None):
         return done is not None and done['__all__'] is True

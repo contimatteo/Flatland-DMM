@@ -14,7 +14,7 @@ EPSILON = 1.0
 EPSILON_MIN = 0.01
 EPSILON_DECAY = 0.995
 
-BATCH_SIZE = 32
+BATCH_SIZE = 25
 LEARNING_RATE = 0.01
 
 MEMORY_LIMIT = 50000
@@ -28,9 +28,8 @@ class DQN:
     def compile_model(input_nodes, output_nodes):
         model = Sequential()
 
-        model.add(Dense(24, input_dim=input_nodes, activation="relu"))
-        model.add(Dense(48, activation="relu"))
-        model.add(Dense(24, activation="relu"))
+        model.add(Dense(64, input_dim=input_nodes, activation="relu"))
+        model.add(Dense(32, activation="relu"))
         model.add(Dense(output_nodes))
 
         model.compile(loss="mean_squared_error", optimizer=Adam(lr=LEARNING_RATE))
@@ -43,16 +42,59 @@ class DQN:
         self.env = None
         self.action_space = None
         self.observation_space = None
+
         self.memory = None
+
         self.model = None
         self.target_model = None
+        self.model_weights_updated = False
+
+    def __train(self):
+        if len(self.memory) < BATCH_SIZE:
+            return
+
+        # return number of {BATCH_SIZE} samples in random order.
+        samples = self.memory.sample(BATCH_SIZE)
+
+        if len(samples) > 0:
+            self.model_weights_updated = True
+
+        for sample in samples:
+            _, action, reward, next_obs, done, _ = sample
+
+            target = self.target_model.predict(next_obs)
+
+            if done:
+                target[0][action] = reward
+            else:
+                q_future_value = max(self.target_model.predict(next_obs)[0])
+                target[0][action] = reward + q_future_value * GAMMA  # TODO: why `[action]` ?
+
+            self.model.fit(next_obs, target, epochs=1, verbose=0)
+
+    def __target_model_weights_sync(self):
+        if self.model_weights_updated is not True:
+            return
+
+        self.model_weights_updated = False
+
+        self.target_model.set_weights(self.model.get_weights())
+
+        # weights = self.model.get_weights()
+        # target_weights = self.target_model.get_weights()
+        # for (i, _) in enumerate(target_weights):
+        #     target_weights[i] = weights[i]
+        # self.target_model.set_weights(target_weights)
+
+    ###
 
     def initialize(self, env, action_space, observation_space):
         self.env = env
         self.action_space = action_space
         self.observation_space = observation_space
 
-        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
+        self.memory = SequentialMemory(limit=MEMORY_LIMIT)
+        # self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
 
         input_nodes = self.observation_space.shape[0]  # TODO: check this
         output_nodes = self.action_space  # TODO: check this
@@ -60,35 +102,12 @@ class DQN:
         self.model = DQN.compile_model(input_nodes, output_nodes)
         self.target_model = DQN.compile_model(input_nodes, output_nodes)
 
-    def remember(self, observation, action, reward, new_state, done, training=True):
-        state = (observation, new_state)
-        self.memory.append(state, action, reward, done, training)
+    def remember(self, observation, action, reward, done, training=True):
+        self.memory.append(observation, action, reward, done, training)
 
-    def replay(self):
-        if len(self.memory) < BATCH_SIZE:
-            return
+        self.__train()
 
-        samples = self.memory.sample(BATCH_SIZE)
+        self.__target_model_weights_sync()
 
-        for sample in samples:
-            state, action, reward, done = sample
-            (observation, new_state) = state
-
-            target = self.target_model.predict(state)
-
-            if done:
-                target[0][action] = reward
-            else:
-                q_future_value = max(self.target_model.predict(new_state)[0])
-                target[0][action] = reward + q_future_value * GAMMA
-
-            self.model.fit(state, target, epochs=1, verbose=0)
-
-    def target_train(self):
-        weights = self.model.get_weights()
-        target_weights = self.target_model.get_weights()
-
-        for (i, _) in enumerate(target_weights):
-            target_weights[i] = weights[i]
-
-        self.target_model.set_weights(target_weights)
+    def predict(self, next_obs):
+        return self.target_model.predict(next_obs)

@@ -10,13 +10,13 @@ from flatland.core.grid.grid4_utils import get_new_position
 
 class SingleAgentNavigationObs(TreeObsForRailEnv):
     """
-    We derive our observation builder from TreeObsForRailEnv, to exploit the existing implementation to compute
-    the minimum distances from each grid node to each agent's target.
+    We derive our observation builder from TreeObsForRailEnv, to exploit the existing 
+    implementation to compute the minimum distances from each grid node to each agent's target.
 
-    We then build a representation vector with 3 binary components, indicating which of the 3 available directions
-    for each agent (Left, Forward, Right) lead to the shortest path to its target.
-    E.g., if taking the Left branch (if available) is the shortest route to the agent's target, the observation vector
-    will be [1, 0, 0].
+    We then build a representation vector with 3 binary components, indicating which of the 3 
+    available directions for each agent (Left, Forward, Right) lead to the shortest path to its 
+    target. E.g., if taking the Left branch (if available) is the shortest route to the agent's 
+    target, the observation vector will be [1, 0, 0].
     """
     def __init__(self):
         super().__init__(max_depth=0)
