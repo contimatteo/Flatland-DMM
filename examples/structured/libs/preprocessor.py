@@ -2,6 +2,8 @@ import inspect
 import json
 import numpy as np
 
+from sklearn.preprocessing import MinMaxScaler
+
 import configs as Configs
 
 ###
@@ -22,6 +24,8 @@ RAW_NODE_FEATURES = np.sort(
         "speed_min_fractional",
     ]
 )
+
+ENV_N_CELLS = Configs.RAIL_ENV_N_CELLS
 
 OBS_TREE_N_NODES = Configs.OBSERVATOR_TREE_N_NODES
 OBS_TREE_N_ATTRIBUTES = Configs.OBSERVATION_TREE_N_ATTRIBUTES
@@ -125,3 +129,23 @@ class TreeProcessor():
             raise Exception('somenthing went wrong during the creation of a memory record.')
 
         return flatted_obs
+
+    @staticmethod
+    def remove_infinity_values(record):
+        """
+        - @param record (list):
+        - @return (list): 
+        """
+        record[record == float("inf")] = ENV_N_CELLS
+        record[record == float("-inf")] = 0
+
+        return record
+
+    @staticmethod
+    def scale_to_range(record):
+        """
+        - @param record (list):
+        - @param rannge (tuple):
+        - @return (list): 
+        """
+        return MinMaxScaler(feature_range=(0,1)).fit_transform([record])[0]

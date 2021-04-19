@@ -80,7 +80,7 @@ def train():
                 next_obs = next_observations.get(i)
 
                 weighted_reward = .1 if rewards[i] == -1 else (.5 if rewards[i] == 0 else 1)
-                weighted_reward = weighted_reward * (N_CELLS - current_obs.dist_min_to_target)
+                # weighted_reward = weighted_reward * (N_CELLS - current_obs.dist_min_to_target) / 10
 
                 agents[i].step(current_obs, actions_taken[i], weighted_reward, next_obs, done[i])
 

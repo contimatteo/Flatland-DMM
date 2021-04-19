@@ -2,6 +2,7 @@
 https://towardsdatascience.com/reinforcement-learning-w-keras-openai-dqns-1eed3a5338c
 """
 
+import numpy as np
 from keras.layers import Dense
 from keras import Sequential
 from keras.optimizers import Adam
@@ -23,17 +24,21 @@ BATCH_SIZE = 25
 LEARNING_RATE = 0.01
 
 MEMORY_LIMIT = OBS_TREE_STATE_SIZE * BATCH_SIZE  # TODO: is this right?
+MEMORY_WINDOW_LENGTH = 1  # DON'T TOUCH THIS
 
 ###
 
 
 class DQN:
     @staticmethod
-    def compile_model(input_nodes, output_nodes):
+    def compile_model():
         model = Sequential()
 
-        model.add(Dense(64, input_dim=input_nodes, activation="relu"))
-        model.add(Dense(32, activation="relu"))
+        input_nodes = OBS_TREE_STATE_SIZE
+        output_nodes = ACTIONS_SPACE_SIZE
+
+        model.add(Dense(32, input_dim=input_nodes, activation="relu"))
+        model.add(Dense(16, activation="relu"))
         model.add(Dense(output_nodes))
 
         model.compile(loss="mean_squared_error", optimizer=Adam(lr=LEARNING_RATE))
@@ -44,9 +49,6 @@ class DQN:
 
     def __init__(self):
         self.env = None
-        self.action_space = ACTIONS_SPACE_SIZE
-        self.observation_space = OBS_TREE_STATE_SIZE
-
         self.memory = None
 
         self.model = None
@@ -54,7 +56,7 @@ class DQN:
         self.model_weights_updated = False
 
     def __train(self):
-        if len(self.memory) < BATCH_SIZE:
+        if self.memory.nb_entries < BATCH_SIZE + 2:
             return
 
         # return number of {BATCH_SIZE} samples in random order.
@@ -65,16 +67,17 @@ class DQN:
 
         for sample in samples:
             observation, action, reward, done, _ = sample
+            observation = np.array(observation)  # .reshape((1, OBS_TREE_STATE_SIZE))
 
             target = self.target_model.predict(observation)
 
-            if done:
+            if done is True:
                 target[0][action] = reward
             else:
                 q_future_value = max(self.target_model.predict(observation)[0])
                 target[0][action] = reward + q_future_value * GAMMA
 
-            self.model.fit(observation, target, epochs=1, verbose=0)
+            self.model.fit([observation], target, epochs=1, verbose=0)
 
     def __target_model_weights_sync(self):
         if self.model_weights_updated is not True:
@@ -94,13 +97,10 @@ class DQN:
 
     def initialize(self, env):
         self.env = env
-        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=BATCH_SIZE)
+        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
 
-        input_nodes = self.observation_space
-        output_nodes = self.action_space
-
-        self.model = DQN.compile_model(input_nodes, output_nodes)
-        self.target_model = DQN.compile_model(input_nodes, output_nodes)
+        self.model = DQN.compile_model()
+        self.target_model = DQN.compile_model()
 
     def remember(self, observation, action, reward, done, training=True):
         self.memory.append(observation, action, reward, done, training)
@@ -109,5 +109,5 @@ class DQN:
 
         self.__target_model_weights_sync()
 
-    def predict(self, next_obs):
-        return self.target_model.predict(next_obs)
+    def predict(self, observation):
+        return self.target_model.predict(observation)

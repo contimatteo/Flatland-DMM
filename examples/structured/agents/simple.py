@@ -26,7 +26,12 @@ class SimpleAgent(BaseAgent):
     def __preprocessing(self, _, next_obs):
         parsed_obs = TreeProcessor.from_observation_to_nodes_dict(next_obs)
 
-        return TreeProcessor.from_nodes_dict_to_memory_record(parsed_obs)
+        memory_record = TreeProcessor.from_nodes_dict_to_memory_record(parsed_obs)
+
+        memory_record = TreeProcessor.remove_infinity_values(memory_record)
+        memory_record = TreeProcessor.scale_to_range(memory_record)
+
+        return memory_record
 
     ###
 
@@ -52,7 +57,5 @@ class SimpleAgent(BaseAgent):
             return
 
         observation = self.__preprocessing(current_obs, next_obs)
-
-        return
 
         self.model.remember(observation, action, reward, done, True)
