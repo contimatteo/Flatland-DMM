@@ -20,7 +20,7 @@ RAW_NODE_FEATURES = np.sort(
         "num_agents_opposite_direction",
         "num_agents_malfunctioning",
         "num_agents_ready_to_depart",
-        "speed_min_fractional",
+        # "speed_min_fractional",
     ]
 )
 
@@ -134,7 +134,7 @@ class TreeProcessor():
         - @return (list):
         """
         record[record == float("inf")] = ENV_N_CELLS / 2
-        record[record == float("-inf")] = 0
+        # record[record == float("-inf")] = 0
 
         return record
 
@@ -143,6 +143,6 @@ class TreeProcessor():
         """
         - @param record (list):
         - @param rannge (tuple):
-        - @return (list): 
+        - @return (list):
         """
         return MinMaxScaler(feature_range=(0, 1)).fit_transform([record])[0]

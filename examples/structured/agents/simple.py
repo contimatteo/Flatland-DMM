@@ -47,13 +47,17 @@ class SimpleAgent(BaseAgent):
         - @param info: input dict with keys {'action_required', 'malfunction', 'speed', 'status'}
         - @return action: integer related to one specific action
         """
-        # if episode > 11:
-        #     observation = self.__preprocessing(current_obs)
-        #     action_key = np.argmax(self.model.predict(observation)[0])
-        # else:
-        #     action_key = np.random.choice(self.available_actions)
+        action_key = None
 
-        action_key = np.random.choice(self.available_actions)
+        if episode > 11:
+            observation = self.__preprocessing(current_obs)
+            observation = np.array([observation]).reshape((1, observation.shape[0]))
+
+            action_key = np.argmax(self.model.predict(observation)[0])
+        else:
+            action_key = np.random.choice(self.available_actions)
+
+        # action_key = np.random.choice(self.available_actions)
 
         return action_key
 

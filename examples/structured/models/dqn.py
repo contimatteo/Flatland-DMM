@@ -20,7 +20,7 @@ EPSILON = 1.0
 EPSILON_MIN = 0.01
 EPSILON_DECAY = 0.995
 
-BATCH_SIZE = 10
+BATCH_SIZE = 5
 LEARNING_RATE = 0.01
 
 MEMORY_LIMIT = OBS_TREE_STATE_SIZE * BATCH_SIZE  # TODO: is this right?
@@ -53,16 +53,13 @@ class DQN:
 
         self.model = None
         self.target_model = None
-        self.model_weights_updated = False
 
     def __train(self):
         if self.memory.nb_entries < BATCH_SIZE + 2:
-            return
+            return False
 
         # return number of {BATCH_SIZE} samples in random order.
         samples = self.memory.sample(BATCH_SIZE)
-
-        self.model_weights_updated = True
 
         for sample in samples:
             observation, action, reward, done, _ = sample
@@ -78,19 +75,10 @@ class DQN:
 
             self.model.fit([observation], target, epochs=1, verbose=0)
 
+        return True
+
     def __target_model_weights_sync(self):
-        if self.model_weights_updated is not True:
-            return
-
-        self.model_weights_updated = False
-
         self.target_model.set_weights(self.model.get_weights())
-
-        # weights = self.model.get_weights()
-        # target_weights = self.target_model.get_weights()
-        # for (i, _) in enumerate(target_weights):
-        #     target_weights[i] = weights[i]
-        # self.target_model.set_weights(target_weights)
 
     ###
 
@@ -104,9 +92,10 @@ class DQN:
     def remember(self, observation, action, reward, done, training=True):
         self.memory.append(observation, action, reward, done, training)
 
-        self.__train()
+        trained = self.__train()
 
-        self.__target_model_weights_sync()
+        if trained is True:
+            self.__target_model_weights_sync()
 
     def predict(self, observation):
         return self.target_model.predict(observation)

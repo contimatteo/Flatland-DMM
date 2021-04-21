@@ -27,6 +27,21 @@ OBS_TREE_STATE_SIZE = Configs.OBSERVATION_TREE_STATE_SIZE
 ###
 
 
+def __compute_weighted_rewards(reward, observation):
+    # weighted_reward = 1 if reward == 1 else (.5 if reward == 0 else .1)
+    # weighted_reward *= (N_CELLS - observation.dist_min_to_target) / 2
+    # return weighted_reward
+
+    return reward
+
+
+def __agent_is_done(done_map, agent_index):
+    return done_map is not None and done_map.get(agent_index) is True
+
+
+###
+
+
 def train():
     attempt = 0
 
@@ -62,6 +77,9 @@ def train():
 
             # the selected agent will return the action to perform.
             for i in environment.get_agents_indexes():
+                if __agent_is_done(done, i):
+                    continue
+
                 action = agents[i].act(current_observations.get(i), info, episode)
                 actions_taken.update({i: action})
 
@@ -70,8 +88,12 @@ def train():
 
             # weight the rewards obtained.
             for i in environment.get_agents_indexes():
-                weighted_rewards[i] = .1 if rewards[i] == -1 else (.5 if rewards[i] == 0 else 1)
-                weighted_rewards[i] *= N_CELLS - current_observations.get(i).dist_min_to_target
+                if __agent_is_done(done, i):
+                    continue
+
+                weighted_rewards[i] = __compute_weighted_rewards(
+                    rewards[i], current_observations.get(i)
+                )
 
             DEBUG and logger.console.debug(
                 "episode = {:0>3d}      actions = {}      rewards = {}".
@@ -80,6 +102,9 @@ def train():
 
             # train the agent by giving action taken and the result.
             for i in environment.get_agents_indexes():
+                if __agent_is_done(done, i):
+                    continue
+
                 score += rewards[i]
 
                 agents[i].step(
