@@ -1,0 +1,8 @@
+0 Do Nothing: If the agent is moving it continues moving, if it is stopped it stays stopped
+1 Deviate Left: If the agent is at a switch with a transition to its left, the agent will chose th eleft path. Otherwise the action has no effect. If the agent is stopped, this action will start agent movement again if allowed by the transitions.
+2 Go Forward: This action will start the agent when stopped. This will move the agent forward and chose the go straight direction at switches.
+3 Deviate Right: Exactly the same as deviate left but for right turns.
+4 Stop: This action causes the agent to stop.
+
+
+NB: Per far partire il treno ci vuole l'azione 1,2,3

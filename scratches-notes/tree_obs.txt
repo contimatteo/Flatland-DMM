@@ -1,0 +1,19 @@
+Node(
+    dist_own_target_encountered=0,   # if own target lies on the explored branch the current distance from the agent in number of cells is stored.
+    dist_other_target_encountered=0, # if another agents target is detected the distance in number of cells from current agent position is stored.
+    dist_other_agent_encountered=0,  # if another agent is detected the distance in number of cells from current agent position is stored.
+    dist_potential_conflict=0,       # possible conflict detected. Other agent predicts to pass along this cell at the same time as the agent, we store the distance in number of cells from current agent position; 0 otherwise
+    dist_unusable_switch=0,          # if an not usable switch (for agent) is detected we store the distance. An unusable switch is a switch where the agent does not have any choice of path (ie the agent is blocked), but other agents coming from different directions might.
+    dist_to_next_branch=0,           # This feature stores the distance (in number of cells) to the next node (e.g. switch or target or dead-end)
+    dist_min_to_target=31.0,         # minimum remaining travel distance from node to the agent’s target given the direction of the agent if this path is chosen
+    num_agents_same_direction=0,     # number of agents going in the same direction found on path to node
+    num_agents_opposite_direction=0, # number of agents going in the opposite direction found on path to node
+    num_agents_malfunctioning=0,     # malfunctioning/blocking agents, returns the number of time steps the observed agent will remain blocked
+    speed_min_fractional=1.0,        # slowest observed speed of an agent in same direction
+    num_agents_ready_to_depart=0,    # number of agents ready to depart but no yet active
+    childs={
+        'L': -inf,  #<--- missing nodes filled with -inf
+        'F': Node(dist_own_target_encountered=inf, dist_other_target_encountered=inf, dist_other_agent_encountered=inf, dist_potential_conflict=inf, dist_unusable_switch=6, dist_to_next_branch=7, dist_min_to_target=24.0, num_agents_same_direction=0, num_agents_opposite_direction=0, num_agents_malfunctioning=0, speed_min_fractional=1.0, num_agents_ready_to_depart=0,
+            childs={}),
+        'R': -inf,
+        'B': -inf})
