@@ -1,6 +1,7 @@
-import sys
 import logging
 import logging.config
+
+logging.getLogger('tensorflow').disabled = True
 
 ###
 

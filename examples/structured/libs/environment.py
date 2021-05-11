@@ -1,4 +1,6 @@
+import math
 import time
+
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_env import RailEnvActions
 from flatland.envs.rail_generators import random_rail_generator
@@ -8,8 +10,12 @@ from flatland.utils.rendertools import RenderTool
 from flatland.utils.rendertools import AgentRenderVariant
 
 import configs as Configs
-from observators.simple import SimpleObs
-from observators.tree import SingleAgentNavigationObs
+
+from observators.tree import CustomTreeObservator
+
+###
+
+OBS_TREE_N_NODES = Configs.OBSERVATOR_TREE_N_NODES
 
 ###
 
@@ -24,9 +30,8 @@ class Environment():
         self.initialize()
 
     def initialize(self):
-        # self._observator = SimpleObs()
-        # self._observator = SingleAgentNavigationObs()
-        self._observator = TreeObsForRailEnv(max_depth=1)
+        # self._observator = TreeObsForRailEnv(max_depth=int(math.log(OBS_TREE_MEMORY_SIZE - 1, 2)))
+        self._observator = CustomTreeObservator(max_memory=OBS_TREE_N_NODES)
 
         self._rail_generator = random_rail_generator()
 
@@ -45,16 +50,17 @@ class Environment():
             # close_following=True
         )
 
-        self._emulator = RenderTool(
-            self._env,
-            # gl="PGL",
-            # jupyter=False,
-            agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
-            show_debug=True,
-            # clear_debug_text=True,
-            screen_width=Configs.EMULATOR_WINDOW_WIDTH,
-            screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
-        )
+        if Configs.EMULATOR_ACTIVE is True:
+            self._emulator = RenderTool(
+                self._env,
+                # gl="PGL",
+                # jupyter=False,
+                agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
+                show_debug=True,
+                # clear_debug_text=True,
+                screen_width=Configs.EMULATOR_WINDOW_WIDTH,
+                screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
+            )
 
     def perform_actions(self, actions):
         """
@@ -64,15 +70,18 @@ class Environment():
         return next_obs, all_rewards, done, info
 
     def render(self, sleep_seconds: float = .5):
-        self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
-        time.sleep(sleep_seconds)
+        if Configs.EMULATOR_ACTIVE is True:
+            self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
+            time.sleep(sleep_seconds)
 
-    def reset(self) -> (dict, dict):
-        self._emulator.reset()
+    def reset(self):
+        if Configs.EMULATOR_ACTIVE is True:
+            self._emulator.reset()
+
         return self._env.reset()
 
-    def get_agents_indexes(self) -> range:
+    def get_agents_indexes(self):
         return range(self._env.get_num_agents())
 
-    def finished(self, done: dict = None) -> bool:
+    def finished(self, done: dict = None):
         return done is not None and done['__all__'] is True
