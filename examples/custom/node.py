@@ -40,8 +40,10 @@ class Node:
         # attr_list is supposed to be a list of str (attribute names)
         # if no attr_list is given, all numerical attributes are given, sorted
         if not attr_list:
-            attr_list = list(self.__dict__.keys())[:-2]     # excluding children attributes
-            attr_list.sort()                                # mantaining always the same order
+            attr_list = list(self.__dict__.keys())      # excluding children attributes
+            attr_list.remove('right_child')
+            attr_list.remove('left_child')
+            attr_list.sort()                            # mantaining always the same order
         return [self.__dict__.get(attr, None) for attr in attr_list]
 
     # simply returns right and left child
