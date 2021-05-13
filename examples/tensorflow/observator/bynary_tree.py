@@ -432,6 +432,7 @@ class MyTreeObsForRailEnv(ObservationBuilder):
 
             # TreeObsForRailEnv.Node
             node = Node(
+                node_code=None,
                 dist_own_target_encountered=own_target_encountered,
                 dist_other_target_encountered=other_target_encountered,
                 dist_other_agent_encountered=other_agent_encountered,

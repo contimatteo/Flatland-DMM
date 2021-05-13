@@ -1,5 +1,6 @@
 flatland-rl
 numpy
+pylint
 scikit-learn
 tensorflow
 tf-agents

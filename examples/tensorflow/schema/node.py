@@ -9,6 +9,7 @@ class Node:
     def __init__(
         self,
         node_code,
+        dist_own_target_encountered,
         dist_other_target_encountered,
         dist_other_agent_encountered=np.inf,
         dist_potential_conflict=np.inf,
@@ -25,6 +26,7 @@ class Node:
     ):
 
         self.node_code = node_code
+        self.dist_own_target_encountered = dist_own_target_encountered
         self.dist_other_target_encountered = dist_other_target_encountered
         self.dist_other_agent_encountered = dist_other_agent_encountered
         self.dist_potential_conflict = dist_potential_conflict
