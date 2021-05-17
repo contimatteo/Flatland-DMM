@@ -1,0 +1,33 @@
+#
+
+DEBUG = True
+RANDOM_SEED = 100
+
+##################
+## Flatland Env ##
+##################
+
+NUMBER_OF_AGENTS = 2
+
+RAIL_ENV_WIDTH = 10
+RAIL_ENV_HEIGHT = 10
+RAIL_ENV_N_CELLS = RAIL_ENV_WIDTH * RAIL_ENV_HEIGHT
+
+TRAIN_N_ATTEMPTS = 1
+TRAIN_N_MAX_EPISODES = 100
+
+##############
+## Emulator ##
+##############
+
+EMULATOR_ACTIVE = False
+EMULATOR_WINDOW_WIDTH = 600
+EMULATOR_WINDOW_HEIGHT = 600
+EMULATOR_STEP_TIMEBREAK_MILLISECONDS = 500
+
+##################
+## Observations ##
+##################
+
+OBS_TREE_N_FEATURES = 12
+OBS_TREE_N_NODES = 4

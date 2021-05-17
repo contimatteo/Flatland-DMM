@@ -26,7 +26,7 @@ class MaxNodeMemory(Exception):
 # same as TreeObsForRailEnv, but exploring in breadth first
 # instead of having a max_depth, a max_memory attribute is defined
 # max_memory will not count 'inf' nodes, which are STILL CREATED
-class MyTreeObsForRailEnv(ObservationBuilder):
+class BinaryTreeObservator(ObservationBuilder):
     """
     TreeObsForRailEnv object.
 
