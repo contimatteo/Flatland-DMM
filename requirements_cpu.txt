@@ -1,7 +1,26 @@
-flatland-rl
+#
+# python  (3.6.13)
+# pip     (21.1.1)
+#
+# author: @contimatteo
+#
+
+#############################
+## Versioned
+
+flatland-rl==2.2.2
+tensorflow==2.2.2
+tf-agents==0.5.0
+
+#############################
+## Not-Versioned
+
+keras-rl
 numpy
-pylint
 scikit-learn
-tensorflow
-tf-agents
+
+#############################
+## Dev
+
+pylint
 yapf

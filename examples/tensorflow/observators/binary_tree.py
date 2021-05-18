@@ -28,24 +28,32 @@ class MaxNodeMemory(Exception):
 # max_memory will not count 'inf' nodes, which are STILL CREATED
 class BinaryTreeObservator(ObservationBuilder):
     """
-    TreeObsForRailEnv object.
-
+    TreeObsForRailEnv object. \n
     This object returns observation vectors for agents in the RailEnv environment.
     The information is local to each agent and exploits the graph structure of the rail
-    network to simplify the representation of the state of the environment for each agent.
-
-    For details about the features in the tree observation see the get() function.
+    network to simplify the representation of the state of the environment for each agent. \n
+    For details about the features in the tree observation see the get() function. \n
     """
 
     tree_explored_actions_char = ['F', 'T']  # F: forward; T: turn
 
     def __init__(self, max_memory: int, predictor: PredictionBuilder = None):
         super().__init__()
+
+        self.max_prediction_depth = None
+        self.predicted_pos = None
+        self.predicted_dir = None
+        self.predictions = None
+        self.location_has_agent_speed = None
+        self.location_has_agent_malfunction = None
+        self.location_has_agent_ready_to_depart = None
+
         self.max_memory = max_memory
         self.predictor = predictor
         self.location_has_agent = {}
         self.location_has_agent_direction = {}
         self.location_has_agent = None
+
         self.code_gen = self.node_code_gen()
 
     def node_code_gen(self, start=100, stop=1000):
@@ -74,8 +82,8 @@ class BinaryTreeObservator(ObservationBuilder):
 
     def get_many(self, handles: Optional[List[int]] = None) -> Dict[int, Node]:
         """
-        Called whenever an observation has to be computed for the `env` environment, for each agent with handle
-        in the `handles` list.
+        Called whenever an observation has to be computed for the `env` environment, 
+        for each agent with handle in the `handles` list.
         """
 
         if handles is None:
@@ -235,7 +243,6 @@ class BinaryTreeObservator(ObservationBuilder):
         return root_node_observation
 
     def _explore_branch(self, handle, position, direction, tot_dist):
-
         exploring = True
         last_is_dead_end = False
         last_is_terminal = False  # wrong cell OR cycle;  either way, we don't want the agent to land here
@@ -449,38 +456,34 @@ class BinaryTreeObservator(ObservationBuilder):
 
             return node
 
-    """
-    def util_print_obs_subtree(self, tree: Node):
-        
-        # Utility function to print tree observations returned by this object.
-        
-        self.print_node_features(tree, "root", "")
-        for direction in self.tree_explored_actions_char:
-            self.print_subtree(tree.childs[direction], direction, "\t")
-
-    
-    @staticmethod
-    def print_node_features(node: Node, label, indent):
-        print(indent, "Direction ", label, ": ", node.dist_own_target_encountered, ", ",
-              node.dist_other_target_encountered, ", ", node.dist_other_agent_encountered, ", ",
-              node.dist_potential_conflict, ", ", node.dist_unusable_switch, ", ", node.dist_to_next_branch, ", ",
-              node.dist_min_to_target, ", ", node.num_agents_same_direction, ", ", node.num_agents_opposite_direction,
-              ", ", node.num_agents_malfunctioning, ", ", node.speed_min_fractional, ", ",
-              node.num_agents_ready_to_depart)
-
-    def print_subtree(self, node, label, indent):
-        if node == -np.inf or not node:
-            print(indent, "Direction ", label, ": -np.inf")
-            return
-
-        self.print_node_features(node, label, indent)
-
-        if not node.childs:
-            return
-
-        for direction in self.tree_explored_actions_char:
-            self.print_subtree(node.childs[direction], direction, indent + "\t")
-    """
+    # def util_print_obs_subtree(self, tree: Node):
+    #     # Utility function to print tree observations returned by this object.
+    #
+    #     self.print_node_features(tree, "root", "")
+    #     for direction in self.tree_explored_actions_char:
+    #         self.print_subtree(tree.childs[direction], direction, "\t")
+    #
+    # @staticmethod
+    # def print_node_features(node: Node, label, indent):
+    #     print(indent, "Direction ", label, ": ", node.dist_own_target_encountered, ", ",
+    #           node.dist_other_target_encountered, ", ", node.dist_other_agent_encountered, ", ",
+    #           node.dist_potential_conflict, ", ", node.dist_unusable_switch, ", ", node.dist_to_next_branch, ", ",
+    #           node.dist_min_to_target, ", ", node.num_agents_same_direction, ", ", node.num_agents_opposite_direction,
+    #           ", ", node.num_agents_malfunctioning, ", ", node.speed_min_fractional, ", ",
+    #           node.num_agents_ready_to_depart)
+    #
+    # def print_subtree(self, node, label, indent):
+    #     if node == -np.inf or not node:
+    #         print(indent, "Direction ", label, ": -np.inf")
+    #         return
+    #
+    #     self.print_node_features(node, label, indent)
+    #
+    #     if not node.childs:
+    #         return
+    #
+    #     for direction in self.tree_explored_actions_char:
+    #         self.print_subtree(node.childs[direction], direction, indent + "\t")
 
     def set_env(self, env: Environment):
         super().set_env(env)
