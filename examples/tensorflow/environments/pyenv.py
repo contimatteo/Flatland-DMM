@@ -20,7 +20,7 @@ from observators.binary_tree import BinaryTreeObservator
 ###
 
 
-class FlatlandEnv(py_environment.PyEnvironment):
+class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
     def __init__(self):
         super().__init__()
 
