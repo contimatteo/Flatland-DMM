@@ -1,21 +1,11 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
+from __future__ import absolute_import, division, print_function
 
-import time
+import configs as Configs
 import numpy as np
-
+from libs.rail_env import FlatlandRailEnv
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
-from flatland.envs.rail_env import RailEnv
-from flatland.envs.rail_generators import random_rail_generator
-from flatland.utils.rendertools import RenderTool
-from flatland.utils.rendertools import AgentRenderVariant
-
-import configs as Configs
-
-from observators.binary_tree import BinaryTreeObservator
 
 ###
 
@@ -23,6 +13,9 @@ from observators.binary_tree import BinaryTreeObservator
 class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
     def __init__(self):
         super().__init__()
+
+        # flatland
+        self._env = None
 
         self._state = None
 
@@ -32,42 +25,10 @@ class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
         self._step_type_spec = None
         self._observation_spec = None
 
-        # flatland
-        self._env = None
-        self._emulator = None
-        self._observator = None
-
         self.initialize()
 
     def initialize(self):
-        self._observator = BinaryTreeObservator(max_memory=Configs.OBS_TREE_N_NODES)
-
-        self._env = RailEnv(
-            width=Configs.RAIL_ENV_WIDTH,
-            height=Configs.RAIL_ENV_HEIGHT,
-            rail_generator=random_rail_generator(),
-            # schedule_generator=None,
-            number_of_agents=Configs.N_OF_AGENTS,
-            obs_builder_object=self._observator,
-            # malfunction_generator_and_process_data=None,
-            # malfunction_generator=None,
-            remove_agents_at_target=True,
-            random_seed=Configs.RANDOM_SEED,
-            # record_steps=False,
-            # close_following=True
-        )
-
-        if Configs.EMULATOR_ACTIVE is True:
-            self._emulator = RenderTool(
-                self._env,
-                # gl="PGL",
-                # jupyter=False,
-                agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
-                show_debug=True,
-                # clear_debug_text=True,
-                screen_width=Configs.EMULATOR_WINDOW_WIDTH,
-                screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
-            )
+        self._env = FlatlandRailEnv()
 
     ###
 
@@ -125,7 +86,7 @@ class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
         '''
         if self._observation_spec is None:
             self._observation_spec = array_spec.ArraySpec(
-                shape=(Configs.OBS_TREE_NODE_N_FEATURES,),
+                shape=(Configs.OBS_TREE_NODE_N_FEATURES, ),
                 dtype=np.int32,
                 name='observation',
             )
@@ -134,18 +95,14 @@ class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
 
     ###
 
-    def _is_episode_ended(self, done):
-        return type(done) is dict and done['__all__'] is True
-
     def _reset(self):
         '''
         Starts a new sequence, returns the first `TimeStep` of this sequence. \n
         See `reset(self)` docstring for more details.
         '''
-        if Configs.EMULATOR_ACTIVE is True:
-            self._emulator.reset()
-
+        # observations, info = self._env.reset()
         _, _ = self._env.reset()
+
         # self._state = (observations, info)
         # self._state = (observations, rewards, done, info)
         self._state = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=np.int32)
@@ -160,7 +117,7 @@ class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
         - action: A NumPy array, or a nested dict, list or tuple of arrays
             corresponding to `action_spec()`.
         '''
-        _, _, done, _ = self._env.step({ 0: action })
+        _, _, done, _ = self._env.step({0: action})
         # observations, rewards, done, info = self._env.step(action)
         # self._state = (observations, info)
 
@@ -171,16 +128,7 @@ class FlatlandEnvironmentSingleAgent(py_environment.PyEnvironment):
         #     # Ignore the current action and start a new episode.
         #     return self.reset()
 
-        self.render(mode='human')
-
-        if self._is_episode_ended(done):
+        if self._env.episode_finished(done):
             return ts.termination(self._state, reward=1)
         else:
             return ts.transition(self._state, reward=1, discount=.8)
-
-    ###
-
-    def render(self, mode='rgb_array'):
-        if Configs.EMULATOR_ACTIVE is True and mode == 'human':
-            self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
-            time.sleep(Configs.EMULATOR_STEP_TIMEBREAK_SECONDS)

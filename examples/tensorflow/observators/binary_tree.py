@@ -11,7 +11,7 @@ from flatland.core.grid.grid_utils import coordinate_to_position
 from flatland.core.grid.grid4_utils import get_new_position
 from flatland.utils.ordered_set import OrderedSet
 
-from schema.node import Node
+from schemes.node import Node
 
 ###
 
