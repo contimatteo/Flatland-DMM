@@ -1,3 +1,3 @@
-__author__ = """???"""
-__email__ = '???'
-__version__ = '1.0.0'
+__author__ = "TODO: ..."
+__email__ = "TODO: ..."
+__version__ = "TODO: ..."
