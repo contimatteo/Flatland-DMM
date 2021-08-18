@@ -23,3 +23,9 @@ scikit-learn
 
 pylint
 yapf
+
+#############################
+## OSX Big Sur compatibility
+## https://github.com/openai/gym/issues/2101
+
+# pyglet==1.5.11
