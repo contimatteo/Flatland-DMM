@@ -7,7 +7,7 @@ RANDOM_SEED: int = 100
 ## Flatland Env ##
 ##################
 
-N_OF_AGENTS: int = 1
+N_OF_AGENTS: int = 2
 
 RAIL_ENV_WIDTH: int = 10
 RAIL_ENV_HEIGHT: int = 10
@@ -22,7 +22,7 @@ TRAIN_N_EPISODES: int = 4
 
 EMULATOR_ACTIVE: bool = True
 EMULATOR_WINDOW_WIDTH: int = 600
-EMULATOR_WINDOW_HEIGHT: int = 600
+EMULATOR_WINDOW_HEIGHT: int = 400
 EMULATOR_STEP_TIMEBREAK_SECONDS: int = 0.2
 
 ##################

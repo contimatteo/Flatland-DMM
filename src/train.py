@@ -29,9 +29,9 @@ def train():
     while episode_count < 100:
         action = policy.action(time_step).action
 
-        time_step = environment.step({0: action})
+        time_step = environment.step({0: action, 1: action})
 
-        if time_step.is_last():
+        if time_step.is_last().all():
             episode_count += 1
             time_step = environment.reset()
 

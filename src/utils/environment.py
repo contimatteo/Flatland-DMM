@@ -1,12 +1,13 @@
 import time
+
 from typing import Dict
-
-import configs as Configs
-from schemes.action import HighLevelAction
-
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import random_rail_generator
 from flatland.utils.rendertools import AgentRenderVariant, RenderTool
+
+import configs as Configs
+
+from schemes.action import HighLevelAction
 
 ###
 
@@ -33,11 +34,8 @@ class RailEnvWrapper:
         if Configs.EMULATOR_ACTIVE is True:
             self._emulator = RenderTool(
                 self._rail_env,
-                # gl="PGL",
-                # jupyter=False,
                 agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
                 show_debug=True,
-                # clear_debug_text=True,
                 screen_width=Configs.EMULATOR_WINDOW_WIDTH,
                 screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
             )
@@ -56,10 +54,10 @@ class RailEnvWrapper:
         return observations, info
 
     def step(self, actions: Dict[int, HighLevelAction]):
-        observations, rewards, done, info = self._rail_env.step(actions)
-
         # TODO: convert high-level actions to low-level actions
         # ...
+
+        observations, rewards, done, info = self._rail_env.step(actions)
 
         if Configs.EMULATOR_ACTIVE is True:
             self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
