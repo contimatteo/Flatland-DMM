@@ -4,12 +4,12 @@ from flatland.envs.rail_env import RailEnvActions
 
 ###
 
-LowLevelAction = RailEnvActions
 
-###
+class LowLevelAction(RailEnvActions):
+    pass
 
 
 class HighLevelAction(IntEnum):
     STOP = 0
-    LEFT_ORIENTED_ACTION = 1
-    RIGHT_ORIENTED_ACTION = 2
+    LEFT_ORIENTED = 1
+    RIGHT_ORIENTED = 2
