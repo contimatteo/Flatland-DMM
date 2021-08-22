@@ -8,6 +8,9 @@
 #############################
 ## Versioned
 
+# https://discourse.aicrowd.com/t/unable-to-install-flatland/1391/7
+# importlib-metadata==0.23
+
 flatland-rl==2.2.2
 tensorflow==2.2.2
 tf-agents==0.5.0
