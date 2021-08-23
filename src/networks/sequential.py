@@ -14,14 +14,23 @@ LEARNING_RATE = 0.01
 class SequentialNetwork(BaseNetwork):
     @property
     def input_nodes(self) -> int:
+        # TODO: missing
+        # ...
+
         return 0
 
     @property
     def input_dim(self) -> int:
+        # TODO: missing
+        # ...
+
         return 0
 
     @property
     def output_nodes(self) -> int:
+        # TODO: missing
+        # ...
+
         return 0
 
     ###

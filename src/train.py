@@ -23,14 +23,14 @@ np.random.seed(Configs.RANDOM_SEED)
 ###
 
 
-def prepare_env():
+def prepare_env() -> PyEnvironment:
     observator = BinaryTreeObservator()
     environment = PyEnvironment(observator=observator)
 
     return environment
 
 
-def prepare_model(environment):
+def prepare_model(environment) -> DQN:
     time_step_spec = environment.time_step_spec()
     action_spec = environment.action_spec()
 
@@ -58,9 +58,9 @@ def prepare_agents(environment) -> List[RandomAgent]:
 def train():
     environment = prepare_env()
 
-    time_step = environment.reset()
-
     for _ in range(N_ATTEMPTS):
+        time_step = environment.reset()
+
         agents = prepare_agents(environment)
 
         for _ in range(N_EPISODES):
@@ -68,6 +68,9 @@ def train():
 
             # perform actions
             for i in range(N_AGENTS):
+                # TODO: check if only one action is allowed.
+                # ...
+
                 actions.update({i: agents[i].act(time_step)})
 
             # get the new observations given the actions
@@ -79,7 +82,7 @@ def train():
 
             # check if all agents have reached the goal
             if time_step.is_last().all():
-                time_step = environment.reset()
+                break
 
 
 ###

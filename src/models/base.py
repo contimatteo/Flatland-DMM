@@ -17,6 +17,7 @@ class BaseModel():
 
         self.memory = SequentialMemory(limit=memory_limit, window_length=MEMORY_WINDOW_LENGTH)
 
+        # TODO: find a way to pass only the Keras instance and not the entire {NetworkClass}
         self.network = NetworkClass(time_step_spec, action_spec).compile()
         self.target_network = NetworkClass(time_step_spec, action_spec).compile()
 
