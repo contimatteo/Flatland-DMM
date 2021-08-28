@@ -37,7 +37,7 @@ class BinaryTreeObservator(ObservationBuilder):
     For details about the features in the tree observation see the get() function. \n
     """
 
-    N_FEATURES = Configs.OBS_TREE_NODE_N_FEATURES
+    N_FEATURES = Configs.OBS_TREE_N_FEATURES
 
     tree_explored_actions_char = ['F', 'T']  # F: forward; T: turn
 

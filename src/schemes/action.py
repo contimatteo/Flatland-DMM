@@ -4,9 +4,7 @@ from flatland.envs.rail_env import RailEnvActions
 
 ###
 
-
-class LowLevelAction(RailEnvActions):
-    pass
+LowLevelAction = RailEnvActions
 
 
 class HighLevelAction(IntEnum):

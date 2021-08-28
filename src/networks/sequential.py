@@ -1,6 +1,6 @@
-from keras.layers import Dense
-from keras import Sequential
-from keras.optimizers import adam_v2
+from tensorflow.keras.layers import Dense
+from tensorflow.keras import Sequential
+from tensorflow.keras.optimizers import Adam
 
 from networks.base import BaseNetwork
 
@@ -14,24 +14,17 @@ LEARNING_RATE = 0.01
 class SequentialNetwork(BaseNetwork):
     @property
     def input_nodes(self) -> int:
-        # TODO: missing
-        # ...
-
-        return 0
+        return self._time_step_spec.observation.shape[0]
 
     @property
     def input_dim(self) -> int:
-        # TODO: missing
-        # ...
-
-        return 0
+        if len(self._time_step_spec.observation.shape) > 1:
+            return self._time_step_spec.observation.shape[1]
+        return 1
 
     @property
     def output_nodes(self) -> int:
-        # TODO: missing
-        # ...
-
-        return 0
+        return (self._action_spec.maximum - self._action_spec.minimum) + 1
 
     ###
 
@@ -42,6 +35,6 @@ class SequentialNetwork(BaseNetwork):
         model.add(Dense(10, activation="relu"))
         model.add(Dense(self.output_nodes))
 
-        model.compile(optimizer=adam_v2.Adam(lr=LEARNING_RATE))
+        model.compile(optimizer=Adam(learning_rate=LEARNING_RATE))
 
         return model

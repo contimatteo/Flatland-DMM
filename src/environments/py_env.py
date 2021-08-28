@@ -14,6 +14,7 @@ class PyEnvironment(py_environment.PyEnvironment):
         super().__init__()
 
         self._info = None
+        self._done = None
 
         self.observator = observator
 
@@ -26,6 +27,9 @@ class PyEnvironment(py_environment.PyEnvironment):
         Returns the environment info returned on the last step.
         """
         return self._info
+
+    def get_done(self):
+        return self._done
 
     def get_state(self):
         raise NotImplementedError('This environment has not implemented `get_state()`.')
@@ -69,7 +73,7 @@ class PyEnvironment(py_environment.PyEnvironment):
 
     #
 
-    def _reset(self):
+    def _reset(self) -> ts.TimeStep:
         """
         Starts a new sequence, returns the first `TimeStep` of this sequence.
 
@@ -83,7 +87,7 @@ class PyEnvironment(py_environment.PyEnvironment):
 
         return ts.restart(observation, batch_size=self.batch_size)
 
-    def _step(self, action):
+    def _step(self, action) -> ts.TimeStep:
         """
         Updates the environment according to action and returns a `TimeStep`.
 
@@ -93,18 +97,25 @@ class PyEnvironment(py_environment.PyEnvironment):
         action: A NumPy array, or a nested dict, list or tuple of arrays
             corresponding to `action_spec()`.
         """
-        observations, self._info, rewards, done = self._env.step(action)
+        observations, self._info, rewards, self._done = self._env.step(action)
 
         # ISSUE: [@contimatteo -> @davidesangiorgi]
         # Sometimes there's not any observation. Why? Is there any way to avoid it?
         if observations[0] is None:
             return ts.termination(None, reward=-1)
 
-        # TODO: map each observation ({Node} class schema) to its
-        # 'flatten' version through the `get_subtree_array() method`.
-        observation = [observations[0].get_subtree_array()]
+        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        ### move this code outside
+        observation = []
+        for node_obs in observations.values():
+            if node_obs is not None:
+                observation.append(node_obs.get_subtree_array())
+            else:
+                observation.append(np.full(self.observation_spec().shape, -10))
+        observation = np.array(observation).flatten()
+        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
-        if not self._env.episode_finished(done):
+        if not self._env.episode_finished(self._done):
             rewards = np.array(list(rewards.values()))
             discounts = np.full(rewards.shape, .8)
 

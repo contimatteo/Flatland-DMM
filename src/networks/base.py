@@ -3,7 +3,7 @@ import abc
 ###
 
 
-class BaseNetwork():
+class BaseNetwork(abc.ABC):
     def __init__(self, time_step_spec, action_spec) -> None:
         self._time_step_spec = time_step_spec
         self._action_spec = action_spec

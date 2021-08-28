@@ -3,7 +3,7 @@ import abc
 ###
 
 
-class BaseAgent:
+class BaseAgent(abc.ABC):
     def __init__(self, model, time_step_spec, action_spec):
         self.model = model
 
@@ -21,11 +21,14 @@ class BaseAgent:
         """
         return self.policy.action(time_step).action
 
-    def step(self, action, time_step):
+    def step(self, action, time_step, done):
         if time_step is None:
             return
 
-        # self.model.remember(observation, action, reward, done, True)
+        observation = time_step.observation
+        reward = time_step.reward
+
+        self.model.remember(observation, action, reward, done, True)
 
     ###
 

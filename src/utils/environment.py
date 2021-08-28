@@ -1,6 +1,6 @@
 import time
 
-from typing import Dict
+from typing import Dict, Any, Tuple, List
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import random_rail_generator
 from flatland.utils.rendertools import AgentRenderVariant, RenderTool
@@ -8,6 +8,7 @@ from flatland.utils.rendertools import AgentRenderVariant, RenderTool
 import configs as Configs
 
 from schemes.action import HighLevelAction
+from schemes.node import Node
 
 ###
 
@@ -53,7 +54,7 @@ class RailEnvWrapper:
 
         return observations, info
 
-    def step(self, actions: Dict[int, HighLevelAction]):
+    def step(self, actions: Dict[int, HighLevelAction]) -> Tuple[Dict[int, Node], dict, dict, dict]:
         # TODO: convert high-level actions to low-level actions
         # ...
 
