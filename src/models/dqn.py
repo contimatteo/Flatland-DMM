@@ -7,31 +7,31 @@ from models.base import BaseModel
 GAMMA = 0.95
 
 MEMORY_WINDOW_LENGTH = 1  # TODO: is this right?
-BATCH_SIZE = 5
+BATCH_SIZE = MEMORY_WINDOW_LENGTH + 2
 
 ###
 
 
 class DQN(BaseModel):
     def _train(self):
-        if self.memory.nb_entries < max(MEMORY_WINDOW_LENGTH + 2, BATCH_SIZE):
+        if self.memory.nb_entries < BATCH_SIZE + 2:
             return False
 
         # return number of {BATCH_SIZE} samples in random order.
         samples = self.memory.sample(batch_size=BATCH_SIZE)
 
         for sample in samples:
-            observation, action, reward, done, _ = sample
-            observation = np.array(observation)
+            observations_dict, action, reward, finished, _ = sample
+            observation = observations_dict[0]['network_input']
 
             target = self.target_network.predict(observation)
 
-            if done is True:
+            if finished is True:
                 target[0][action] = reward
             else:
                 q_future_value = max(self.target_network.predict(observation)[0])
                 target[0][action] = reward + q_future_value * GAMMA
 
-            self.network.fit([observation], target, epochs=1, verbose=0)
+            self.network.fit([observation], target, epochs=1, verbose=1)
 
         return True

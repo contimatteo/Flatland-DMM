@@ -1,6 +1,7 @@
 from tensorflow.keras.layers import Dense
 from tensorflow.keras import Sequential
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.losses import mean_squared_error
 
 from networks.base import BaseNetwork
 
@@ -35,6 +36,6 @@ class SequentialNetwork(BaseNetwork):
         model.add(Dense(10, activation="relu"))
         model.add(Dense(self.output_nodes))
 
-        model.compile(optimizer=Adam(learning_rate=LEARNING_RATE))
+        model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss=mean_squared_error)
 
         return model

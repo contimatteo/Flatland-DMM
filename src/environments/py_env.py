@@ -1,9 +1,12 @@
 import numpy as np
 
+from typing import Dict, Any
+
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 
+from schemes.node import Node
 from utils.environment import RailEnvWrapper
 
 ###
@@ -28,7 +31,7 @@ class PyEnvironment(py_environment.PyEnvironment):
         """
         return self._info
 
-    def get_done(self):
+    def get_done(self) -> Dict[Any, bool]:
         return self._done
 
     def get_state(self):
@@ -66,8 +69,8 @@ class PyEnvironment(py_environment.PyEnvironment):
         return array_spec.BoundedArraySpec(
             shape=(),
             dtype=np.int32,
-            minimum=1,  # ISSUE: we need a deep discussion about this
-            maximum=3,  # ISSUE: we need a deep discussion about this
+            minimum=0,  # ISSUE: we need a deep discussion about this
+            maximum=2,  # ISSUE: we need a deep discussion about this
             name='action',
         )
 
@@ -105,6 +108,8 @@ class PyEnvironment(py_environment.PyEnvironment):
             return ts.termination(None, reward=-1)
 
         ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        
         ### move this code outside
         observation = []
         for node_obs in observations.values():
@@ -112,7 +117,19 @@ class PyEnvironment(py_environment.PyEnvironment):
                 observation.append(node_obs.get_subtree_array())
             else:
                 observation.append(np.full(self.observation_spec().shape, -10))
+        
+
+        observation = np.array(observation).flatten().tolist()
+
+        # ISSUE: [@contimatteo -> @davidesangiorgi]
+        # some nodes are not converted to an array ...
+        for (i, val) in enumerate(observation):
+            if isinstance(val, Node):
+                observation[i] = 1
+        
         observation = np.array(observation).flatten()
+        
+        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
         if not self._env.episode_finished(self._done):

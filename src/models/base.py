@@ -20,8 +20,9 @@ class BaseModel(abc.ABC):
 
     ###
 
-    def remember(self, action, observation, reward, done, training=True):
-        self.memory.append(observation, action, reward, done, training)
+    def remember(self, action, observation, reward: float, finished: bool, training=True):
+        observation_dict = { 'network_input': observation }
+        self.memory.append(observation_dict, action, reward, finished, training)
 
         trained = self._train()
 

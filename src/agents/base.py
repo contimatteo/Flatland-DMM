@@ -1,5 +1,10 @@
 import abc
 
+from tf_agents.trajectories import time_step as ts
+from tf_agents.policies import py_policy
+
+from schemes.action import HighLevelAction
+
 ###
 
 
@@ -14,26 +19,27 @@ class BaseAgent(abc.ABC):
 
     ###
 
-    def act(self, time_step):
+    def act(self, time_step) -> HighLevelAction:
         """
         - @param time_step: Tensorflow time-step
         - @return action: integer related to one specific action
         """
-        return self.policy.action(time_step).action
+        return HighLevelAction(int(self.policy.action(time_step).action))
 
-    def step(self, action, time_step, done):
+    def step(self, idx: int, action, time_step: ts.TimeStep, done: dict):
         if time_step is None:
             return
 
+        reward = time_step.reward[idx]
         observation = time_step.observation
-        reward = time_step.reward
+        finished = done[idx] is True or done['__all__'] is True
 
-        self.model.remember(observation, action, reward, done, True)
+        self.model.remember(action, observation, reward, finished, True)
 
     ###
 
     @abc.abstractmethod
-    def load_policy(self):
+    def load_policy(self) -> py_policy.Base:
         raise NotImplementedError('`load_policy` method not implemented.')
 
     # @abc.abstractmethod
