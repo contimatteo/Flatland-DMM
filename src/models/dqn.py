@@ -1,5 +1,3 @@
-import numpy as np
-
 from models.base import BaseModel
 
 ###
@@ -23,6 +21,7 @@ class DQN(BaseModel):
         for sample in samples:
             observations_dict, action, reward, finished, _ = sample
             observation = observations_dict[0]['network_input']
+            observation = observation.astype('float32')
 
             target = self.target_network.predict(observation)
 

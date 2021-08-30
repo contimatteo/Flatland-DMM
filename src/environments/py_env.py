@@ -109,26 +109,24 @@ class PyEnvironment(py_environment.PyEnvironment):
 
         ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-        
+
         ### move this code outside
         observation = []
         for node_obs in observations.values():
-            if node_obs is not None:
-                observation.append(node_obs.get_subtree_array())
-            else:
-                observation.append(np.full(self.observation_spec().shape, -10))
-        
+            # if node_obs is not None: observation.append(node_obs.get_subtree_array())
+            # else: observation.append(np.full(self.observation_spec().shape, -10))
+            observation.append(np.full(self.observation_spec().shape, -10))
 
-        observation = np.array(observation).flatten().tolist()
+        observation = np.array(observation).flatten()
 
         # ISSUE: [@contimatteo -> @davidesangiorgi]
         # some nodes are not converted to an array ...
-        for (i, val) in enumerate(observation):
+        for (i, val) in np.ndenumerate(observation):
             if isinstance(val, Node):
-                observation[i] = 1
-        
+                observation[i] = 1  # ISSUE: we need a deep discussion about this
+
         observation = np.array(observation).flatten()
-        
+
         ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
