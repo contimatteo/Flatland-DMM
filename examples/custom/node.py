@@ -5,8 +5,9 @@ class Node:
     # we have the same properties given by flatland in the namedtuple
     # only added node_code: check tree_observator (I'm going to update it) for usage
     def __init__(self,
-                 node_code,
-                 dist_other_target_encountered,
+                 node_code=0,
+                 dist_own_target_encountered=np.inf,
+                 dist_other_target_encountered=np.inf,
                  dist_other_agent_encountered=np.inf,
                  dist_potential_conflict=np.inf,
                  dist_unusable_switch=np.inf,
@@ -15,25 +16,26 @@ class Node:
                  num_agents_same_direction=0,
                  num_agents_opposite_direction=0,
                  num_agents_malfunctioning=0,
-                 speed_min_fractional=0,
+                 speed_min_fractional=1.,
                  num_agents_ready_to_depart=0,
-                 right_child=None,
-                 left_child=None):
+                 forward_child=None,
+                 turn_child=None):
 
-        self.node_code = node_code
-        self.dist_other_target_encountered = dist_other_target_encountered
-        self.dist_other_agent_encountered = dist_other_agent_encountered
-        self.dist_potential_conflict = dist_potential_conflict
-        self.dist_unusable_switch = dist_unusable_switch
-        self.dist_to_next_branch = dist_to_next_branch
         self.dist_min_to_target = dist_min_to_target
-        self.num_agents_same_direction = num_agents_same_direction
-        self.num_agents_opposite_direction = num_agents_opposite_direction
+        self.dist_other_agent_encountered = dist_other_agent_encountered
+        self.dist_other_target_encountered = dist_other_target_encountered
+        self.dist_own_target_encountered = dist_own_target_encountered
+        self.dist_potential_conflict = dist_potential_conflict
+        self.dist_to_next_branch = dist_to_next_branch
+        self.dist_unusable_switch = dist_unusable_switch
+        self.forward_child = forward_child
+        self.node_code = node_code
         self.num_agents_malfunctioning = num_agents_malfunctioning
-        self.speed_min_fractional = speed_min_fractional
+        self.num_agents_opposite_direction = num_agents_opposite_direction
         self.num_agents_ready_to_depart = num_agents_ready_to_depart
-        self.right_child = right_child
-        self.left_child = left_child
+        self.num_agents_same_direction = num_agents_same_direction
+        self.speed_min_fractional = speed_min_fractional
+        self.turn_child = turn_child
 
     # returns a list of numerical attributes (children nodes excluded)
     def get_attribute_list(self, attr_list=[]):
@@ -41,14 +43,14 @@ class Node:
         # if no attr_list is given, all numerical attributes are given, sorted
         if not attr_list:
             attr_list = list(self.__dict__.keys())      # excluding children attributes
-            attr_list.remove('right_child')
-            attr_list.remove('left_child')
-            attr_list.sort()                            # mantaining always the same order
+            attr_list.remove('forward_child')
+            attr_list.remove('turn_child')
+            attr_list.sort()                            # maintaining always the same order
         return [self.__dict__.get(attr, None) for attr in attr_list]
 
     # simply returns right and left child
     def get_childs(self):
-        return self.right_child, self.left_child
+        return self.forward_child, self.turn_child
 
     # returns a flattened array of node attributes
     # designed to be the input of the neural network

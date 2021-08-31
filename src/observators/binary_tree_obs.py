@@ -11,7 +11,10 @@ from flatland.core.grid.grid_utils import coordinate_to_position
 from flatland.envs.agent_utils import RailAgentStatus, EnvAgent
 from flatland.utils.ordered_set import OrderedSet
 
-from node import Node
+import configs as Configs
+
+from schemes.node import Node
+
 
 class MaxNodeMemory(Exception):
     pass
@@ -31,6 +34,7 @@ class MyTreeObsForRailEnv(ObservationBuilder):
     For details about the features in the tree observation see the get() function.
     """
 
+    N_FEATURES = Configs.OBS_TREE_N_FEATURES
 
     tree_explored_actions_char = ['F', 'T']  # F: forward; T: turn
 
@@ -46,7 +50,7 @@ class MyTreeObsForRailEnv(ObservationBuilder):
     def node_code_gen(self, start=100, stop=1000):
         random.seed(0)
         while True:
-            yield random.randint(start, stop-1) / stop
+            yield random.randint(start, stop - 1) / stop
 
     def complex_code_gen(self, start=100, stop=1000):
         random.seed(0)
@@ -55,14 +59,15 @@ class MyTreeObsForRailEnv(ObservationBuilder):
         generated_list = [start]
         n = start
         while True:
-            while n in generated_list and (n>=start and n<stop):
+            while n in generated_list and (n >= start and n < stop):
                 std_dev += std_dev * 0.05
                 n = round(random.gauss(mu=mean, sigma=std_dev))
             generated_list.append(n)
             yield n / stop
 
     def reset(self):
-        self.location_has_target = {tuple(agent.target): 1 for agent in self.env.agents}  # dictionary of target positions
+        self.location_has_target = {tuple(agent.target): 1 for agent in
+                                    self.env.agents}  # dictionary of target positions
 
     def get_many(self, handles: Optional[List[int]] = None) -> Dict[int, Node]:
         """
@@ -102,7 +107,7 @@ class MyTreeObsForRailEnv(ObservationBuilder):
 
         for _agent in self.env.agents:
             if _agent.status in [RailAgentStatus.ACTIVE, RailAgentStatus.DONE] and \
-                _agent.position:
+                    _agent.position:
                 self.location_has_agent[tuple(_agent.position)] = 1
                 self.location_has_agent_direction[tuple(_agent.position)] = _agent.direction
                 self.location_has_agent_speed[tuple(_agent.position)] = _agent.speed_data['speed']
@@ -110,7 +115,7 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                     'malfunction']
 
             if _agent.status in [RailAgentStatus.READY_TO_DEPART] and \
-                _agent.initial_position:
+                    _agent.initial_position:
                 self.location_has_agent_ready_to_depart[tuple(_agent.initial_position)] = \
                     self.location_has_agent_ready_to_depart.get(tuple(_agent.initial_position), 0) + 1
 
@@ -139,7 +144,6 @@ class MyTreeObsForRailEnv(ObservationBuilder):
             print('agent initial pos:', agent.position, '\ntarget position:', agent.target)
             return None
 
-
         # storing all possible transitions
         # possible_transitions = self.env.rail.get_transitions(*agent_virtual_position, agent.direction)
         # num_transitions = np.count_nonzero(possible_transitions)
@@ -153,13 +157,12 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                                      dist_other_agent_encountered=0, dist_potential_conflict=0,
                                      dist_unusable_switch=0, dist_to_next_branch=0,
                                      dist_min_to_target=distance_map[
-                                                           (handle, *agent_virtual_position,
-                                                            agent.direction)],
+                                         (handle, *agent_virtual_position,
+                                          agent.direction)],
                                      num_agents_same_direction=0, num_agents_opposite_direction=0,
                                      num_agents_malfunctioning=agent.malfunction_data['malfunction'],
                                      speed_min_fractional=agent.speed_data['speed'],
                                      num_agents_ready_to_depart=0)
-
 
         # Start from the current orientation, and see which transitions are available;
         # organize them as [left, forward, right, back], relative to the current orientation
@@ -167,12 +170,11 @@ class MyTreeObsForRailEnv(ObservationBuilder):
         orientation = agent.direction
         position = agent_virtual_position
 
-
         queue = [(root_node_observation, position, orientation)]
 
         n_added_nodes = 1
         try:
-            while queue: # I stop when I raise MaxNodeMemory or I expanded all the tree
+            while queue:  # I stop when I raise MaxNodeMemory or I expanded all the tree
                 # extrapolating node, position and orientation from queue
                 n_tuple = queue.pop(0)
                 node = n_tuple[0]
@@ -198,7 +200,8 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                         new_cell = get_new_position(position, branch_direction)
 
                         # main change w.r.t. TreeObsForRailEnv: breadth first search
-                        node_observed, observed_pos, observed_dir = self._explore_branch(handle, new_cell, branch_direction, 1)
+                        node_observed, observed_pos, observed_dir = self._explore_branch(handle, new_cell,
+                                                                                         branch_direction, 1)
 
                         # check if node_observed is forward
                         if i == 0:
@@ -346,7 +349,7 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                             for ca in conflicting_agent[0]:
                                 if direction != self.predicted_dir[post_step][ca] and cell_transitions[
                                     self._reverse_dir(
-                                            self.predicted_dir[post_step][ca])] == 1 \
+                                        self.predicted_dir[post_step][ca])] == 1 \
                                         and tot_dist < potential_conflict:  # noqa: E125
                                     potential_conflict = tot_dist
                                 if self.env.agents[ca].status == RailAgentStatus.DONE and tot_dist < potential_conflict:
@@ -385,7 +388,6 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                 # Detect Switches that can only be used by other agents.
                 if total_transitions > 2 > num_transitions and tot_dist < unusable_switch:
                     unusable_switch = tot_dist
-
 
                 if num_transitions == 1:
                     # Check if dead-end, or if we can go forward along direction
@@ -441,7 +443,6 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                 dist_min_to_target = abs(self.env.agents[handle].target[0] - position[0]) + \
                                      abs(self.env.agents[handle].target[1] - position[1])
 
-
             # TreeObsForRailEnv.Node
             node = Node(dist_own_target_encountered=own_target_encountered,
                         dist_other_target_encountered=other_target_encountered,
@@ -456,19 +457,18 @@ class MyTreeObsForRailEnv(ObservationBuilder):
                         speed_min_fractional=min_fractional_speed,
                         num_agents_ready_to_depart=other_agent_ready_to_depart_encountered)
 
-
             return node, position, direction
 
     """
     def util_print_obs_subtree(self, tree: Node):
-        
+
         # Utility function to print tree observations returned by this object.
-        
+
         self.print_node_features(tree, "root", "")
         for direction in self.tree_explored_actions_char:
             self.print_subtree(tree.childs[direction], direction, "\t")
 
-    
+
     @staticmethod
     def print_node_features(node: Node, label, indent):
         print(indent, "Direction ", label, ": ", node.dist_own_target_encountered, ", ",
