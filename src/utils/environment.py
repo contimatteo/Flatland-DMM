@@ -65,6 +65,16 @@ class RailEnvWrapper:
         return self._rail_env.agents[agent_index]
 
     def get_agent_position(self, agent_index: int) -> Tuple[int, int]:
+        """
+        maybe not so easy:
+            - if agent.status == READY_TO_DEPART the agent is already asking for observations and answering with
+                some decisions, but its position in still None
+                ==> in this case it's maybe better to return agent.initial_position
+            - we have 2 cases when the agent.position==None (agent.status==READY_TO_DEPART & agent.status==DONE_REMOVED),
+                maybe we want to distinguish those
+
+        remember also to not use agent.position during observations (agent.old_position becomes the correct one)
+        """
         return self.get_agent(agent_index).position
 
     def get_agent_direction(self, agent_index: int) -> Grid4TransitionsEnum:
@@ -75,6 +85,9 @@ class RailEnvWrapper:
 
         if position is None:
             return [False, False, False, False]
+
+        # the following considers also the agent direction (switches allow to turn only from specific directions)
+        # return self._rail_env.rail.get_transitions(*position, self.get_agent_direction(agent_index))
 
         return self._rail_env.get_valid_directions_on_grid(row=position[0], col=position[1])
 
