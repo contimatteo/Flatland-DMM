@@ -4,18 +4,15 @@ from rl.memory import SequentialMemory
 
 ###
 
+MEMORY_LIMIT = 100
 MEMORY_WINDOW_LENGTH = 1  # TODO: is this right?
-
-BATCH_SIZE = 5
 
 ###
 
 
-class BaseModel():
+class BaseModel(abc.ABC):
     def __init__(self, NetworkClass, time_step_spec, action_spec):
-        memory_limit = BATCH_SIZE * time_step_spec.observations.shape[0]
-
-        self.memory = SequentialMemory(limit=memory_limit, window_length=MEMORY_WINDOW_LENGTH)
+        self.memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=MEMORY_WINDOW_LENGTH)
 
         # TODO: find a way to pass only the Keras instance and not the entire {NetworkClass}
         self.network = NetworkClass(time_step_spec, action_spec).compile()
@@ -23,10 +20,11 @@ class BaseModel():
 
     ###
 
-    def remember(self, observation, action, reward, done, training=True):
-        self.memory.append(observation, action, reward, done, training)
+    def remember(self, action, observation, reward: float, finished: bool, training=True):
+        observation_dict = { 'network_input': observation }
+        self.memory.append(observation_dict, action, reward, finished, training)
 
-        trained = self.__train()
+        trained = self._train()
 
         if trained is True:
             self.__sync_target_network()
@@ -40,5 +38,5 @@ class BaseModel():
     ###
 
     @abc.abstractmethod
-    def __train(self):
+    def _train(self):
         raise NotImplementedError('`_train` method not implemented.')

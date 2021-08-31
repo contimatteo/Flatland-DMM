@@ -24,7 +24,7 @@ np.random.seed(Configs.RANDOM_SEED)
 
 
 def prepare_env() -> PyEnvironment:
-    observator = BinaryTreeObservator()
+    observator = BinaryTreeObservator(max_memory=Configs.OBS_TREE_N_NODES)
     environment = PyEnvironment(observator=observator)
 
     return environment
@@ -78,7 +78,7 @@ def train():
 
             # share with the agents the reward obtained
             for i in range(N_AGENTS):
-                agents[i].step(actions[i], time_step)
+                agents[i].step(i, actions[i], time_step, environment.get_done())
 
             # check if all agents have reached the goal
             if time_step.is_last().all():

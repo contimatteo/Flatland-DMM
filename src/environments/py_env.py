@@ -1,9 +1,12 @@
 import numpy as np
 
+from typing import Dict, Any
+
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 
+from schemes.node import Node
 from utils.environment import RailEnvWrapper
 
 ###
@@ -14,6 +17,7 @@ class PyEnvironment(py_environment.PyEnvironment):
         super().__init__()
 
         self._info = None
+        self._done = None
 
         self.observator = observator
 
@@ -26,6 +30,9 @@ class PyEnvironment(py_environment.PyEnvironment):
         Returns the environment info returned on the last step.
         """
         return self._info
+
+    def get_done(self) -> Dict[Any, bool]:
+        return self._done
 
     def get_state(self):
         raise NotImplementedError('This environment has not implemented `get_state()`.')
@@ -62,14 +69,14 @@ class PyEnvironment(py_environment.PyEnvironment):
         return array_spec.BoundedArraySpec(
             shape=(),
             dtype=np.int32,
-            minimum=1,  # ISSUE: we need a deep discussion about this
-            maximum=3,  # ISSUE: we need a deep discussion about this
+            minimum=0,  # ISSUE: we need a deep discussion about this
+            maximum=2,  # ISSUE: we need a deep discussion about this
             name='action',
         )
 
     #
 
-    def _reset(self):
+    def _reset(self) -> ts.TimeStep:
         """
         Starts a new sequence, returns the first `TimeStep` of this sequence.
 
@@ -83,7 +90,7 @@ class PyEnvironment(py_environment.PyEnvironment):
 
         return ts.restart(observation, batch_size=self.batch_size)
 
-    def _step(self, action):
+    def _step(self, action) -> ts.TimeStep:
         """
         Updates the environment according to action and returns a `TimeStep`.
 
@@ -93,18 +100,11 @@ class PyEnvironment(py_environment.PyEnvironment):
         action: A NumPy array, or a nested dict, list or tuple of arrays
             corresponding to `action_spec()`.
         """
-        observations, self._info, rewards, done = self._env.step(action)
+        observations, self._info, rewards, self._done = self._env.step(action)
 
-        # ISSUE: [@contimatteo -> @davidesangiorgi]
-        # Sometimes there's not any observation. Why? Is there any way to avoid it?
-        if observations[0] is None:
-            return ts.termination(None, reward=-1)
+        observation = Node.dict_to_array(observations)
 
-        # TODO: map each observation ({Node} class schema) to its
-        # 'flatten' version through the `get_subtree_array() method`.
-        observation = [observations[0].get_subtree_array()]
-
-        if not self._env.episode_finished(done):
+        if not self._env.episode_finished(self._done):
             rewards = np.array(list(rewards.values()))
             discounts = np.full(rewards.shape, .8)
 
