@@ -1,5 +1,6 @@
 import numpy as np
 import random
+import math
 
 class Node:
     # we have the same properties given by flatland in the namedtuple
@@ -76,7 +77,8 @@ class Node:
             last = visited
             visited = []
 
-        r = np.array(subtree_list)
-        print('GET SUBTREE ARRAY\n', r)
+        # transforming into array and removing inf
+        subtree_array = np.array(subtree_list)
+        subtree_array[subtree_array == math.inf] = 0
 
-        return r
+        return subtree_array
