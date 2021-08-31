@@ -1,7 +1,8 @@
+import numpy as np
 import time
 
 from typing import Dict, Any, Tuple, List
-from flatland.envs.rail_env import RailEnv
+from flatland.envs.rail_env import RailEnv, EnvAgent, Grid4TransitionsEnum
 from flatland.envs.rail_generators import random_rail_generator
 from flatland.utils.rendertools import AgentRenderVariant, RenderTool
 
@@ -57,6 +58,28 @@ class RailEnvWrapper:
 
     ###
 
+    def get_grid(self) -> np.ndarray:
+        return self._rail_env.rail.grid
+
+    def get_agent(self, agent_index: int) -> EnvAgent:
+        return self._rail_env.agents[agent_index]
+
+    def get_agent_position(self, agent_index: int) -> Tuple[int, int]:
+        return self.get_agent(agent_index).position
+
+    def get_agent_direction(self, agent_index: int) -> Grid4TransitionsEnum:
+        return self.get_agent(agent_index).direction
+
+    def get_agent_allowed_directions(self, agent_index: int) -> List[bool]:
+        position = self.get_agent_position(agent_index)
+
+        if position is None:
+            return [False, False, False, False]
+
+        return self._rail_env.get_valid_directions_on_grid(row=position[0], col=position[1])
+
+    ###
+
     def reset(self):
         if Configs.EMULATOR_ACTIVE is True:
             self._emulator.reset()
@@ -68,6 +91,17 @@ class RailEnvWrapper:
     def step(self, actions: Dict[int, HighLevelAction]) -> Tuple[Dict[int, Node], Dict[int, float]]:
         # TODO: convert high-level actions to low-level actions
         # ...
+
+        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+        # print()
+        # print("==================================================================================")
+        # agent_index = 0
+        # print(self.get_agent_position(agent_index))
+        # print(self.get_agent_direction(agent_index))
+        # print(self.get_agent_allowed_directions(agent_index))
+        # print("==================================================================================")
+        # print()
+        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 
         observations, rewards, self._done, self._info = self._rail_env.step(actions)
 
