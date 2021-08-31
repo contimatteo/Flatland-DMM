@@ -102,33 +102,7 @@ class PyEnvironment(py_environment.PyEnvironment):
         """
         observations, self._info, rewards, self._done = self._env.step(action)
 
-        # ISSUE: [@contimatteo -> @davidesangiorgi]
-        # Sometimes there's not any observation. Why? Is there any way to avoid it?
-        if observations[0] is None:
-            return ts.termination(None, reward=-1)
-
-        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-
-        ### move this code outside
-        observation = []
-        for node_obs in observations.values():
-            # if node_obs is not None: observation.append(node_obs.get_subtree_array())
-            # else: observation.append(np.full(self.observation_spec().shape, -10))
-            observation.append(np.full(self.observation_spec().shape, -10))
-
-        observation = np.array(observation).flatten()
-
-        # ISSUE: [@contimatteo -> @davidesangiorgi]
-        # some nodes are not converted to an array ...
-        for (i, val) in np.ndenumerate(observation):
-            if isinstance(val, Node):
-                observation[i] = 1  # ISSUE: we need a deep discussion about this
-
-        observation = np.array(observation).flatten()
-
-        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-        ### # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        observation = Node.dict_to_array(observations)
 
         if not self._env.episode_finished(self._done):
             rewards = np.array(list(rewards.values()))

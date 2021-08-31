@@ -24,7 +24,7 @@ np.random.seed(Configs.RANDOM_SEED)
 
 
 def prepare_env() -> PyEnvironment:
-    observator = BinaryTreeObservator()
+    observator = BinaryTreeObservator(max_memory=Configs.OBS_TREE_N_NODES)
     environment = PyEnvironment(observator=observator)
 
     return environment
