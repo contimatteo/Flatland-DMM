@@ -1,5 +1,8 @@
-from enum import IntEnum
+from typing import Tuple
 
+import numpy as np
+
+from enum import IntEnum
 from flatland.envs.rail_env import RailEnvActions as LowLevelAction
 
 ###
@@ -11,6 +14,8 @@ MOVE_LEFT = LowLevelAction.MOVE_LEFT
 MOVE_FORWARD = LowLevelAction.MOVE_FORWARD
 MOVE_RIGHT = LowLevelAction.MOVE_RIGHT
 STOP_MOVING = LowLevelAction.STOP_MOVING
+
+###
 
 
 class HighLevelAction(IntEnum):
@@ -42,11 +47,13 @@ class HighLevelAction(IntEnum):
             6) we have a complete map => apply it to action and return the result
         """
         # 1)
-        directions = {i-1 : (i-orientation)%4+1 for i in range(1, 5)}
+        directions = {i - 1: (i - orientation) % 4 + 1 for i in range(1, 5)}
 
         # 2)
-        possible_transitions_r = {directions.get(d): directions.get(d) for d in directions if
-                                  possible_transitions[d]}
+        possible_transitions_r = {
+            directions.get(d): directions.get(d)
+            for d in directions if possible_transitions[d]
+        }
 
         # 3)
         # we have to map forward into left or right depending on the switch (only if the switch has forward possibility)
@@ -67,3 +74,74 @@ class HighLevelAction(IntEnum):
 
         # 6)
         return action_map(action)
+
+    ###
+
+    def to_low_level(self, orientation: int, possible_transitions: Tuple[bool]) -> LowLevelAction:
+        """
+        @param `orientation` {int} - agent's direction
+        @param `possible_transitions` {List[bool]} - (N,E,S,W) absolute values
+        @return {LowLevelAction}
+        """
+        oriented_possible_transitions = tuple(
+            # list(np.roll(np.array(list(possible_transitions)), -orientation))
+            list(np.roll(np.array(list(possible_transitions)), orientation))
+        )
+
+        can_go_left = bool(oriented_possible_transitions[3])
+        can_go_forward = bool(oriented_possible_transitions[0])
+        can_go_right = bool(oriented_possible_transitions[1])
+        can_go_back = bool(oriented_possible_transitions[2])
+
+        n_transitions_allowed = int(
+            np.sum([int(can_go_left),
+                    int(can_go_forward),
+                    int(can_go_right),
+                    int(can_go_back)])
+        )
+
+        ### {STOP} action is mapped 1:1 between High and Low levels.
+        if self == self.STOP:
+            return STOP_MOVING
+
+        ### {STOP} if there are no transitions allowed.
+        if n_transitions_allowed < 1:
+            return STOP_MOVING
+
+        #
+
+        ### 1 TRANSITION ALLOWED
+        if n_transitions_allowed == 1:
+            if can_go_left is True:
+                return MOVE_LEFT
+            if can_go_forward is True:
+                return MOVE_FORWARD
+            if can_go_right is True:
+                return MOVE_RIGHT
+            if can_go_back is True:
+                return STOP_MOVING
+
+        ### 2 TRANSITION ALLOWED (LEFT)
+        if n_transitions_allowed == 2 and self == self.LEFT_ORIENTED:
+            if can_go_left is True:
+                return MOVE_LEFT
+            if can_go_forward is True:
+                return MOVE_FORWARD
+
+        ### 2 TRANSITION ALLOWED (RIGHT)
+        if n_transitions_allowed == 2 and self == self.RIGHT_ORIENTED:
+            if can_go_right is True:
+                return MOVE_RIGHT
+            if can_go_forward is True:
+                return MOVE_FORWARD
+
+        #
+
+        if n_transitions_allowed == 2:
+            raise Exception(
+                "HighLevelAction: ({}, {}, {}, {}) case not supported.".format(
+                    self, orientation, possible_transitions, oriented_possible_transitions
+                )
+            )
+
+        raise Exception('{N_TRANSITIONS_ALLOWED} could not be greater than 2.')

@@ -19,6 +19,7 @@ tf-agents==0.5.0
 #############################
 ## Not-Versioned
 
+python-dotenv
 keras-rl
 scikit-learn
 

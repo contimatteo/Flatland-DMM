@@ -1,4 +1,5 @@
 from typing import List
+from dotenv import load_dotenv
 
 import numpy as np
 
@@ -17,6 +18,8 @@ N_ATTEMPTS = Configs.TRAIN_N_ATTEMPTS
 N_EPISODES = Configs.TRAIN_N_EPISODES
 
 ###
+
+load_dotenv()
 
 np.random.seed(Configs.RANDOM_SEED)
 
