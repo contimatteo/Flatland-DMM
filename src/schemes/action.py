@@ -1,4 +1,5 @@
 from enum import IntEnum
+import numpy as np
 
 from flatland.envs.rail_env import RailEnvActions as LowLevelAction
 
@@ -17,6 +18,27 @@ class HighLevelAction(IntEnum):
     STOP = 0
     LEFT_ORIENTED = 1
     RIGHT_ORIENTED = 2
+
+    action_map = {LEFT_ORIENTED:MOVE_LEFT, RIGHT_ORIENTED:MOVE_RIGHT}
+
+    def high2low2(self, action, orientation, possible_transitions):
+
+        """
+        to change:
+        STOP = 1
+        LEFT_ORIENTED = 0
+        RIGHT_ORIENTED = 2
+        """
+
+        if action == self.STOP:
+            return STOP_MOVING
+
+        possible_actions = np.roll(possible_transitions, (1-orientation)%4)
+        if possible_actions[action]:
+            return self.action_map[action]
+        else:
+            return MOVE_FORWARD
+
 
     def high2low(self, action, orientation, possible_transitions):
         """
