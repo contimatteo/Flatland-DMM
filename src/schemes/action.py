@@ -41,6 +41,9 @@ class HighLevelAction(IntEnum):
             5) add manually all other action mappings (e.g self.STOP:STOP_MOVING)
             6) we have a complete map => apply it to action and return the result
         """
+        if action == self.STOP:
+            return STOP_MOVING
+
         # 1)
         directions = {i-1 : (i-orientation)%4+1 for i in range(1, 5)}
 
@@ -59,11 +62,12 @@ class HighLevelAction(IntEnum):
                 # if going left is not possible, then forward is mapped into left
                 possible_transitions_r[MOVE_FORWARD] = self.LEFT_ORIENTED
                 possible_transitions_r[MOVE_RIGHT] = self.RIGHT_ORIENTED
+        else:
+            possible_transitions_r[MOVE_LEFT] = self.LEFT_ORIENTED
+            possible_transitions_r[MOVE_RIGHT] = self.RIGHT_ORIENTED
 
         # 4)
         action_map = {possible_transitions_r.get(k): k for k in possible_transitions_r}
-        # 5)
-        action_map[self.STOP] = STOP_MOVING
 
         # 6)
         return action_map(action)
