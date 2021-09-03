@@ -1,3 +1,26 @@
+import random
+
+import numpy as np
+from tf_agents.trajectories import TimeStep
+
+from msrc import config
+from msrc.environment import FLEnvironment
+
+
+class SimpleAgent:
+    def __init__(self, env: FLEnvironment):
+        self.env = env
+
+    def act(self, time_step: TimeStep):
+        a = np.array([random.randrange(0, 3) for _ in range(config.N_AGENTS)])
+        return a
+
+
+class RandAgent:
+    def act(self, handle, obs, info):
+        print(obs)
+        return random.randrange(0, 4)
+
 
 class TreeLookupAgent:
     def act(self, handle, obs, info):
