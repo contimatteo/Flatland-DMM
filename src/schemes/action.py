@@ -1,7 +1,6 @@
-from typing import Tuple
-
 import numpy as np
 
+from typing import Tuple
 from enum import IntEnum
 from flatland.envs.rail_env import RailEnvActions as LowLevelAction
 
@@ -22,6 +21,27 @@ class HighLevelAction(IntEnum):
     STOP = 0
     LEFT_ORIENTED = 1
     RIGHT_ORIENTED = 2
+
+    action_map = {LEFT_ORIENTED:MOVE_LEFT, RIGHT_ORIENTED:MOVE_RIGHT}
+
+    def high2low2(self, action, orientation, possible_transitions):
+
+        """
+        to change:
+        STOP = 1
+        LEFT_ORIENTED = 0
+        RIGHT_ORIENTED = 2
+        """
+
+        if action == self.STOP:
+            return STOP_MOVING
+
+        possible_actions = np.roll(possible_transitions, (1-orientation)%4)
+        if possible_actions[action]:
+            return self.action_map[action]
+        else:
+            return MOVE_FORWARD
+
 
     def high2low(self, action, orientation, possible_transitions):
         """
@@ -46,6 +66,9 @@ class HighLevelAction(IntEnum):
             5) add manually all other action mappings (e.g self.STOP:STOP_MOVING)
             6) we have a complete map => apply it to action and return the result
         """
+        if action == self.STOP:
+            return STOP_MOVING
+
         # 1)
         directions = {i - 1: (i - orientation) % 4 + 1 for i in range(1, 5)}
 
@@ -66,11 +89,12 @@ class HighLevelAction(IntEnum):
                 # if going left is not possible, then forward is mapped into left
                 possible_transitions_r[MOVE_FORWARD] = self.LEFT_ORIENTED
                 possible_transitions_r[MOVE_RIGHT] = self.RIGHT_ORIENTED
+        else:
+            possible_transitions_r[MOVE_LEFT] = self.LEFT_ORIENTED
+            possible_transitions_r[MOVE_RIGHT] = self.RIGHT_ORIENTED
 
         # 4)
         action_map = {possible_transitions_r.get(k): k for k in possible_transitions_r}
-        # 5)
-        action_map[self.STOP] = STOP_MOVING
 
         # 6)
         return action_map(action)
