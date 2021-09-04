@@ -78,7 +78,7 @@ class RailEnvWrapper:
         if agent.status == RailAgentStatus.READY_TO_DEPART:
             return agent.initial_position
         elif agent.status == RailAgentStatus.DONE_REMOVED:
-            return None # TODO: reason about this ...
+            return None  # TODO: reason about this ...
         else:
             return agent.position
 
@@ -86,7 +86,7 @@ class RailEnvWrapper:
         if agent.status == RailAgentStatus.READY_TO_DEPART:
             return agent.initial_direction
         elif agent.status == RailAgentStatus.DONE_REMOVED:
-            return None # TODO: reason about this ...
+            return None  # TODO: reason about this ...
         else:
             return agent.direction
 
@@ -113,7 +113,9 @@ class RailEnvWrapper:
 
         return observations
 
-    def step(self, high_level_actions: Dict[int, HighLevelAction]) -> Tuple[Dict[int, Node], Dict[int, float]]:
+    def step(
+        self, high_level_actions: Dict[int, HighLevelAction]
+    ) -> Tuple[Dict[int, Node], Dict[int, float]]:
         # TODO: convert high-level actions to low-level actions
         # ...
 

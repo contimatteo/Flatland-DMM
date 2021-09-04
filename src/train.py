@@ -77,15 +77,15 @@ def train():
                 actions.update({i: agents[i].act(time_step)})
 
             # get the new observations given the actions
-            time_step = environment.step(actions)
-
-            # share with the agents the reward obtained
-            for i in range(N_AGENTS):
-                agents[i].step(i, actions[i], time_step, environment.get_done())
+            time_steps_dict = environment.step(actions)
 
             # check if all agents have reached the goal
-            if time_step.is_last().all():
+            if environment.is_episode_finished() is True:
                 break
+
+            # share with the agents the reward obtained
+            for i in time_steps_dict.keys():
+                agents[i].step(actions[i], time_steps_dict[i], environment.get_done()[i])
 
 
 ###

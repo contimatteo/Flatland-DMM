@@ -26,13 +26,12 @@ class BaseAgent(abc.ABC):
         """
         return HighLevelAction(int(self.policy.action(time_step).action))
 
-    def step(self, idx: int, action, time_step: ts.TimeStep, done: dict):
+    def step(self, action: HighLevelAction, time_step: ts.TimeStep, finished: bool):
         if time_step is None:
             return
 
-        reward = time_step.reward[idx]
+        reward = time_step.reward
         observation = time_step.observation
-        finished = done[idx] is True or done['__all__'] is True
 
         self.model.remember(action, observation, reward, finished, True)
 

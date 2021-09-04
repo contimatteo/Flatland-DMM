@@ -5,6 +5,7 @@ from typing import Dict, Any
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
+from schemes.action import HighLevelAction
 
 from schemes.node import Node
 from utils.environment import RailEnvWrapper
@@ -21,6 +22,9 @@ class PyEnvironment(py_environment.PyEnvironment):
         self._env = RailEnvWrapper(observator=self.observator)
 
     #
+
+    def is_episode_finished(self) -> bool:
+        return self._env.is_episode_finished()
 
     def get_info(self) -> dict:
         """
@@ -85,7 +89,7 @@ class PyEnvironment(py_environment.PyEnvironment):
 
         return ts.restart(observation, batch_size=self.batch_size)
 
-    def _step(self, action) -> ts.TimeStep:
+    def _step(self, action: Dict[int, HighLevelAction]) -> Dict[int, ts.TimeStep]:
         """
         Updates the environment according to action and returns a `TimeStep`.
 
@@ -97,12 +101,21 @@ class PyEnvironment(py_environment.PyEnvironment):
         """
         observations, rewards = self._env.step(action)
 
-        observation = Node.dict_to_array(observations)
+        if self.is_episode_finished() is True:
+            return {}
 
-        if not self._env.is_episode_finished():
-            rewards = np.array(list(rewards.values()))
-            discounts = np.full(rewards.shape, .8)
+        time_steps_dict = {}
 
-            return ts.transition(observation, reward=rewards, discount=discounts)
-        else:
-            return ts.termination(observation, reward=1)
+        for agent_idx in action.keys():
+            observation = observations[agent_idx].get_subtree_array()
+            reward = rewards[agent_idx]
+            discount = .5
+
+            if self._env.get_done()[agent_idx] is True:
+                time_step = ts.termination(observation, reward=1)
+            else:
+                time_step = ts.transition(observation, reward=reward, discount=discount)
+
+            time_steps_dict.update({agent_idx: time_step})
+
+        return time_steps_dict
