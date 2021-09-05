@@ -1,3 +1,6 @@
+import warnings
+warnings.filterwarnings('ignore')
+
 from typing import List
 from dotenv import load_dotenv
 
