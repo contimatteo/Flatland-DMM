@@ -1,8 +1,6 @@
-import warnings
-warnings.filterwarnings('ignore')
-
 from typing import List
 from dotenv import load_dotenv
+import warnings
 
 import numpy as np
 
@@ -14,6 +12,8 @@ from observators.tree import BinaryTreeObservator
 from utils import logger
 
 import configs as Configs
+
+warnings.filterwarnings('ignore')
 
 ###
 
