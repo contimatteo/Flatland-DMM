@@ -11,27 +11,38 @@ from msrc import config
 class TreeTensorObserver(TreeObsForRailEnv):
     extra_params_len = 0  # !! to change if additional info params are passed in the node_to_np function
 
+    # OBS SPECIFICATION
+    obs_np_len = len(config.OBSERVED_NODE_PARAMS) + extra_params_len
+    obs_n_nodes = 2**(config.OBS_TREE_DEPTH + 1) - 1
+    obs_spec = array_spec.BoundedArraySpec(
+        shape=(config.N_AGENTS, obs_n_nodes, obs_np_len),
+        dtype=np.float32,
+        minimum=0,
+        maximum=config.OBS_MAX_VALUE,
+        name='observation'
+    )
+
     def __init__(self):
         super(TreeTensorObserver, self).__init__(
-            max_depth=config.OBS_TREE_DEPTH,
-            predictor=ShortestPathPredictorForRailEnv()
+            max_depth=config.OBS_TREE_DEPTH, predictor=ShortestPathPredictorForRailEnv()
         )
-        # OBS SPECIFICATION
-        self.obs_np_len = len(config.OBSERVED_NODE_PARAMS) + TreeTensorObserver.extra_params_len
-        self.obs_n_nodes = 2 ** (config.OBS_TREE_DEPTH + 1) - 1
-        self.obs_spec = array_spec.BoundedArraySpec(
-            shape=(config.N_AGENTS, self.obs_n_nodes, self.obs_np_len),
-            dtype=np.float32,
-            minimum=0, maximum=config.OBS_MAX_VALUE,
-            name='observation'
-        )
+        self.allowed_directions = {}
 
     def get(self, handle: int = 0):
         obs = super(TreeTensorObserver, self).get(handle)
+        # Save the root's allowed directions to aid the action remapping
+        if isinstance(obs, Node):
+            dirs = [k for k in obs.childs.keys() if isinstance(obs.childs[k], Node)]
+        else:
+            dirs = []
+        self.allowed_directions[handle] = dirs
+        # Return the flattened node
         return self.flatten(self.tree_to_np(obs))
 
     def get_many(self, handles: Optional[List[int]] = None):
+        # Call the super's get many, which automatically builds a dict of observations
         many_obs = super(TreeTensorObserver, self).get_many(handles)
+        # Then convert the dictionary to a list and then into a tensor, returning it
         obs_list = list(many_obs.values())
         obs_tensor = np.array(obs_list, dtype=np.float32)
         return obs_tensor
@@ -77,7 +88,9 @@ class TreeTensorObserver(TreeObsForRailEnv):
 
     @staticmethod
     def node_to_np(node, extra=None):
-        node_array = np.array([node.__getattribute__(param) for param in config.OBSERVED_NODE_PARAMS])
+        node_array = np.array(
+            [node.__getattribute__(param) for param in config.OBSERVED_NODE_PARAMS]
+        )
         node_array[node_array == float('inf')] = config.OBS_MAX_VALUE
         if extra is None:
             return node_array
