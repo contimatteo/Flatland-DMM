@@ -8,10 +8,13 @@ from environments.py_env import PyEnvironment
 from models.dqn import DQN
 from networks.sequential import SequentialNetwork
 from observators.tree import BinaryTreeObservator
+from utils import logger
 
 import configs as Configs
 
 ###
+
+DEBUG = Configs.DEBUG
 
 N_AGENTS = Configs.N_OF_AGENTS
 N_ATTEMPTS = Configs.TRAIN_N_ATTEMPTS
@@ -61,15 +64,26 @@ def prepare_agents(environment) -> List[RandomAgent]:
 def train():
     environment = prepare_env()
 
-    for _ in range(N_ATTEMPTS):
+    for attempt in range(N_ATTEMPTS):
+        DEBUG and print("\n\n")
+        DEBUG and print("========================================================================")
+        DEBUG and print("========================================================================")
+        DEBUG and print("\n\n")
+
+        # prepare the environment
         time_step = environment.reset()
 
+        # prepare the agents
         agents = prepare_agents(environment)
 
-        for _ in range(N_EPISODES):
-            actions = {}
+        for episode in range(N_EPISODES):
+            DEBUG and logger.console.debug(
+                "Attempt {}/{}  |  Episode {}/{}".
+                format(attempt + 1, N_ATTEMPTS, episode + 1, N_EPISODES)
+            )
 
             # perform actions
+            actions = {}
             for i in range(N_AGENTS):
                 # TODO: check if only one action is allowed.
                 # ...
@@ -86,6 +100,8 @@ def train():
             # share with the agents the reward obtained
             for i in time_steps_dict.keys():
                 agents[i].step(actions[i], time_steps_dict[i], environment.get_done()[i])
+
+        DEBUG and print("\n\n")
 
 
 ###
