@@ -36,3 +36,9 @@ N_OF_AGENTS: int = 1
 
 TRAIN_N_ATTEMPTS = 5
 TRAIN_N_EPISODES = 100
+
+####################
+## Neural Network ##
+####################
+
+NN_VERBOSE = False

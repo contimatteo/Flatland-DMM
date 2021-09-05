@@ -4,14 +4,12 @@ import configs as Configs
 
 ###
 
-DEBUG = Configs.DEBUG
-
 GAMMA = 0.95
 
 MEMORY_WINDOW_LENGTH = 1  # TODO: is this right?
 BATCH_SIZE = MEMORY_WINDOW_LENGTH + 2
 
-VERBOSE = 1 if DEBUG is True else 0
+VERBOSE = 1 if Configs.NN_VERBOSE is True else 0
 
 ###
 

@@ -40,10 +40,9 @@ class HighLevelAction(IntEnum):
         @param `possible_transitions` {List[bool]} - (N,E,S,W) absolute values
         @return {LowLevelAction}
         """
-        # grid_orientation_shift_value = (1 - orientation) % 4
-        grid_orientation_shift_value = orientation
-        
-        oriented_possible_transitions = np.roll(list(possible_transitions), grid_orientation_shift_value)
+        grid_orientation_shift = orientation  # (1 - orientation) % 4
+
+        oriented_possible_transitions = np.roll(list(possible_transitions), grid_orientation_shift)
         oriented_possible_transitions = tuple(list(oriented_possible_transitions))
 
         can_go_forward = bool(oriented_possible_transitions[0])
@@ -100,9 +99,9 @@ class HighLevelAction(IntEnum):
             print("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # ")
             print(" HighLevelAction.to_low_level(): case not supported.")
             print("  > orientation = ", orientation)
-            print("  > possible_transitions = ", possible_transitions)
-            print("  > possible_transitions = ", possible_transitions)
-            print("  > oriented_possible_transitions = ", oriented_possible_transitions)
+            print("  > HighLevelAction = ", self, self.value)
+            print("  > transitions (N,E,S,W) = ", possible_transitions)
+            print("  > oriented transitions (N,E,S,W) = ", oriented_possible_transitions)
             print("  > can_go_forward = ", can_go_forward)
             print("  > can_go_right = ", can_go_right)
             print("  > can_go_back = ", can_go_back)

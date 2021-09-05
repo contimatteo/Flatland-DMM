@@ -68,10 +68,9 @@ def train():
     environment = prepare_env()
 
     for attempt in range(N_ATTEMPTS):
-        DEBUG and print("\n\n")
         DEBUG and print("========================================================================")
         DEBUG and print("========================================================================")
-        DEBUG and print("\n\n")
+        DEBUG and print()
 
         # prepare the environment
         time_step = environment.reset()
