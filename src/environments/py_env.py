@@ -5,6 +5,7 @@ from typing import Dict, Any
 from tf_agents.environments import py_environment
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
+from schemes.action import HighLevelAction
 
 from schemes.node import Node
 from utils.environment import RailEnvWrapper
@@ -16,23 +17,23 @@ class PyEnvironment(py_environment.PyEnvironment):
     def __init__(self, observator):
         super().__init__()
 
-        self._info = None
-        self._done = None
-
         self.observator = observator
 
         self._env = RailEnvWrapper(observator=self.observator)
 
     #
 
-    def get_info(self):
+    def is_episode_finished(self) -> bool:
+        return self._env.is_episode_finished()
+
+    def get_info(self) -> dict:
         """
         Returns the environment info returned on the last step.
         """
-        return self._info
+        return self._env.get_info()
 
     def get_done(self) -> Dict[Any, bool]:
-        return self._done
+        return self._env.get_done()
 
     def get_state(self):
         raise NotImplementedError('This environment has not implemented `get_state()`.')
@@ -66,6 +67,8 @@ class PyEnvironment(py_environment.PyEnvironment):
         Returns:
         An `ArraySpec`, or a nested dict, list or tuple of `ArraySpec`s.
         """
+        ### TODO: defines the actions that should be provided to `step()`.
+
         return array_spec.BoundedArraySpec(
             shape=(),
             dtype=np.int32,
@@ -82,15 +85,13 @@ class PyEnvironment(py_environment.PyEnvironment):
 
         See `reset(self)` docstring for more details
         """
-        observations, self._info = self._env.reset()
+        observations = self._env.reset()
 
-        # TODO: map each observation ({Node} class schema) to its
-        # 'flatten' version through the `get_subtree_array() method`.
-        observation = [observations[0].get_subtree_array()]
+        observation = Node.dict_to_array(observations)
 
         return ts.restart(observation, batch_size=self.batch_size)
 
-    def _step(self, action) -> ts.TimeStep:
+    def _step(self, action: Dict[int, HighLevelAction]) -> Dict[int, ts.TimeStep]:
         """
         Updates the environment according to action and returns a `TimeStep`.
 
@@ -100,14 +101,23 @@ class PyEnvironment(py_environment.PyEnvironment):
         action: A NumPy array, or a nested dict, list or tuple of arrays
             corresponding to `action_spec()`.
         """
-        observations, self._info, rewards, self._done = self._env.step(action)
+        observations, rewards = self._env.step(action)
 
-        observation = Node.dict_to_array(observations)
+        if self.is_episode_finished() is True:
+            return {}
 
-        if not self._env.episode_finished(self._done):
-            rewards = np.array(list(rewards.values()))
-            discounts = np.full(rewards.shape, .8)
+        time_steps_dict = {}
 
-            return ts.transition(observation, reward=rewards, discount=discounts)
-        else:
-            return ts.termination(observation, reward=1)
+        for agent_idx in action.keys():
+            observation = observations[agent_idx].get_subtree_array()
+            reward = rewards[agent_idx]
+            discount = .5
+
+            if self._env.get_done()[agent_idx] is True:
+                time_step = ts.termination(observation, reward=1)
+            else:
+                time_step = ts.transition(observation, reward=reward, discount=discount)
+
+            time_steps_dict.update({agent_idx: time_step})
+
+        return time_steps_dict

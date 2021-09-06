@@ -1,11 +1,15 @@
 from models.base import BaseModel
 
+import configs as Configs
+
 ###
 
 GAMMA = 0.95
 
 MEMORY_WINDOW_LENGTH = 1  # TODO: is this right?
 BATCH_SIZE = MEMORY_WINDOW_LENGTH + 2
+
+VERBOSE = 1 if Configs.NN_VERBOSE is True else 0
 
 ###
 
@@ -31,6 +35,6 @@ class DQN(BaseModel):
                 q_future_value = max(self.target_network.predict(observation)[0])
                 target[0][action] = reward + q_future_value * GAMMA
 
-            self.network.fit([observation], target, epochs=1, verbose=1)
+            self.network.fit([observation], target, epochs=1, verbose=VERBOSE)
 
         return True
