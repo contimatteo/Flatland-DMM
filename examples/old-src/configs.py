@@ -1,7 +1,7 @@
 #
 
-APP_DEBUG: bool = True
-APP_SEED: int = 100
+DEBUG: bool = True
+RANDOM_SEED: int = 100
 
 #######################
 ## Flatland Rail Env ##
@@ -20,6 +20,14 @@ EMULATOR_WINDOW_WIDTH: int = 1200
 EMULATOR_WINDOW_HEIGHT: int = 1200
 EMULATOR_STEP_TIMEBREAK_SECONDS: int = 0.3
 
+##################
+## Observations ##
+##################
+
+OBS_TREE_NODE_N_FEATURES: int = 13
+OBS_TREE_N_NODES: int = 1 + 2
+OBS_TREE_N_FEATURES: int = OBS_TREE_N_NODES * OBS_TREE_NODE_N_FEATURES
+
 ##############
 ## Training ##
 ##############
@@ -34,11 +42,3 @@ TRAIN_N_EPISODES = 100
 ####################
 
 NN_VERBOSE = False
-
-##################
-## Observations ##
-##################
-
-OBS_TREE_NODE_N_FEATURES: int = 13
-OBS_TREE_N_NODES: int = 1 + 2
-OBS_TREE_N_FEATURES: int = OBS_TREE_N_NODES * OBS_TREE_NODE_N_FEATURES
