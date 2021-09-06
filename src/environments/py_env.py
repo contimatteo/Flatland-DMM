@@ -67,6 +67,8 @@ class PyEnvironment(py_environment.PyEnvironment):
         Returns:
         An `ArraySpec`, or a nested dict, list or tuple of `ArraySpec`s.
         """
+        ### TODO: defines the actions that should be provided to `step()`.
+
         return array_spec.BoundedArraySpec(
             shape=(),
             dtype=np.int32,
