@@ -1,10 +1,27 @@
+import warnings
+import numpy as np
+
+from dotenv import load_dotenv
+
 import configs as Configs
+
+from runner import Runner
+
+warnings.filterwarnings('ignore')
+
+###
+
+load_dotenv()
+
+np.random.seed(Configs.APP_SEED)
 
 ###
 
 
 def train():
-    pass
+    runner = Runner()
+
+    runner.train()
 
 
 ###

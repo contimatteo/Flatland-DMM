@@ -95,19 +95,19 @@ class HighLevelAction(IntEnum):
         #
 
         if n_transitions_allowed == 2:
-            print()
-            print("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # ")
-            print(" HighLevelAction.to_low_level(): case not supported.")
-            print("  > orientation = ", orientation)
-            print("  > HighLevelAction = ", self, self.value)
-            print("  > transitions (N,E,S,W) = ", possible_transitions)
-            print("  > oriented transitions (N,E,S,W) = ", oriented_possible_transitions)
-            print("  > can_go_forward = ", can_go_forward)
-            print("  > can_go_right = ", can_go_right)
-            print("  > can_go_back = ", can_go_back)
-            print("  > can_go_left = ", can_go_left)
-            print("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # ")
-            print()
+            # print()
+            # print("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # ")
+            # print(" HighLevelAction.to_low_level(): case not supported.")
+            # print("  > orientation = ", orientation)
+            # print("  > HighLevelAction = ", self, self.value)
+            # print("  > transitions (N,E,S,W) = ", possible_transitions)
+            # print("  > oriented transitions (N,E,S,W) = ", oriented_possible_transitions)
+            # print("  > can_go_forward = ", can_go_forward)
+            # print("  > can_go_right = ", can_go_right)
+            # print("  > can_go_back = ", can_go_back)
+            # print("  > can_go_left = ", can_go_left)
+            # print("# # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # ")
+            # print()
             return LowLevelAction.DO_NOTHING
 
         raise Exception('{N_TRANSITIONS_ALLOWED} could not be greater than 2.')

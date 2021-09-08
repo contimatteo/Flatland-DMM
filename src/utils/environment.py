@@ -26,12 +26,12 @@ class RailEnvWrapper:
             height=Configs.RAIL_ENV_HEIGHT,
             rail_generator=random_rail_generator(),
             # schedule_generator=None,
-            number_of_agents=Configs.N_OF_AGENTS,
+            number_of_agents=Configs.TRAIN_N_AGENTS,
             obs_builder_object=self._observator,
             # malfunction_generator_and_process_data=None,
             # malfunction_generator=None,
             remove_agents_at_target=True,
-            random_seed=Configs.RANDOM_SEED,
+            random_seed=Configs.APP_SEED,
             # record_steps=False,
             # close_following=True
         )
@@ -57,6 +57,10 @@ class RailEnvWrapper:
         return self._done
 
     ###
+
+    @property
+    def n_agents(self) -> int:
+        return Configs.TRAIN_N_AGENTS
 
     def get_grid(self) -> np.ndarray:
         return self._rail_env.rail.grid
@@ -90,7 +94,7 @@ class RailEnvWrapper:
         else:
             return agent.direction
 
-    def get_agent_allowed_directions(self, agent: EnvAgent) -> Tuple[bool]:
+    def get_agent_transitions(self, agent: EnvAgent) -> Tuple[bool]:
         position = self.get_agent_position(agent)
         direction = self.get_agent_direction(agent)
 
@@ -98,10 +102,9 @@ class RailEnvWrapper:
             return [False, False, False, False]
 
         ### this considers also the agent direction
-        ### (switches allow to turn only from specific directions)
-        directions = self._rail_env.rail.get_transitions(*position, direction)
+        transitions = self._rail_env.rail.get_transitions(*position, direction)
 
-        return tuple([x == 1 for x in list(directions)])
+        return tuple([x == 1 for x in list(transitions)])
 
     ###
 
@@ -113,32 +116,22 @@ class RailEnvWrapper:
 
         return observations
 
-    def step(
-        self, high_level_actions: Dict[int, HighLevelAction]
-    ) -> Tuple[Dict[int, Node], Dict[int, float]]:
-        # TODO: convert high-level actions to low-level actions
-        # ...
+    def step(self,
+             high_level_actions: List[HighLevelAction]) -> Tuple[Dict[int, Node], Dict[int, float]]:
+        low_level_actions = {}
 
-        low_level_actions = high_level_actions.copy()
+        # for (agent_idx, high_action) in enumerate(high_level_actions):
+        #     agent = self.get_agent(agent_idx)
+        #     direction = self.get_agent_direction(agent)
+        #     transitions = self.get_agent_transitions(agent)
+        #     low_action = high_action.to_low_level(direction, transitions)
+        #     low_level_actions.update({agent_idx: low_action})
 
-        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-        # print()
-        # print()
-        # print("==================================================================================")
-        agent: EnvAgent = self.get_agent(0)
+        high_level_actions = HighLevelAction(int(high_level_actions))
+        agent = self.get_agent(0)
         direction = self.get_agent_direction(agent)
-        allowed_directions = self.get_agent_allowed_directions(agent)
-        high_level_action = low_level_actions[0]
-        # print("HIGH-LEVEL action = ", high_level_action, int(high_level_action))
-        low_level_action = high_level_action.to_low_level(direction, allowed_directions)
-        # print("LOW-LEVEL action = ", low_level_action, int(low_level_action))
-        low_level_actions[0] = low_level_action
-        # print("==================================================================================")
-        # print()
-        # print()
-        # input("Press Enter to continue...")
-        # print()
-        ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+        transitions = self.get_agent_transitions(agent)
+        low_level_actions.update({0: high_level_actions.to_low_level(direction, transitions)})
 
         observations, rewards, self._done, self._info = self._rail_env.step(low_level_actions)
 
