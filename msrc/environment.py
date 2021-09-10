@@ -1,21 +1,16 @@
-from typing import Any
-
-import numpy as np
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import complex_rail_generator
 from flatland.utils.rendertools import RenderTool
-from tf_agents.environments import py_environment
-from tf_agents.specs import array_spec
-from tf_agents.trajectories import time_step as ts
-from tf_agents.typing import types
+from tensorforce import Environment
 
 import config
 from msrc.observer import TreeTensorObserver
 
 
-class FLEnvironment(py_environment.PyEnvironment):
+class TFEnvironment(Environment):
     def __init__(self, render=True):
-        super().__init__()
+        super(TFEnvironment, self).__init__()
+
         # RAIL GENERATOR
         self._rail_gen = complex_rail_generator(
             nr_start_goal=config.RAIL_NR_START_GOAL,
@@ -40,29 +35,49 @@ class FLEnvironment(py_environment.PyEnvironment):
         )
 
         # RENDERER
-        if render:
-            self.renderer = RenderTool(
-                self._env, show_debug=False, screen_height=1000, screen_width=1000
-            )
+        self.renderer = RenderTool(
+            self._env, show_debug=False, screen_height=1000, screen_width=1000
+        ) if render else None
 
-        # ACTION SPECS
-        self._action_spec = array_spec.BoundedArraySpec(
-            shape=(config.N_AGENTS,), dtype=np.int32, minimum=0, maximum=2, name='action'
-        )
+        # ACTION SPEC
+        # The input is a 1d int vector of size N_AGENTS, where each number is in 0,1,2
+        self._action_spec = dict(type='int', shape=(config.N_AGENTS, ), num_values=3)
 
         # OTHER
         self.info = None
         self.done = False
         self._frame_count = 0
 
-    def _step(self, pseudo_actions: types.NestedArray) -> ts.TimeStep:
-        # End of episode (all done or frames limit)
-        if self.done or self._frame_count > config.ENV_MAX_FRAMES:
-            return self._reset()
+    def states(self):
+        """Returns the state space specification"""
+        return TreeTensorObserver.obs_spec
 
+    def actions(self):
+        """Returns the action space specification"""
+        return self._action_spec
+
+    def max_episode_timesteps(self):
+        # Note: the max timesteps are defined in the environment construction
+        return super().max_episode_timesteps()
+
+    def close(self):
+        super().close()
+
+    def reset(self, num_parallel=None):
+        # Reset the environment and internal parameters
+        obs, info = self._env.reset(activate_agents=True)
+        self.info = info
+        self.done = False
+        self._frame_count = 0
+        # Renderer
+        if self.renderer:
+            self.renderer.reset()
+        return obs
+
+    def execute(self, actions):
         # Convert the pseudo actions <0,1,2> into the real action dictionary {h: <0,...,4>}
         # and pass it to the flatland environment
-        action_dict = self._convert_actions(pseudo_actions)
+        action_dict = self._convert_actions(actions)
         obs, reward_dict, done_dict, self.info = self._env.step(action_dict)
 
         # Reward determination
@@ -76,21 +91,7 @@ class FLEnvironment(py_environment.PyEnvironment):
         # End of episode determination and time step returning
         self.done = done_dict['__all__']
         self._frame_count += 1
-        if self.done:
-            return ts.termination(obs, reward)
-        else:
-            return ts.transition(obs, reward, discount=1.0)
-
-    def _reset(self) -> ts.TimeStep:
-        # Reset the environment and internal parameters
-        obs, info = self._env.reset(activate_agents=True)
-        self.info = info
-        self.done = False
-        self._frame_count = 0
-        # Renderer
-        if self.renderer:
-            self.renderer.reset()
-        return ts.restart(obs)
+        return obs, self.done, reward
 
     def _convert_actions(self, pseudo_actions_tensor):
         def _convert(handle):
@@ -99,8 +100,9 @@ class FLEnvironment(py_environment.PyEnvironment):
                 return 4  # STOP
 
             allowed_dirs = self._obs_builder.allowed_directions[handle]
+            # Example of allowed dirs: ['L', 'F']
             if len(allowed_dirs) == 0:
-                return 0
+                return 0  # DO NOTHING (keep going)
             if len(allowed_dirs) == 1:
                 return 2  # FORWARD
 
@@ -111,18 +113,3 @@ class FLEnvironment(py_environment.PyEnvironment):
 
         # Iterate through the pseudo-action tensor, building the real action dict
         return {h: _convert(h) for h in range(len(pseudo_actions_tensor))}
-
-    def observation_spec(self) -> types.NestedArraySpec:
-        return self._obs_builder.obs_spec
-
-    def action_spec(self) -> types.NestedArraySpec:
-        return self._action_spec
-
-    def get_info(self):
-        return self.info
-
-    def get_state(self) -> Any:
-        pass
-
-    def set_state(self, state: Any) -> None:
-        pass

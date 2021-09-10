@@ -19,7 +19,7 @@ class BaseAgent:
         - @param time_step: Tensorflow time-step
         - @return action: integer related to one specific action
         """
-        return self.policy.action(time_step).action
+        return self.policy.actions(time_step).actions
 
     def step(self, action, time_step):
         if time_step is None:

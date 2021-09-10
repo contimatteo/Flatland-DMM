@@ -3,7 +3,6 @@ from typing import Optional, List
 import numpy as np
 from flatland.envs.observations import TreeObsForRailEnv, Node
 from flatland.envs.predictions import ShortestPathPredictorForRailEnv
-from tf_agents.specs import array_spec
 
 from msrc import config
 
@@ -12,14 +11,12 @@ class TreeTensorObserver(TreeObsForRailEnv):
     extra_params_len = 0  # !! to change if additional info params are passed in the node_to_np function
 
     # OBS SPECIFICATION
-    obs_np_len = len(config.OBSERVED_NODE_PARAMS) + extra_params_len
+    obs_n_features = len(config.OBSERVED_NODE_PARAMS) + extra_params_len
     obs_n_nodes = 2**(config.OBS_TREE_DEPTH + 1) - 1
-    obs_spec = array_spec.BoundedArraySpec(
-        shape=(config.N_AGENTS, obs_n_nodes, obs_np_len),
-        dtype=np.float32,
-        minimum=0,
-        maximum=config.OBS_MAX_VALUE,
-        name='observation'
+    obs_spec = dict(
+        type='float',
+        shape=(config.N_AGENTS, obs_n_nodes, obs_n_features),
+        min_value=0.0, max_value=config.OBS_MAX_VALUE
     )
 
     def __init__(self):
@@ -30,12 +27,14 @@ class TreeTensorObserver(TreeObsForRailEnv):
 
     def get(self, handle: int = 0):
         obs = super(TreeTensorObserver, self).get(handle)
+
         # Save the root's allowed directions to aid the action remapping
         if isinstance(obs, Node):
             dirs = [k for k in obs.childs.keys() if isinstance(obs.childs[k], Node)]
         else:
             dirs = []
         self.allowed_directions[handle] = dirs
+
         # Return the flattened node
         return self.flatten(self.tree_to_np(obs))
 
@@ -56,8 +55,9 @@ class TreeTensorObserver(TreeObsForRailEnv):
             # Get root value to array
             np_value = TreeTensorObserver.node_to_np(root)
 
-            # Populate the branches, filling in missing nodes
+            # Populate the allowed branches, filling in missing nodes
             branches = list(filter(lambda n: isinstance(n, Node), root.childs.values()))
+
             if len(branches) > 2:
                 raise Exception("Node " + root + "has > 2 children")
             while len(branches) < 2:
@@ -65,7 +65,7 @@ class TreeTensorObserver(TreeObsForRailEnv):
         else:
             # Missing value, set the value to a zeros array and branches to empty
             # FIXME: maybe instead of zeros use the max value
-            np_value = np.zeros(self.obs_np_len)
+            np_value = np.zeros(self.obs_n_features)
             branches = [float("-inf"), float("-inf")]
 
         # Return the tree node

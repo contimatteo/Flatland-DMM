@@ -1,20 +1,44 @@
-from tf_agents.environments import validate_py_environment
+from tensorforce import Environment, Agent
+from tensorforce.execution import Runner
 
-from environment import FLEnvironment
 from msrc import config
-
+from msrc.environment import TFEnvironment
 # Environment
-from msrc.network import ActorNetwork
+from msrc.network import get_model
 
-env = FLEnvironment(render=True)
-# validate_py_environment(env, episodes=5)  # PASSES
+env = Environment.create(
+    environment=TFEnvironment(render=False), max_episode_timesteps=config.ENV_MAX_TIMESTEPS
+)
 
 # Agent (single)
-actor = ActorNetwork(env.observation_spec())
+model = get_model(env.states()['shape'])
+model.summary()
 
-# Main loop
-for episode in range(config.ENV_MAX_EPISODES):
-    time_step = env.reset()
-    while not env.done:
-        action, _ = actor(time_step.observation, time_step.step_type)
-        time_step = env.step(action)
+agent = Agent.create(
+    agent='dqn',
+    environment=env,
+    batch_size=100,
+    horizon=1,
+    memory=100 + 20,
+    network=dict(type='keras', model=model),
+)
+
+# Main loop (training)
+for episode in range(config.TRAINING_EPISODES):
+    obs = env.reset()
+    done = False
+    print("Start EP", episode)
+    while not done:
+        actions = agent.act(states=obs)
+        obs, done, reward = env.execute(actions)
+        agent.observe(terminal=done, reward=reward)
+
+# Evaluation loop
+runner = Runner(
+    agent=agent,
+    environment=Environment.create(
+        environment=TFEnvironment(render=True), max_episode_timesteps=config.ENV_MAX_TIMESTEPS
+    ),
+    max_episode_timesteps=config.ENV_MAX_TIMESTEPS
+)
+runner.run(num_episodes=config.EVAL_EPISODES)
