@@ -7,6 +7,7 @@ from rl.agents.dqn import DQNAgent
 from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 
 from environments.keras import KerasEnvironment
+from marl.dqn import DQNMultiAgent
 from networks.sequential import SequentialNetwork
 from observators.tree import BinaryTreeObservator
 
@@ -58,7 +59,7 @@ class Runner():
 
         model = network.build_model()
 
-        agent = DQNAgent(model, memory=memory, nb_actions=N_ACTIONS, target_model_update=1e-2)
+        agent = DQNMultiAgent(model, memory=memory, nb_actions=N_ACTIONS, target_model_update=1e-2)
         agent.compile(Adam(learning_rate=LEARNING_RATE), metrics=['mae'])
 
         # callbacks = Runner.build_callbacks(env_name='local')
