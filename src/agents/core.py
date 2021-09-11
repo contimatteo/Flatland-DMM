@@ -123,7 +123,6 @@ class Agent(object):
                     episode_reward_dict = {}
                     action_dict = {}
                     accumulated_info = {}
-                    reward_dict = {}
 
                     # Obtain the initial observation by resetting the environment.
                     self.reset_states()
@@ -159,7 +158,7 @@ class Agent(object):
                                 observation = self.processor.process_observation(
                                     observation)
                             break
-                """
+                    """
                 # At this point, we expect to be fully initialized.
                 assert episode_reward_dict is not None
                 assert episode_step is not None
@@ -198,7 +197,7 @@ class Agent(object):
 
                 # action=0 because on_action_end() is called only by visualizer
                 # which do not need action
-                callbacks.on_action_end(0)
+                callbacks.on_action_end(action=0)
 
                 if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
                     # Force a terminal state.
@@ -208,7 +207,7 @@ class Agent(object):
                 if done_dict['__all__']:
                     done = True
 
-                metrics = self.backward(reward_dict, terminal=done)  # TODO: CHANGE BACKWARD
+                metrics = self.backward(reward_dict, terminal=done)
 
                 for agent in range(n_agents):
                     episode_reward_dict[agent] = episode_reward_dict.get(agent, 0) + reward_dict[agent]
@@ -326,16 +325,18 @@ class Agent(object):
         callbacks.on_train_begin()
         for episode in range(nb_episodes):
             callbacks.on_episode_begin(episode)
-            episode_reward = 0.
+            episode_reward_dict = {}
             episode_step = 0
+            action_dict = {}
+            accumulated_info = {}
 
             # Obtain the initial observation by resetting the environment.
             self.reset_states()
-            observation = deepcopy(env.reset())
+            observation_dict = deepcopy(env.reset())
             if self.processor is not None:
-                observation = self.processor.process_observation(observation)
-            assert observation is not None
-
+                observation_dict = self.processor.process_observation(observation_dict)
+            assert observation_dict is not None
+            """
             # Perform random starts at beginning of episode and do not record them into the experience.
             # This slightly changes the start position between games.
             nb_random_start_steps = 0 if nb_max_start_steps == 0 else np.random.randint(
@@ -363,62 +364,84 @@ class Agent(object):
                         observation = self.processor.process_observation(
                             observation)
                     break
-
+            """
             # Run the episode until we're done.
             done = False
             while not done:
+
+                n_agents = len(observation_dict)
+
                 callbacks.on_step_begin(episode_step)
 
-                action = self.forward(observation)
-                if self.processor is not None:
-                    action = self.processor.process_action(action)
-                reward = 0.
-                accumulated_info = {}
-                for _ in range(action_repetition):
-                    callbacks.on_action_begin(action)
-                    observation, r, d, info = env.step(action)
-                    observation = deepcopy(observation)
-                    if self.processor is not None:
-                        observation, r, d, info = self.processor.process_step(
-                            observation, r, d, info)
-                    callbacks.on_action_end(action)
-                    reward += r
-                    for key, value in info.items():
-                        if not np.isreal(value):
-                            continue
-                        if key not in accumulated_info:
-                            accumulated_info[key] = np.zeros_like(value)
-                        accumulated_info[key] += value
-                    if d:
-                        done = True
-                        break
-                if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
-                    done = True
-                self.backward(reward, terminal=done)
-                episode_reward += reward
+                for agent in range(n_agents):
 
-                step_logs = {
-                    'action': action,
-                    'observation': observation,
-                    'reward': reward,
-                    'episode': episode,
-                    'info': accumulated_info,
-                }
-                callbacks.on_step_end(episode_step, step_logs)
+                    observation = observation_dict.get(agent)
+                    action = self.forward(observation)
+                    if self.processor is not None:
+                        action = self.processor.process_action(action)
+                    action_dict[agent] = action
+                    callbacks.on_action_begin(action)
+
+                observation_dict, reward_dict, done_dict, info_dict = env.step(action_dict)
+                observation_dict = deepcopy(observation_dict)
+                if self.processor is not None:
+                    observation_dict, reward_dict, done_dict, info_dict = self.processor.process_step(
+                        observation_dict, reward_dict, done_dict, info_dict)
+
+                for key in info_dict:
+                    # if not np.isreal(value):
+                    #    continue
+                    # if key not in accumulated_info:
+                    #     accumulated_info[key] = []  # np.zeros_like(value)
+                    # for each key of info_dict we'll have a list (the history) of all values
+                    # accumulated_info[key] += [info_dict[key]]  # value
+                    accumulated_info[key] = accumulated_info.get(key, []) + [info_dict[key]]
+
+                # action=0 because on_action_end() is called only by visualizer
+                # which do not need action
+                callbacks.on_action_end(0)
+
+                if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
+                    # Force a terminal state.
+                    done = True
+                if done_dict['__all__']:
+                    done = True
+
+                self.backward(reward_dict, terminal=done)
+
+                for agent in range(n_agents):
+                    callbacks.on_action_begin(action)
+
+                    episode_reward_dict[agent] = episode_reward_dict.get(agent, 0) + reward_dict[agent]
+
+                    step_logs = {
+                        'action': action_dict[agent],
+                        'observation': observation_dict[agent],
+                        'reward': reward_dict[agent],
+                        'episode': episode,
+                        'info': {key: [accumulated_info[key][ep][agent] for ep in range(episode_step + 1)]
+                                 for key in accumulated_info},
+                    }
+
+                    callbacks.on_step_end(episode_step, step_logs)
+
                 episode_step += 1
                 self.step += 1
+
 
             # We are in a terminal state but the agent hasn't yet seen it. We therefore
             # perform one more forward-backward call and simply ignore the action before
             # resetting the environment. We need to pass in `terminal=False` here since
             # the *next* state, that is the state of the newly reset environment, is
             # always non-terminal by convention.
-            self.forward(observation)
+            for agent in range(n_agents):
+                observation = observation_dict[agent]
+                self.forward(observation)
             self.backward(0., terminal=False)
 
             # Report end of episode.
             episode_logs = {
-                'episode_reward': episode_reward,
+                'episode_reward': episode_reward_dict[n_agents - 1],
                 'nb_steps': episode_step,
             }
             callbacks.on_episode_end(episode, episode_logs)
