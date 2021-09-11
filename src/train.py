@@ -24,11 +24,11 @@ dqn_agent = prepare_dqn_agent()
 nb_max_episode_steps = Configs.MAP_HEIGHT*Configs.MAP_WIDTH
 nb_steps = nb_max_episode_steps * 2  # in order to have at least one env.reset() inside the fit
 
-history = dqn_agent.fit(env=env,
+dqn_agent.fit(env=env,
                         nb_steps=nb_steps,
-                        nb_max_episode_steps=nb_max_episode_steps,
+                        # nb_max_episode_steps=nb_max_episode_steps,
                         visualize=Configs.EMULATOR_ACTIVE)
 
-print(history.on_train_begin())
-
+dqn_agent.test(env=env,
+               visualize=Configs.EMULATOR_ACTIVE)
 
