@@ -5,7 +5,9 @@ from copy import deepcopy
 import numpy as np
 from keras.callbacks import History
 
-from rl.callbacks import (
+from schemes.action import LowLevelAction, HighLevelAction
+
+from utils.callbacks import (
     CallbackList,
     TestLogger,
     TrainEpisodeLogger,
@@ -121,6 +123,7 @@ class Agent(object):
                     callbacks.on_episode_begin(episode)
                     episode_step = np.int16(0)
                     episode_reward_dict = {}
+                    # high_lev_action_dict = {}
                     action_dict = {}
                     accumulated_info = {}
 
@@ -168,15 +171,20 @@ class Agent(object):
                 n_agents = len(observation_dict)  # TODO: get n_agents from env
 
                 for agent in range(n_agents):
-                    callbacks.on_step_begin(episode_step)
+
+                    callbacks.on_step_begin(episode_step, logs={'agent': agent})
+
                     # This is were all of the work happens. We first perceive and compute the action
                     # (forward step) and then use the reward to improve (backward step).
                     observation = observation_dict.get(agent)
                     action = self.forward(observation)
+                    # high_lev_action_dict[agent] = HighLevelAction(action)
                     if self.processor is not None:
                         action = self.processor.process_action(action)
                     action_dict[agent] = action
-                    # completed all actions
+                    callbacks.on_action_begin(action=action)
+
+                # completed all actions
 
                 done = False
 
@@ -195,6 +203,7 @@ class Agent(object):
                     # accumulated_info[key] += [info_dict[key]]  # value
                     accumulated_info[key] = accumulated_info.get(key, []) + [info_dict[key]]
 
+
                 # action=0 because on_action_end() is called only by visualizer
                 # which do not need action
                 callbacks.on_action_end(action=0)
@@ -212,15 +221,22 @@ class Agent(object):
                 for agent in range(n_agents):
                     episode_reward_dict[agent] = episode_reward_dict.get(agent, 0) + reward_dict[agent]
 
+                    # getting only the last infos
+                    info = {key: accumulated_info[key][-1][agent] for key in accumulated_info}
+
                     step_logs = {
+                        'agent': agent,
+                        # 'high level action': high_lev_action_dict[agent],
+                        # 'low lev action': LowLevelAction(action),
                         'action': action_dict[agent],
                         'observation': observation_dict[agent],
                         'reward': reward_dict[agent],
                         'metrics': metrics,
                         'episode': episode,
-                        'info': {key: [accumulated_info[key][ep][agent] for ep in range(episode_step + 1)]
-                                 for key in accumulated_info},
+                        'info': info
                     }
+
+                    # print(step_logs)
 
                     callbacks.on_step_end(episode_step, step_logs)
 
@@ -236,15 +252,21 @@ class Agent(object):
                     for agent in range(n_agents):
                         observation = observation_dict[agent]
                         self.forward(observation)
+
+                        episode_logs = {
+                            'agent': agent,
+                            'episode_reward': episode_reward_dict[agent],
+                            'nb_episode_steps': episode_step,
+                            'nb_steps': self.step,
+                        }
+
+                        # print(episode_logs)
+
+                        callbacks.on_episode_end(episode, episode_logs)
+
                     self.backward(0., terminal=False)
 
                     # This episode is finished, report and reset.
-                    episode_logs = {
-                        'episode_reward': episode_reward_dict[n_agents - 1],
-                        'nb_episode_steps': episode_step,
-                        'nb_steps': self.step,
-                    }
-                    callbacks.on_episode_end(episode, episode_logs)
 
                     episode += 1
                     observation_dict = None
@@ -371,9 +393,9 @@ class Agent(object):
 
                 n_agents = len(observation_dict)
 
-                callbacks.on_step_begin(episode_step)
-
                 for agent in range(n_agents):
+
+                    callbacks.on_step_begin(episode_step, logs={'agent': agent})
 
                     observation = observation_dict.get(agent)
                     action = self.forward(observation)
@@ -415,6 +437,7 @@ class Agent(object):
                     episode_reward_dict[agent] = episode_reward_dict.get(agent, 0) + reward_dict[agent]
 
                     step_logs = {
+                        'agent': agent,
                         'action': action_dict[agent],
                         'observation': observation_dict[agent],
                         'reward': reward_dict[agent],
@@ -437,14 +460,17 @@ class Agent(object):
             for agent in range(n_agents):
                 observation = observation_dict[agent]
                 self.forward(observation)
+
+                # Report end of episode.
+                episode_logs = {
+                    'agent': agent,
+                    'episode_reward': episode_reward_dict[n_agents - 1],
+                    'nb_steps': episode_step
+                }
+                callbacks.on_episode_end(episode, episode_logs)
+
             self.backward(0., terminal=False)
 
-            # Report end of episode.
-            episode_logs = {
-                'episode_reward': episode_reward_dict[n_agents - 1],
-                'nb_steps': episode_step,
-            }
-            callbacks.on_episode_end(episode, episode_logs)
         callbacks.on_train_end()
         self._on_test_end()
 
