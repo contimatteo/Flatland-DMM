@@ -1,10 +1,8 @@
 from __future__ import absolute_import, division, print_function
 
-from tensorflow.keras.optimizers import Adam
-from keras.optimizers import Adam
 from rl.memory import SequentialMemory
-from rl.agents.dqn import DQNAgent
 from rl.callbacks import FileLogger, ModelIntervalCheckpoint
+from tensorflow.keras.optimizers import Adam
 
 from environments.keras import KerasEnvironment
 from marl.dqn import DQNMultiAgent
@@ -12,8 +10,6 @@ from networks.sequential import SequentialNetwork
 from observators.tree import BinaryTreeObservator
 
 import configs as Configs
-
-Adam._name = 'Adam'
 
 ###
 
@@ -25,7 +21,6 @@ MEMORY_LIMIT = 50000
 
 LEARNING_RATE = 1e-3
 
-target_model_update = 1e-2
 N_ACTIONS = 3
 
 ###
