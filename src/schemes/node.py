@@ -1,6 +1,8 @@
+from typing import Dict
+
 import numpy as np
 
-from typing import Dict
+import configs as Configs
 
 ###
 
@@ -42,20 +44,11 @@ class Node:
         self.speed_min_fractional = speed_min_fractional
         self.turn_child = turn_child
 
-    #
-
     @staticmethod
-    def dict_to_array(nodes: Dict[int, 'Node']) -> np.ndarray:
-        observation = []
+    def get_n_of_features():
+        ### ISSUE: [@contimatteo] this MUST be changed!
+        return Configs.OBS_TREE_N_NODES
 
-        for node_obs in nodes.values():
-            observation.append(node_obs.get_subtree_array())
-
-        return np.array(observation).flatten()
-
-    #
-
-    # returns a list of numerical attributes (children nodes excluded)
     def get_attribute_list(self, attr_list=[]):
         # attr_list is supposed to be a list of str (attribute names)
         # if no attr_list is given, all numerical attributes are given, sorted

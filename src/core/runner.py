@@ -1,27 +1,14 @@
 from __future__ import absolute_import, division, print_function
 
 from rl.memory import SequentialMemory
-from rl.callbacks import FileLogger, ModelIntervalCheckpoint
 from tensorflow.keras.optimizers import Adam
 
-from environments.keras import KerasEnvironment
+from environments.prepare_env import prepare_env
+from marl.callbacks import FileLogger, ModelIntervalCheckpoint
 from marl.dqn import DQNMultiAgent
 from networks.sequential import SequentialNetwork
-from observators.tree import BinaryTreeObservator
 
 import configs as Configs
-
-###
-
-N_AGENTS = Configs.TRAIN_N_AGENTS
-N_ATTEMPTS = Configs.TRAIN_N_ATTEMPTS
-N_EPISODES = Configs.TRAIN_N_EPISODES
-
-MEMORY_LIMIT = 50000
-
-LEARNING_RATE = 1e-3
-
-N_ACTIONS = 3
 
 ###
 
@@ -43,21 +30,26 @@ class Runner():
     #
 
     def train(self) -> None:
-        observator = BinaryTreeObservator(max_memory=Configs.OBS_TREE_N_NODES)
-        env = KerasEnvironment(observator=observator)
+        env = prepare_env()
+        network = SequentialNetwork(env.time_step_spec(), env.action_spec())
+        memory = SequentialMemory(limit=Configs.DQN_AGENT_MEMORY_LIMIT, window_length=1)
 
-        timestep_spec = env.time_step_spec()
-        action_spec = env.action_spec()
+        agent = DQNMultiAgent(
+            memory=memory,
+            model=network.build_model(),
+            nb_actions=Configs.N_ACTIONS,
+            target_model_update=Configs.DQN_AGENT_TARGET_MODEL_UPDATE,
+        )
 
-        memory = SequentialMemory(limit=MEMORY_LIMIT, window_length=1)
-        network = SequentialNetwork(timestep_spec, action_spec)
-
-        model = network.build_model()
-
-        agent = DQNMultiAgent(model, memory=memory, nb_actions=N_ACTIONS, target_model_update=1e-2)
-        agent.compile(Adam(learning_rate=LEARNING_RATE), metrics=['mae'])
+        agent.compile(Adam(learning_rate=Configs.DQN_AGENT_LEARNING_RATE), metrics=['mae'])
 
         # callbacks = Runner.build_callbacks(env_name='local')
-
         # agent.fit(env, nb_steps=1000, visualize=False, verbose=2, callbacks=callbacks)
-        agent.fit(env, nb_steps=50000, visualize=False, verbose=2)
+
+        agent.fit(
+            env,
+            visualize=False,
+            nb_steps=Configs.TRAIN_N_STEPS,
+            verbose=Configs.DQN_AGENT_VERBOSE,
+            nb_max_episode_steps=Configs.TRAIN_N_MAX_EPISODE_STEPS,
+        )

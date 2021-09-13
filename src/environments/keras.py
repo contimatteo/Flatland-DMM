@@ -1,28 +1,36 @@
+from typing import Dict
+
 import numpy as np
 
-from rl.core import Env, Processor, Space
+from rl.core import Env
 from tf_agents.specs import array_spec
 from tf_agents.trajectories import time_step as ts
 
 from schemes.action import HighLevelAction
+from schemes.node import Node
 from utils.environment import RailEnvWrapper
 
 ###
 
 
 class KerasEnvironment(Env):
-    def __init__(self, observator):
+    def __init__(self, observator, rail_generator, schedule_generator, malfunction_generator):
         super().__init__()
 
         self.observator = observator
 
-        self._env = RailEnvWrapper(observator=self.observator)
+        self._env = RailEnvWrapper(
+            observator=self.observator,
+            rail_generator=rail_generator,
+            schedule_generator=schedule_generator,
+            malfunction_generator=malfunction_generator
+        )
 
     #
 
     def observation_spec(self):
         return array_spec.ArraySpec(
-            shape=(self.observator.N_FEATURES, ),
+            shape=(Node.get_n_of_features(), ),
             dtype=np.int32,
             name='observation',
         )
@@ -56,31 +64,7 @@ class KerasEnvironment(Env):
         pass
 
     def reset(self):
-        """
-        Resets the state of the environment and returns an initial observation.
-        #### Returns
-        - observation (object): The initial observation of the space. Initial reward is assumed to be 0.
-        """
-        observations = self._env.reset()
-        return observations[0].get_subtree_array()
+        return self._env.reset()
 
-    def step(self, action):
-        """
-        Run one timestep of the environment's dynamics.
-        Accepts an action and returns a tuple (observation, reward, done, info).
-        # Arguments
-            action (object): An action provided by the environment.
-        # Returns
-            observation (object): Agent's observation of the current environment.
-            reward (float) : Amount of reward returned after previous action.
-            done (boolean): Whether the episode has ended, in which case further step() calls will return undefined results.
-            info (dict): Contains auxiliary diagnostic information (helpful for debugging, and sometimes learning).
-        """
-        observations, rewards = self._env.step(action)
-
-        observation = observations[0].get_subtree_array()
-        reward = rewards[0]
-        done = self._env.get_done()[0]
-        info = self._env.get_info()
-
-        return (observation, reward, done, {})
+    def step(self, action: Dict[int, HighLevelAction]):
+        return self._env.step(action)
