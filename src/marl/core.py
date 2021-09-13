@@ -110,7 +110,6 @@ class MultiAgent(Agent):
                 assert observations_dict is not None
                 assert episode_rewards_dict is not None
 
-                all_done = False
                 actions_dict = {}
                 n_agents = len(observations_dict)
 
@@ -163,11 +162,15 @@ class MultiAgent(Agent):
                     episode_rewards_dict[
                         agent_id] = episode_rewards_dict.get(agent_id, 0) + rewards_dict[agent_id]
 
-                ### STEP TERMINATION CONDITIONS
+                ###
 
                 for agent_id in range(n_agents):
                     ### callback (call)
                     callbacks.on_action_end(actions_dict.get(agent_id))
+
+                ### STEP TERMINATION CONDITIONS
+
+                all_done = False
 
                 done_dict_values_as_sum = 0
                 for agent_id in range(n_agents):
