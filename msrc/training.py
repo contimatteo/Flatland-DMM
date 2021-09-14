@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from tensorforce import Environment, Agent
-from tensorforce.execution import Runner
 
 from msrc import config
 from msrc.environment import TFEnvironment
@@ -9,7 +8,8 @@ from msrc.environment import TFEnvironment
 from msrc.network import get_model
 
 env = Environment.create(
-    environment=TFEnvironment(render=False), max_episode_timesteps=config.ENV_MAX_TIMESTEPS
+    environment=TFEnvironment(render=False, regeneration_frequency=config.ENV_REGENERATION_FREQUENCY),
+    max_episode_timesteps=config.ENV_MAX_TIMESTEPS
 )
 
 # Agent (single)
@@ -23,15 +23,15 @@ agent = Agent.create(
     horizon=1,
     memory=config.ENV_MAX_TIMESTEPS + 20,
     network=dict(type='keras', model=model),
-    # saver=dict(
-    #     directory='model-checkpoint',
-    #     frequency=config.SAVE_FREQUENCY  # save checkpoint every 100 updates
-    # ),
+    exploration=0.1
 )
 # agent = Agent.load(directory='model-checkpoint', format='checkpoint', environment=environment)
 
 # Main loop (training)
 for episode in range(config.TRAINING_EPISODES):
+    if env.episode_count % config.ENV_REGENERATION_FREQUENCY == 0:
+        print(f'============= START ENVIRONMENT {env.episode_count / config.ENV_REGENERATION_FREQUENCY} =============')
+
     obs = env.reset()
     done = False
     tot_reward = 0
@@ -44,19 +44,10 @@ for episode in range(config.TRAINING_EPISODES):
     print(":::TRAINING::: Done EP", episode, "with reward", tot_reward)
 
 # Save explicitly
-agent.save(directory='model-checkpoint', filename=datetime.now().strftime("%Y%m%d %H%M%S"))
+filename = f'model-checkpoint/{datetime.now().strftime("%Y%m%d %H%M%S")}.h5'
+model.save_weights(filename)
+print('Saved model in', filename)
+# agent.save(directory='model-checkpoint', filename=datetime.now().strftime("%Y%m%d %H%M%S"), format='hdf5')
 
-# Evaluation loop
-env = Environment.create(
-    environment=TFEnvironment(render=True), max_episode_timesteps=config.ENV_MAX_TIMESTEPS
-)
-for _ in range(config.EVALUATION_EPISODES):
-    obs = env.reset()
-    done = False
-    tot_reward = 0
-
-    while not done:
-        actions = agent.act(states=obs)
-        obs, done, reward = env.execute(actions)
-        tot_reward += reward
-    print(":::TESTING::: Done EP", episode, "with reward", tot_reward)
+agent.close()
+env.close()

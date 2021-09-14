@@ -18,12 +18,18 @@ class CustomSequentialLayer(Layer):
     def __call__(self, *args, **kwargs):
         return super().__call__(*args, **kwargs)
 
+    def get_config(self):
+        config = super().get_config()
+        config.update({"layers": self.layers})
+        return config
+
 
 class PreprocessingLayer(CustomSequentialLayer):
     def __init__(self):
-        self.out_dim = 2
+        self.out_dim = 4
         super(PreprocessingLayer, self).__init__([
             Dense(8, activation=tf.tanh),
+            Dense(6, activation=tf.tanh),
             Dense(4, activation=tf.tanh),
             Dense(self.out_dim, activation=tf.tanh),
         ])
@@ -33,6 +39,7 @@ class MainNet(CustomSequentialLayer):
     def __init__(self):
         self.out_dim = 1
         super(MainNet, self).__init__([
+            Dense(15, activation=tf.tanh),
             Dense(15, activation=tf.tanh),
             Dense(9, activation=tf.tanh),
             Dense(3, activation=tf.tanh),

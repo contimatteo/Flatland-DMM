@@ -10,7 +10,7 @@ from msrc.observer import TreeTensorObserver
 
 
 class TFEnvironment(Environment):
-    def __init__(self, render=True):
+    def __init__(self, render=True, regeneration_frequency=1):
         super(TFEnvironment, self).__init__()
 
         # RAIL GENERATOR
@@ -41,14 +41,17 @@ class TFEnvironment(Environment):
             self._env, show_debug=False, screen_height=1000, screen_width=1000
         ) if render else None
 
-        # ACTION SPEC
+        # SPECS
         # The input is a 1d int vector of size N_AGENTS, where each number is in 0,1,2
         self._action_spec = dict(type='int', shape=(config.N_TRAINS,), num_values=3)
 
         # OTHER
         self.info = None
         self.done = False
-        self._frame_count = 0
+        self.episode_count = 0
+        self._step_count = 0
+        self._visited_points = np.zeros((config.N_TRAINS, config.ENV_WIDTH, config.ENV_HEIGHT), dtype=np.bool)
+        self._regeneration_frequency = regeneration_frequency
 
     def states(self):
         """Returns the state space specification"""
@@ -66,11 +69,14 @@ class TFEnvironment(Environment):
         super().close()
 
     def reset(self, num_parallel=None):
+        regenerate = self.episode_count % self._regeneration_frequency == 0
         # Reset the environment and internal parameters
-        obs, info = self._env.reset(activate_agents=True)
+        obs, info = self._env.reset(activate_agents=True, regenerate_rail=regenerate, regenerate_schedule=regenerate)
         self.info = info
         self.done = False
-        self._frame_count = 0
+        self.episode_count += 1
+        self._step_count = 0
+        self._visited_points = np.zeros((config.N_TRAINS, config.ENV_WIDTH, config.ENV_HEIGHT), dtype=np.bool)
         # Renderer
         if self.renderer:
             self.renderer.reset()
@@ -83,7 +89,6 @@ class TFEnvironment(Environment):
         obs, reward_dict, done_dict, self.info = self._env.step(action_dict)
 
         # Reward determination
-        # TODO: weight train collisions and other weighting (eg. distance) aka "Reward Shaping"
         reward = sum([self._agent_reward(h) for h in self._env.get_agent_handles()])
 
         # Rendering
@@ -92,7 +97,7 @@ class TFEnvironment(Environment):
 
         # End of episode determination and time step returning
         self.done = done_dict['__all__']
-        self._frame_count += 1
+        self._step_count += 1
         return obs, self.done, reward
 
     def _convert_actions(self, pseudo_actions_tensor):
@@ -122,12 +127,17 @@ class TFEnvironment(Environment):
 
         if agent.status in (RailAgentStatus.DONE, RailAgentStatus.DONE_REMOVED):
             # If the train has reached the target, increase the reward
-            reward += 2
+            reward += 50
         else:
             # Decrease the reward by the distance (manhattan) from its target
             p, t = agent.position, agent.target
             dist_from_target = abs(p[0] - t[0]) + abs(p[1] - t[1])
             reward -= dist_from_target
+
+            # Check if the agent is in an already visited point, to discourage "looping"
+            if self._visited_points[handle, p[0], p[1]]:
+                reward -= 20
+            self._visited_points[handle, p[0], p[1]] = True
 
             # print(agent.malfunction_data['malfunction'])
 
