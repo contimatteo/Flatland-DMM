@@ -1,3 +1,5 @@
+import numpy as np
+from flatland.envs.agent_utils import RailAgentStatus
 from flatland.envs.rail_env import RailEnv
 from flatland.envs.rail_generators import complex_rail_generator
 from flatland.utils.rendertools import RenderTool
@@ -27,7 +29,7 @@ class TFEnvironment(Environment):
         self._env = RailEnv(
             width=config.ENV_WIDTH,
             height=config.ENV_HEIGHT,
-            number_of_agents=config.N_AGENTS,
+            number_of_agents=config.N_TRAINS,
             remove_agents_at_target=True,
             obs_builder_object=self._obs_builder,
             random_seed=config.ENV_SEED,
@@ -41,7 +43,7 @@ class TFEnvironment(Environment):
 
         # ACTION SPEC
         # The input is a 1d int vector of size N_AGENTS, where each number is in 0,1,2
-        self._action_spec = dict(type='int', shape=(config.N_AGENTS, ), num_values=3)
+        self._action_spec = dict(type='int', shape=(config.N_TRAINS,), num_values=3)
 
         # OTHER
         self.info = None
@@ -82,7 +84,7 @@ class TFEnvironment(Environment):
 
         # Reward determination
         # TODO: weight train collisions and other weighting (eg. distance) aka "Reward Shaping"
-        reward = sum(reward_dict.values())
+        reward = sum([self._agent_reward(h) for h in self._env.get_agent_handles()])
 
         # Rendering
         if self.renderer:
@@ -113,3 +115,20 @@ class TFEnvironment(Environment):
 
         # Iterate through the pseudo-action tensor, building the real action dict
         return {h: _convert(h) for h in range(len(pseudo_actions_tensor))}
+
+    def _agent_reward(self, handle):
+        agent = self._env.agents[handle]
+        reward = -1
+
+        if agent.status in (RailAgentStatus.DONE, RailAgentStatus.DONE_REMOVED):
+            # If the train has reached the target, increase the reward
+            reward += 2
+        else:
+            # Decrease the reward by the distance (manhattan) from its target
+            p, t = agent.position, agent.target
+            dist_from_target = abs(p[0] - t[0]) + abs(p[1] - t[1])
+            reward -= dist_from_target
+
+            # print(agent.malfunction_data['malfunction'])
+
+        return reward

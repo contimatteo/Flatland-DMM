@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from tensorforce import Environment, Agent
 from tensorforce.execution import Runner
 
@@ -19,26 +21,42 @@ agent = Agent.create(
     environment=env,
     batch_size=100,
     horizon=1,
-    memory=100 + 20,
+    memory=config.ENV_MAX_TIMESTEPS + 20,
     network=dict(type='keras', model=model),
+    # saver=dict(
+    #     directory='model-checkpoint',
+    #     frequency=config.SAVE_FREQUENCY  # save checkpoint every 100 updates
+    # ),
 )
+# agent = Agent.load(directory='model-checkpoint', format='checkpoint', environment=environment)
 
 # Main loop (training)
 for episode in range(config.TRAINING_EPISODES):
     obs = env.reset()
     done = False
-    print("Start EP", episode)
+    tot_reward = 0
+
     while not done:
         actions = agent.act(states=obs)
         obs, done, reward = env.execute(actions)
         agent.observe(terminal=done, reward=reward)
+        tot_reward += reward
+    print(":::TRAINING::: Done EP", episode, "with reward", tot_reward)
+
+# Save explicitly
+agent.save(directory='model-checkpoint', filename=datetime.now().strftime("%Y%m%d %H%M%S"))
 
 # Evaluation loop
-runner = Runner(
-    agent=agent,
-    environment=Environment.create(
-        environment=TFEnvironment(render=True), max_episode_timesteps=config.ENV_MAX_TIMESTEPS
-    ),
-    max_episode_timesteps=config.ENV_MAX_TIMESTEPS
+env = Environment.create(
+    environment=TFEnvironment(render=True), max_episode_timesteps=config.ENV_MAX_TIMESTEPS
 )
-runner.run(num_episodes=config.EVAL_EPISODES)
+for _ in range(config.EVALUATION_EPISODES):
+    obs = env.reset()
+    done = False
+    tot_reward = 0
+
+    while not done:
+        actions = agent.act(states=obs)
+        obs, done, reward = env.execute(actions)
+        tot_reward += reward
+    print(":::TESTING::: Done EP", episode, "with reward", tot_reward)

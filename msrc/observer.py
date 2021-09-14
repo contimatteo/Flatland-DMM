@@ -15,7 +15,7 @@ class TreeTensorObserver(TreeObsForRailEnv):
     obs_n_nodes = 2**(config.OBS_TREE_DEPTH + 1) - 1
     obs_spec = dict(
         type='float',
-        shape=(config.N_AGENTS, obs_n_nodes, obs_n_features),
+        shape=(config.N_TRAINS, obs_n_nodes, obs_n_features),
         min_value=0.0, max_value=config.OBS_MAX_VALUE
     )
 
