@@ -34,7 +34,7 @@ class SequentialNetwork(BaseNetwork):
     def build_model(self) -> Sequential:
         model = Sequential()
 
-        model.add(Input(shape=(self.input_nodes, )))
+        model.add(Flatten(input_shape=(1, self.input_nodes)))
         
         model.add(Dense(32, activation="relu"))
         model.add(Dense(16, activation="relu"))

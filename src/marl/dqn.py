@@ -73,7 +73,10 @@ class AbstractMultiDQNAgent(MultiAgent):
         self.compiled = False
 
     def process_state_batch(self, batch):
-        batch = np.array(batch, dtype=object)
+        # ISSUE: the below line generate the following error:
+        # "Failed to convert a NumPy array to a Tensor"
+        # batch = np.array(batch, dtype=object)
+        batch = np.asarray(batch).astype('float32') # fix made by @contimatteo
         if self.processor is None:
             return batch
         return self.processor.process_state_batch(batch)
