@@ -35,5 +35,8 @@ class Runner():
 
         agent.compile(optimizer, metrics=metrics)
 
-        for _ in range(Configs.TRAIN_N_ATTEMPTS):
+        for attempt in range(Configs.TRAIN_N_ATTEMPTS):
+            print()
+            print("##############################################################################")
+            print(f"ATTEMPT {attempt+1}/{Configs.TRAIN_N_ATTEMPTS}")
             agent.fit(env, nb_steps, visualize=visualize, callbacks=callbacks, verbose=verbose)

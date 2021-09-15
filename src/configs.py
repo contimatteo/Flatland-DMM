@@ -12,9 +12,9 @@ APP_SEED: int = None
 ##########
 
 N_AGENTS = 2
-N_ACTIONS = 2
+N_ACTIONS = 3
 
-TRAIN_N_ATTEMPTS = 10
+TRAIN_N_ATTEMPTS = 50
 TRAIN_N_STEPS = 1000
 
 ##############
