@@ -1,17 +1,15 @@
 import random
 from typing import Optional, List, Dict
 
+import configs as Configs
 import numpy as np
-
 from flatland.core.env import Environment
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.core.env_prediction_builder import PredictionBuilder
 from flatland.core.grid.grid4_utils import get_new_position
 from flatland.core.grid.grid_utils import coordinate_to_position
-from flatland.envs.agent_utils import RailAgentStatus, EnvAgent
+from flatland.envs.agent_utils import RailAgentStatus
 from flatland.utils.ordered_set import OrderedSet
-
-import configs as Configs
 
 from schemes.node import Node
 
@@ -39,7 +37,7 @@ class BinaryTreeObservator(ObservationBuilder):
     For details about the features in the tree observation see the get() function.
     """
 
-    N_FEATURES = Configs.OBS_TREE_N_FEATURES
+    obs_length = Node.get_n_of_features() * Configs.OBS_TREE_N_NODES
 
     tree_explored_actions_char = ['F', 'T']  # F: forward; T: turn
 
@@ -259,7 +257,7 @@ class BinaryTreeObservator(ObservationBuilder):
             if not queue:
                 print('!!!!!!!!!expanded all the tree!!!!!!!!!')
 
-        return root_node_observation
+        return root_node_observation.get_subtree_array()
 
     def _explore_branch(self, handle, position, direction, tot_dist):
 

@@ -6,31 +6,33 @@
 #
 
 #############################
-## Versioned
-
-# https://discourse.aicrowd.com/t/unable-to-install-flatland/1391/7
-# importlib-metadata==0.23
-
-tensorflow-probability==0.10.0
-flatland-rl==2.2.2
-tensorflow==2.2.2
-tf-agents==0.5.0
-
-#############################
-## Not-Versioned
-
-python-dotenv
-keras-rl
-scikit-learn
-
-#############################
 ## Dev
 
 pylint
 yapf
 
 #############################
-## OSX Big Sur compatibility
-## https://github.com/openai/gym/issues/2101
+## Not-Versioned
 
+numpy
+python-dotenv
+keras-rl2
+
+#############################
+## Versioned
+
+keras==2.3.1
+
+# tensorflow-probability==0.10.0
+tensorflow==2.2.2
+
+# https://discourse.aicrowd.com/t/unable-to-install-flatland/1391/7
+importlib-metadata==0.23
+
+flatland-rl==2.2.2
+
+#############################
+
+# OSX Big Sur compatibility
+# (https://github.com/openai/gym/issues/2101)
 # pyglet==1.5.11
