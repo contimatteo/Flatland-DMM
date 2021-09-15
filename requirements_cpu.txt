@@ -16,9 +16,7 @@ yapf
 
 numpy
 python-dotenv
-# keras-rl
 keras-rl2
-# tf-agents
 
 #############################
 ## Versioned
