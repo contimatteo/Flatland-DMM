@@ -117,10 +117,11 @@ class RailEnvWrapper:
 
         return observations
 
-    def step(self, high_actions: List[HighLevelAction]) -> Tuple[Dict[int, Node], Dict[int, float]]:
+    def step(self, high_actions: Dict[int, int]) -> Tuple[Dict[int, Node], Dict[int, float]]:
         low_actions = {}
 
-        for (agent_idx, high_action) in enumerate(high_actions):
+        for (agent_idx, high_action) in high_actions.items():
+            high_action = HighLevelAction(high_action)
             agent = self.get_agent(agent_idx)
             direction = self.get_agent_direction(agent)
             transitions = self.get_agent_transitions(agent)
@@ -133,4 +134,4 @@ class RailEnvWrapper:
             self._emulator.render_env(show=True, show_observations=True, show_predictions=False)
             time.sleep(Configs.EMULATOR_STEP_TIMEBREAK_SECONDS)
 
-        return observations, rewards
+        return observations, rewards, self._done, self._info

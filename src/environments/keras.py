@@ -66,5 +66,5 @@ class KerasEnvironment(Env):
     def reset(self):
         return self._env.reset()
 
-    def step(self, action: Dict[int, HighLevelAction]):
+    def step(self, action: Dict[int, int]):
         return self._env.step(action)

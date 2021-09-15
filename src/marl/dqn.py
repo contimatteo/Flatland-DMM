@@ -76,7 +76,7 @@ class AbstractMultiDQNAgent(MultiAgent):
         # ISSUE: the below line generate the following error:
         # "Failed to convert a NumPy array to a Tensor"
         # batch = np.array(batch, dtype=object)
-        batch = np.asarray(batch).astype('float32') # fix made by @contimatteo
+        batch = np.asarray(batch).astype('float32')  # fix made by @contimatteo
         if self.processor is None:
             return batch
         return self.processor.process_state_batch(batch)
@@ -256,9 +256,9 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
     def save_weights(self, filepath, overwrite=False):
         self.model.save_weights(filepath, overwrite=overwrite)
 
-    def reset_states(self):
-        self.recent_action = None
-        self.recent_observation = None
+    def reset_states(self):  # runned at the beginning of training before env.reset()
+        self.recent_action = []
+        self.recent_observation = []
         if self.compiled:
             self.model.reset_states()
             self.target_model.reset_states()
@@ -276,21 +276,27 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             action = self.test_policy.select_action(q_values=q_values)
 
         # Book-keeping.
-        self.recent_observation = observation
-        self.recent_action = action
+        self.recent_observation.append(observation)
+        self.recent_action.append(action)
 
         return action
 
-    def backward(self, reward, terminal):
+    def backward(self, reward_dict, terminal):
         # Store most recent experience in memory.
         if self.step % self.memory_interval == 0:
-            self.memory.append(
-                self.recent_observation,
-                self.recent_action,
-                reward,
-                terminal,
-                training=self.training
-            )
+
+            ### TODO: [@contimatteo -> @davide] we have to find a better way for doing this ...
+            if reward_dict == 0.0:
+                reward_dict = dict(enumerate([0 for _ in range(len(self.recent_observation))])) 
+
+            for agent in range(len(self.recent_observation)):
+                obs = self.recent_observation[agent]
+                action = self.recent_action[agent]
+                reward = reward_dict[agent]
+                self.memory.append(obs, action, reward, terminal, training=self.training)
+
+            self.recent_observation = []
+            self.recent_action = []
 
         metrics = [np.nan for _ in self.metrics_names]
         if not self.training:
