@@ -5,17 +5,16 @@ from typing import Mapping
 #########
 
 APP_DEBUG: bool = True
-APP_SEED: int = 100
+APP_SEED: int = None
 
 ##########
 ## BASE ##
 ##########
 
 N_AGENTS = 2
-N_ACTIONS = 3
 
-TRAIN_N_STEPS = 3000
-TRAIN_N_MAX_EPISODE_STEPS = 9000
+TRAIN_N_ATTEMPTS = 10
+TRAIN_N_STEPS = 1000
 
 ##############
 ## RAIL ENV ##
@@ -63,6 +62,6 @@ OBS_TREE_NODE_N_FEATURES: int = 13
 ###############
 
 DQN_AGENT_VERBOSE: int = 1
-DQN_AGENT_MEMORY_LIMIT: int = 25000
+DQN_AGENT_MEMORY_LIMIT: int = 10000
 DQN_AGENT_LEARNING_RATE: float = 1e-3
 DQN_AGENT_TARGET_MODEL_UPDATE: float = 1e-2

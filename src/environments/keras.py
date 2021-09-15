@@ -1,13 +1,5 @@
-from typing import Dict
+from gym import Env, spaces
 
-import numpy as np
-
-from rl.core import Env
-# from tf_agents.specs import array_spec
-# from tf_agents.trajectories import time_step as ts
-
-from schemes.action import HighLevelAction
-from schemes.node import Node
 from utils.environment import RailEnvWrapper
 
 ###
@@ -28,43 +20,27 @@ class KerasEnvironment(Env):
 
     #
 
-    # def observation_spec(self):
-    #     return array_spec.ArraySpec(
-    #         shape=(Node.get_n_of_features(), ),
-    #         dtype=np.int32,
-    #         name='observation',
-    #     )
+    @property
+    def action_space(self):
+        return spaces.Discrete(3)
 
-    # def action_spec(self):
-    #     raw_actions_values = list(map(int, HighLevelAction))
-
-    #     return array_spec.BoundedArraySpec(
-    #         name='action',
-    #         dtype=np.int32,
-    #         shape=(self._env.n_agents, ),
-    #         minimum=min(raw_actions_values),
-    #         maximum=max(raw_actions_values),
-    #     )
-
-    # def time_step_spec(self):
-    #     return ts.time_step_spec(self.observation_spec())
+    @property
+    def observation_space(self):
+        return spaces.Box(low=-1, high=1000, shape=(39, ))
 
     #
-
-    def close(self):
-        pass
 
     def seed(self, seed=None):
         pass
 
-    def configure(self, *args, **kwargs):
+    def render(self, mode="human"):
         pass
 
-    def render(self, mode='human', close=False):
+    def close(self):
         pass
+
+    def step(self, action):
+        return self._env.step(action)
 
     def reset(self):
         return self._env.reset()
-
-    def step(self, action: Dict[int, int]):
-        return self._env.step(action)
