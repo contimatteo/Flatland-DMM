@@ -35,12 +35,11 @@ class SequentialNetwork(BaseNetwork):
         model = Sequential()
 
         model.add(Flatten(input_shape=(1, self.input_nodes)))
-        
-        model.add(Dense(32, activation="relu"))
         model.add(Dense(16, activation="relu"))
         model.add(Dense(8, activation="relu"))
+        model.add(Dense(self.output_nodes, activation="linear"))
 
-        model.add(Dense(self.output_nodes, activation="relu"))
+        print(model.summary())
 
         return model
 
