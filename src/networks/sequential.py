@@ -13,17 +13,17 @@ LEARNING_RATE = 0.01
 class SequentialNetwork(BaseNetwork):
     @property
     def input_nodes(self) -> int:
-        return self._time_step_spec.observation.shape[0]
+        return self._observations_shape[0]
 
     @property
     def input_dim(self) -> int:
-        if len(self._time_step_spec.observation.shape) > 1:
-            return self._time_step_spec.observation.shape[1]
+        if len(self._observations_shape) > 1:
+            return self._observations_shape[1]
         return 1
 
     @property
     def output_nodes(self) -> int:
-        return (self._action_spec.maximum - self._action_spec.minimum) + 1
+        return self._n_actions
 
     @property
     def keras_model(self) -> int:

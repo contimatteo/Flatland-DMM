@@ -30,13 +30,16 @@ class Runner():
     #
 
     def train(self) -> None:
+        observations_shape = (39,)
+        n_actions = 3
+
         env = prepare_env()
-        network = SequentialNetwork(env.time_step_spec(), env.action_spec())
+        network = SequentialNetwork(observations_shape, n_actions)
         memory = SequentialMemory(limit=Configs.DQN_AGENT_MEMORY_LIMIT, window_length=1)
 
         agent = DQNMultiAgent(
             memory=memory,
-            model=network.build_model(),
+            model=network.keras_model,
             nb_actions=Configs.N_ACTIONS,
             target_model_update=Configs.DQN_AGENT_TARGET_MODEL_UPDATE,
         )

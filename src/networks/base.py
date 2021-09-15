@@ -1,3 +1,4 @@
+from typing import Tuple
 import abc
 
 from tensorflow.keras import Sequential
@@ -6,9 +7,9 @@ from tensorflow.keras import Sequential
 
 
 class BaseNetwork(abc.ABC):
-    def __init__(self, time_step_spec, action_spec) -> None:
-        self._time_step_spec = time_step_spec
-        self._action_spec = action_spec
+    def __init__(self, observations_shape: Tuple, n_actions: int) -> None:
+        self._observations_shape = observations_shape
+        self._n_actions = n_actions
 
         self._keras_model = self.build_model()
 
