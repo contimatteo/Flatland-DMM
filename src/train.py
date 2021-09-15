@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 import configs as Configs
 
-from core.runner import Runner
+from core import Runner
 
 warnings.filterwarnings('ignore')
 

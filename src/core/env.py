@@ -1,11 +1,13 @@
 from gym import Env, spaces
 
+import configs as Configs
+
 from utils.environment import RailEnvWrapper
 
 ###
 
 
-class KerasEnvironment(Env):
+class MarlEnvironment(Env):
     def __init__(self, observator, rail_generator, schedule_generator, malfunction_generator):
         super().__init__()
 
@@ -22,7 +24,7 @@ class KerasEnvironment(Env):
 
     @property
     def action_space(self):
-        return spaces.Discrete(3)
+        return spaces.Discrete(Configs.N_ACTIONS)
 
     @property
     def observation_space(self):

@@ -1,15 +1,9 @@
 from __future__ import absolute_import, division, print_function
 
-from rl.memory import SequentialMemory
-from rl.policy import BoltzmannQPolicy
-from tensorflow.keras.optimizers import Adam
-from rl.callbacks import ModelIntervalCheckpoint, FileLogger
-
 import configs as Configs
 
-from environments.prepare_env import prepare_env
+from core import prepare_env, prepare_memory, prepare_network, prepare_policy, prepare_callbacks
 from marl.dqn import DQNMultiAgent
-from networks.sequential import SequentialNetwork
 
 ###
 
@@ -20,42 +14,26 @@ class Runner():
 
     #
 
-    @staticmethod
-    def build_callbacks(env_name):
-        checkpoint_weights_filename = './tmp/dqn_' + env_name + '_weights_{step}.h5f'
-        log_filename = 'tmp/dqn_{}_log.json'.format(env_name)
-        callbacks = [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=500)]
-        callbacks += [FileLogger(log_filename, interval=100)]
-        return callbacks
-
-    #
-
     def train(self) -> None:
+        visualize = False
+        nb_steps = Configs.TRAIN_N_STEPS
+        verbose = Configs.DQN_AGENT_VERBOSE
+
         env = prepare_env()
-
-        observations_shape = env.observation_space.shape
-        n_actions = env.action_space.n
-
-        network = SequentialNetwork(observations_shape, n_actions)
-        memory = SequentialMemory(limit=Configs.DQN_AGENT_MEMORY_LIMIT, window_length=1)
-
-        # policy = BoltzmannQPolicy()
-        callbacks = Runner.build_callbacks(env_name='local')
+        memory = prepare_memory()
+        policy = prepare_policy()
+        callbacks = prepare_callbacks()
+        network, optimizer, metrics = prepare_network(env)
 
         agent = DQNMultiAgent(
-            # policy=policy,
+            policy=policy,
             memory=memory,
             model=network.keras_model,
-            nb_actions=n_actions,
+            nb_actions=Configs.N_ACTIONS,
             target_model_update=Configs.DQN_AGENT_TARGET_MODEL_UPDATE,
         )
 
-        agent.compile(Adam(learning_rate=Configs.DQN_AGENT_LEARNING_RATE), metrics=['mae'])
+        agent.compile(optimizer, metrics=metrics)
 
         for _ in range(Configs.TRAIN_N_ATTEMPTS):
-            agent.fit(
-                env,
-                # callbacks=callbacks,
-                nb_steps=Configs.TRAIN_N_STEPS,
-                verbose=Configs.DQN_AGENT_VERBOSE,
-            )
+            agent.fit(env, nb_steps, visualize=visualize, callbacks=callbacks, verbose=verbose)
