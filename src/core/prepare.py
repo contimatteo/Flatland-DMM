@@ -8,8 +8,8 @@ from flatland.envs.rail_generators import RailGen
 from flatland.envs.schedule_generators import ScheduleGenerator
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from rl.callbacks import Callback
-from rl.callbacks import FileLogger
-from rl.callbacks import ModelIntervalCheckpoint
+# from rl.callbacks import FileLogger
+# from rl.callbacks import ModelIntervalCheckpoint
 from rl.policy import Policy
 from rl.policy import LinearAnnealedPolicy
 from rl.policy import SoftmaxPolicy
@@ -25,6 +25,8 @@ from tensorflow.python.keras.optimizer_v2 import optimizer_v2
 import configs as Configs
 
 from core import MarlEnvironment
+from marl.callbacks import FileLogger
+from marl.callbacks import ModelIntervalCheckpoint
 from networks import BaseNetwork
 from networks import SequentialNetwork
 from observators import BinaryTreeObservator
@@ -113,7 +115,7 @@ def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
 def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
     callbacks = []
 
-    # env_name = "local"
+    # env_name = "local"
     # checkpoint_weights_filename = './tmp/dqn_' + env_name + '_weights_{step}.h5f'
     # log_filename = 'tmp/dqn_{}_log.json'.format(env_name)
     # callbacks += [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=500)]
