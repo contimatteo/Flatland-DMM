@@ -75,6 +75,8 @@ class MultiAgent(Agent):
         ###
 
         self._on_train_begin()
+        
+        ### callback (call)
         callbacks.on_train_begin()
 
         did_abort = False
