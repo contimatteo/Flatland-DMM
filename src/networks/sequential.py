@@ -25,10 +25,6 @@ class SequentialNetwork(BaseNetwork):
     def output_nodes(self) -> int:
         return self._n_actions
 
-    @property
-    def keras_model(self) -> int:
-        return self._keras_model
-
     ###
 
     def build_model(self) -> Sequential:

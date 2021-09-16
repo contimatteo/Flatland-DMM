@@ -15,6 +15,12 @@ class BaseNetwork(abc.ABC):
 
     ###
 
+    @property
+    def keras_model(self) -> int:
+        return self._keras_model
+
+    ###
+
     @abc.abstractproperty
     def input_nodes(self) -> int:
         raise NotImplementedError('`input_nodes` property not implemented.')
@@ -26,10 +32,6 @@ class BaseNetwork(abc.ABC):
     @abc.abstractproperty
     def output_nodes(self) -> int:
         raise NotImplementedError('`output_nodes` property not implemented.')
-
-    # @abc.abstractmethod
-    # def compile(self) -> Model:
-    #     raise NotImplementedError('`compile` method not implemented.')
 
     @abc.abstractmethod
     def build_model(self) -> Sequential:
