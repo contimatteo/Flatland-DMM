@@ -2,6 +2,8 @@ import time
 import numpy as np
 
 from typing import Dict, Any, Tuple, List
+
+from flatland.core.grid.grid4_utils import get_new_position
 from flatland.envs.rail_env import RailEnv, EnvAgent, Grid4TransitionsEnum, RailAgentStatus
 from flatland.utils.rendertools import AgentRenderVariant, RenderTool
 
@@ -53,6 +55,9 @@ class RailEnvWrapper:
         return dict is not None and isinstance(self._done, dict) and self._done['__all__'] is True
 
     def get_info(self) -> dict:
+
+        self._info['action_required2'] = {agent_id: self.action_required(agent_id) for agent_id in range(self._rail_env.get_num_agents())}
+
         return self._info
 
     def get_done(self) -> Dict[Any, bool]:
@@ -135,3 +140,32 @@ class RailEnvWrapper:
             time.sleep(Configs.EMULATOR_STEP_TIMEBREAK_SECONDS)
 
         return observations, rewards, self._done, self._info
+
+    def action_required(self, idx_agent):
+
+        get_transitions = self._rail_env.rail.get_transitions
+
+        agent = self.get_agent(idx_agent)
+        pos = self.get_agent_position(agent)
+        dir = self.get_agent_direction(agent)
+
+        t = get_transitions(*pos, dir)
+
+        # if more than one transition possible we are in switch
+        if np.count_nonzero(t) > 1 or agent.status == RailAgentStatus.READY_TO_DEPART:
+            return True
+
+        # if here, then we are in a straight cell
+        # check if next is a switch
+
+        dir = t.index(1)
+        pos = get_new_position(pos, dir)
+
+        t = get_transitions(*pos, dir)
+
+        # if more than one transition possible we are in switch
+        if np.count_nonzero(t) > 1:
+            return True
+
+
+        return False
