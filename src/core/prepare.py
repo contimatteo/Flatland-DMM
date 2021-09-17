@@ -1,6 +1,7 @@
 from typing import Tuple, List
 
 from datetime import datetime
+from pathlib import Path
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
 from flatland.envs.malfunction_generators import ParamMalfunctionGen
@@ -117,7 +118,10 @@ def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
 def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
     callbacks = []
 
-    # log_filename = 'tmp/dqn_log.json'
+    # log_filename = './tmp/logs/dqn/'
+    # Path(log_filename).mkdir(parents=True, exist_ok=True)
+    # log_filename += '{}.json'.format(datetime.now()) # .strftime("%s"))
+    # Path(log_filename).touch(exist_ok=True)
     # callbacks += [FileLogger(log_filename, interval=100)]
 
     interval = 1000
