@@ -259,6 +259,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
     def reset_states(self):  # runned at the beginning of training before env.reset()
         self.recent_action = []
         self.recent_observation = []
+        self.recent_reward = []
         if self.compiled:
             self.model.reset_states()
             self.target_model.reset_states()
@@ -281,22 +282,21 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
         return action
 
-    def backward(self, reward_dict, terminal):
+    def backward(self, rewards, terminal):
+
+        self.recent_reward += rewards
         # Store most recent experience in memory.
         if self.step % self.memory_interval == 0:
-
-            ### TODO: [@contimatteo -> @davide] we have to find a better way for doing this ...
-            if reward_dict == 0.0:
-                reward_dict = dict(enumerate([0 for _ in range(len(self.recent_observation))])) 
 
             for agent in range(len(self.recent_observation)):
                 obs = self.recent_observation[agent]
                 action = self.recent_action[agent]
-                reward = reward_dict[agent]
+                reward = self.recent_reward[agent]
                 self.memory.append(obs, action, reward, terminal, training=self.training)
 
             self.recent_observation = []
             self.recent_action = []
+            self.recent_reward = []
 
         metrics = [np.nan for _ in self.metrics_names]
         if not self.training:
