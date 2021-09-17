@@ -42,6 +42,8 @@ class MultiAgent(Agent):
         ### {verbose}
         assert verbose is not None
         assert isinstance(verbose, int)
+        ### {nb_max_episode_steps}
+        assert isinstance(nb_max_episode_steps, int) and nb_max_episode_steps > 0
 
         if not self.compiled:
             error_msg = 'Your tried to fit your agent but it hasn\'t been compiled yet.'
@@ -78,7 +80,7 @@ class MultiAgent(Agent):
         ###
 
         self._on_train_begin()
-        
+
         ### callback (call)
         callbacks.on_train_begin()
 
@@ -96,13 +98,16 @@ class MultiAgent(Agent):
                     episode_rewards_dict = {}
                     episode_step = np.int16(0)
 
-                    ### callback (call)
-                    callbacks.on_episode_begin(episode)
-
                     self.reset_states()
 
                     ### Obtain the initial observation by resetting the environment.
                     observations_dict = env.reset()
+
+                    n_agents = len(observations_dict)
+
+                    for agent_id in range(n_agents):
+                        ### callback (call)
+                        callbacks.on_episode_begin(episode, logs={'agent': agent_id})
 
                     observations_dict = deepcopy(observations_dict)
                     if self.processor is not None:
@@ -115,15 +120,16 @@ class MultiAgent(Agent):
                 assert observations_dict is not None
                 assert episode_rewards_dict is not None
 
-                actions_dict = {}
-                self.meaningful = []
                 n_agents = len(observations_dict)
 
                 ### GET ACTIONS
 
+                actions_dict = {}
+                self.meaningful = []
+
                 for agent_id in range(n_agents):
                     ### callback (call)
-                    callbacks.on_step_begin(episode_step, logs={'agent_id': agent_id})
+                    callbacks.on_step_begin(episode_step, logs={'agent': agent_id})
 
                     ### This is were all of the work happens. We first perceive and compute the
                     ### action (forward step) and then use the reward to improve (backward step).
@@ -202,7 +208,7 @@ class MultiAgent(Agent):
 
                 for agent_id in range(n_agents):
                     step_logs = {
-                        'agent_id': agent_id,
+                        'agent': agent_id,
                         'action': actions_dict[agent_id],
                         'observation': observations_dict[agent_id],
                         'reward': rewards_dict[agent_id],
@@ -228,7 +234,7 @@ class MultiAgent(Agent):
 
                         ### This episode is finished, report and reset.
                         episode_logs = {
-                            'agent_id': agent_id,
+                            'agent': agent_id,
                             'episode_reward': episode_rewards_dict[agent_id],
                             'nb_episode_steps': episode_step,
                             'nb_steps': self.step,
@@ -317,6 +323,7 @@ class MultiAgent(Agent):
         ###
 
         self.step = 0
+        n_agents = None
 
         self._on_test_begin()
 
@@ -328,13 +335,16 @@ class MultiAgent(Agent):
             actions_dict = {}
             episode_rewards_dict = {}
 
-            ### callback (call)
-            callbacks.on_episode_begin(episode)
-
             self.reset_states()
 
             ### obtain the initial observation by resetting the environment.
             observations_dict = env.reset()
+
+            n_agents = len(observations_dict)
+
+            for agent_id in range(n_agents):
+                ### callback (call)
+                callbacks.on_episode_begin(episode, logs={'agent': agent_id})
 
             observations_dict = deepcopy(observations_dict)
             if self.processor is not None:
@@ -352,7 +362,7 @@ class MultiAgent(Agent):
 
                 for agent_id in range(n_agents):
                     ### callback (call)
-                    callbacks.on_step_begin(episode_step, logs={'agent_id': agent_id})
+                    callbacks.on_step_begin(episode_step, logs={'agent': agent_id})
 
                     act = self.forward(observations_dict.get(agent_id))
 
@@ -401,6 +411,20 @@ class MultiAgent(Agent):
                     ### callback (call)
                     callbacks.on_action_end(actions_dict.get(agent_id))
 
+                ### STEP TERMINATION CONDITIONS
+
+                all_done = False
+
+                done_dict_values_as_sum = 0
+                for agent_id in range(n_agents):
+                    done_dict_values_as_sum += int(done_dict.get(agent_id, False))
+                if done_dict_values_as_sum == n_agents:
+                    all_done = True
+
+                if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
+                    ### force a terminal state.
+                    all_done = True
+
                 ### TESTING
 
                 ### TODO: reason about calling this for each agent.
@@ -408,7 +432,7 @@ class MultiAgent(Agent):
 
                 for agent_id in range(n_agents):
                     step_logs = {
-                        'agent_id': agent_id,
+                        'agent': agent_id,
                         'action': actions_dict[agent_id],
                         'observation': observations_dict[agent_id],
                         'reward': rewards_dict[agent_id],
@@ -430,7 +454,7 @@ class MultiAgent(Agent):
 
                 ### report end of episode.
                 episode_logs = {
-                    'agent_id': agent_id,
+                    'agent': agent_id,
                     'episode_reward': episode_rewards_dict[agent_id],
                     'nb_steps': episode_step,
                 }
