@@ -157,8 +157,10 @@ class TrainEpisodeLogger(Callback):
         self.episode_start = timeit.default_timer()
         print('\nepisode start:', self.episode_start, '\n')
 
-    def on_episode_end(self, agent, logs):
+    ### TODO: [@matteo -> @davide] I've renamed the {agent} param to {episode}. Ok?
+    def on_episode_end(self, episode, logs):
         """ Compute and print training statistics of the episode when done """
+        assert 'agent' in logs
         agent = logs['agent']
         duration = timeit.default_timer() - self.episode_start
         episode_steps = len(self.observations[agent])
@@ -187,7 +189,7 @@ class TrainEpisodeLogger(Callback):
             'agent': agent,
             'step': self.step,
             'nb_steps': self.params['nb_steps'],
-            'episode': agent,
+            'episode': episode,
             'duration': duration,
             'episode_steps': episode_steps,
             'sps': float(episode_steps) / duration,
@@ -219,6 +221,7 @@ class TrainEpisodeLogger(Callback):
 
     def on_step_end(self, step, logs):
         """ Update statistics of episode after each step """
+        assert 'agent' in logs
         agent = logs['agent']
         self.observations[agent] = self.observations.get(agent, []) + [logs['observation']]
         self.rewards[agent] = self.rewards.get(agent, []) + [logs['reward']]
@@ -258,6 +261,7 @@ class TrainIntervalLogger(Callback):
 
     def on_step_begin(self, step, logs):
         """ Print metrics if interval is over """
+        assert 'agent' in logs
         agent = logs['agent']
         if self.step % self.interval == 0:
             if len(self.episode_rewards.get(agent, [])) > 0:
@@ -296,6 +300,7 @@ class TrainIntervalLogger(Callback):
     def on_step_end(self, step, logs):
         """ Update progression bar at the end of each step """
         # don't know how to insert agent handle
+        assert 'agent' in logs
         agent = logs['agent']
         if self.info_names is None:
             self.info_names = logs['info'].keys()
@@ -318,6 +323,7 @@ class TrainIntervalLogger(Callback):
 
     def on_episode_end(self, episode, logs):
         """ Update reward value at the end of each episode """
+        assert 'agent' in logs
         agent = logs['agent']
         self.episode_rewards[agent] = self.episode_rewards.get(agent, []) + [logs['episode_reward']]
 
