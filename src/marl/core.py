@@ -2,6 +2,8 @@ import warnings
 from copy import deepcopy
 
 import numpy as np
+from flatland.core.grid.grid4_utils import get_new_position
+from flatland.envs.agent_utils import RailAgentStatus
 from tensorflow.keras.callbacks import History
 
 from rl.core import Agent
@@ -10,6 +12,7 @@ from rl.callbacks import (
 )
 
 ###
+from schemes.action import HighLevelAction
 
 
 class MultiAgent(Agent):
@@ -113,6 +116,7 @@ class MultiAgent(Agent):
                 assert episode_rewards_dict is not None
 
                 actions_dict = {}
+                self.meaningful = []
                 n_agents = len(observations_dict)
 
                 ### GET ACTIONS
@@ -123,7 +127,11 @@ class MultiAgent(Agent):
 
                     ### This is were all of the work happens. We first perceive and compute the
                     ### action (forward step) and then use the reward to improve (backward step).
-                    act = self.forward(observations_dict.get(agent_id))
+                    if env._env.get_info()['action_required2'][agent_id]:
+                        self.meaningful.append(agent_id)
+                        act = self.forward(observations_dict.get(agent_id))
+                    else:
+                        act = HighLevelAction.RIGHT_ORIENTED.value
 
                     if self.processor is not None:
                         act = self.processor.process_action(act)
@@ -187,7 +195,8 @@ class MultiAgent(Agent):
                 ### TRAINING
 
                 ### TODO: reason about calling this for each agent.
-                metrics = self.backward(rewards_dict, terminal=done_dict)
+                meaningful_rewards = [rewards_dict[k] for k in self.meaningful]
+                metrics = self.backward(meaningful_rewards, terminal=done_dict)
 
                 ### METRICS
 
@@ -214,7 +223,7 @@ class MultiAgent(Agent):
                     ### the *next* state, that is the state of the newly reset environment, is
                     ### always non-terminal by convention.
 
-                    for agent_id in range(n_agents):
+                    for agent_id in self.meaningful:
                         self.forward(observations_dict.get(agent_id))
 
                         ### This episode is finished, report and reset.
@@ -230,7 +239,8 @@ class MultiAgent(Agent):
 
                     ### TODO: reason about calling this for each agent.
                     ### TODO: ask to @davide why he have put {False} in the {terminal} parameter.
-                    self.backward(0., terminal=False)
+                    ### TODO: answer to @matteo: I don't know
+                    self.backward([0. for _ in self.meaningful], terminal=False)
 
                     episode += 1
                     observations_dict = None
