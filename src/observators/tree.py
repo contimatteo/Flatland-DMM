@@ -1,4 +1,5 @@
 import random
+from copy import deepcopy
 from typing import Optional, List, Dict
 
 import configs as Configs
@@ -48,25 +49,6 @@ class BinaryTreeObservator(ObservationBuilder):
         self.location_has_agent = {}
         self.location_has_agent_direction = {}
         self.location_has_agent = None
-        self.code_gen = self.complex_code_gen()
-
-    def node_code_gen(self, start=100, stop=1000):
-        random.seed(0)
-        while True:
-            yield random.randint(start, stop - 1) / stop
-
-    def complex_code_gen(self, start=100, stop=1000):
-        random.seed(0)
-        std_dev = 0.9
-        mean = (start + stop) / 2
-        generated_list = [start]
-        n = start
-        while True:
-            while n in generated_list and (n >= start and n < stop):
-                std_dev += std_dev * 0.05
-                n = round(random.gauss(mu=mean, sigma=std_dev))
-            generated_list.append(n)
-            yield n / stop
 
     def reset(self):
         self.location_has_target = {
@@ -149,16 +131,14 @@ class BinaryTreeObservator(ObservationBuilder):
             print('agent initial pos:', agent.position, '\ntarget position:', agent.target)
             return None
 
-        # storing all possible transitions
-        # possible_transitions = self.env.rail.get_transitions(*agent_virtual_position, agent.direction)
-        # num_transitions = np.count_nonzero(possible_transitions)
-
         # Here information about the agent itself is stored
         distance_map = self.env.distance_map.get()
 
-        # was referring to TreeObsForRailEnv.Node
+        # storing all possible transitions
+        possible_transitions = self.env.rail.get_transitions(*agent_virtual_position, agent.direction)
+        num_transitions = np.count_nonzero(possible_transitions)
+
         root_node_observation = Node(
-            node_code=next(self.code_gen),
             dist_own_target_encountered=0,
             dist_other_target_encountered=0,
             dist_other_agent_encountered=0,
@@ -170,21 +150,24 @@ class BinaryTreeObservator(ObservationBuilder):
             num_agents_opposite_direction=0,
             num_agents_malfunctioning=agent.malfunction_data['malfunction'],
             speed_min_fractional=agent.speed_data['speed'],
-            num_agents_ready_to_depart=0
+            num_agents_ready_to_depart=0,
+            pos_x=agent_virtual_position[0],
+            pos_y=agent_virtual_position[1]
         )
 
-        # Start from the current orientation, and see which transitions are available;
-        # organize them as [left, forward, right, back], relative to the current orientation
-        # If only one transition is possible, the tree is oriented with this transition as the forward branch.
-        orientation = agent.direction
-        position = agent_virtual_position
-
-        queue = [(root_node_observation, position, orientation)]
+        # if in straight, the first node is not saved
+        if num_transitions > 1:
+            queue = [(root_node_observation, agent_virtual_position, agent.direction)]
+        else:
+            first_node, position, orientation = self._explore_branch(
+                handle, agent_virtual_position, agent.direction, 1
+            )
+            root_node_observation.right_child = first_node
+            queue = [(first_node, position, orientation)]
 
         n_added_nodes = 1
         try:
             while queue:  # I stop when I raise MaxNodeMemory or I expanded all the tree
-                # extrapolating node, position and orientation from queue
                 n_tuple = queue.pop(0)
                 node = n_tuple[0]
                 position = n_tuple[1]
@@ -194,10 +177,6 @@ class BinaryTreeObservator(ObservationBuilder):
                 possible_transitions = self.env.rail.get_transitions(*position, orientation)
                 num_transitions = np.count_nonzero(possible_transitions)
 
-                # preparing node codes, if we'll find no children we (correctly) skip those code values
-                forward_node_code = next(self.code_gen)
-                turn_node_code = next(self.code_gen)
-
                 # we may have a turn without a switch: our orientation changes even if we must go straight forward
                 if num_transitions == 1:
                     orientation = np.argmax(possible_transitions)
@@ -206,6 +185,7 @@ class BinaryTreeObservator(ObservationBuilder):
                 for i, branch_direction in enumerate([(orientation + i) % 4 for i in range(0, 4)]):
 
                     if possible_transitions[branch_direction]:
+                        # print('\nfollowing direction:', branch_direction)
                         new_cell = get_new_position(position, branch_direction)
 
                         # main change w.r.t. TreeObsForRailEnv: breadth first search
@@ -215,20 +195,16 @@ class BinaryTreeObservator(ObservationBuilder):
 
                         # check if node_observed is forward
                         if i == 0:
-                            node_observed.node_code = forward_node_code
-                            node.forward_child = node_observed
+                            node.right_child = deepcopy(node_observed)
+                        # check if node_observed is right
+                        elif i == 1:
+                            node.left_child = deepcopy(node.right_child)
+                            node.right_child = deepcopy(node_observed)
+                        # node is left
                         else:
-                            if not node.turn_child:
-                                node_observed.node_code = turn_node_code
-                                node.turn_child = node_observed
-                            else:
-                                # in this case turn_child was a right turn, but we encountered a left turn too
-                                # then we move turn_child into forward_child and reassign turn_child
-                                node.turn_child.node_code = forward_node_code
-                                node.forward_child = node.turn_child
+                            node.left_child = deepcopy(node_observed)
 
-                                node_observed.node_code = turn_node_code
-                                node.turn_child = node_observed
+                        # print(1)
 
                         if not node_observed:
                             print(
@@ -242,20 +218,16 @@ class BinaryTreeObservator(ObservationBuilder):
 
                         # if we have still space we append observed node to queue
                         queue.append((node_observed, observed_pos, observed_dir))
-                    """
-                    # childs already initialized with None at instantation of Node
-                    else:
-                        # add cells filled with infinity if no transition is possible
-                        node.childs[self.tree_explored_actions_char[i]] = -np.inf
-                    """
 
+
+            # outside while
             print('outside while without raising an error\nnumber of added nodes:', n_added_nodes)
 
         except MaxNodeMemory:
             pass
         else:
             if not queue:
-                print('!!!!!!!!!expanded all the tree!!!!!!!!!')
+                print('!!!!!!!!!expanded all the tree!!!!!!!!!\n')
 
         return root_node_observation.get_subtree_array()
 
@@ -289,7 +261,7 @@ class BinaryTreeObservator(ObservationBuilder):
                 # for each cell visited between the previous branching node and the next switch / target / dead-end.
                 if position in self.location_has_agent:
                     # print('\n\nLOCATION HAS AGENT\n\n')
-                    exploring = False
+                    # exploring = False
                     if tot_dist < other_agent_encountered:
                         other_agent_encountered = tot_dist
 
@@ -314,7 +286,7 @@ class BinaryTreeObservator(ObservationBuilder):
                         # If no agent in the same direction was found all agents in that position are other direction
                         # Attention this counts to many agents as a few might be going off on a switch.
                         other_agent_opposite_direction += self.location_has_agent[position]
-                        exploring = False
+                        # exploring = False
                         # print('\n\nOTHER AGENT OPPOSITE DIRECTION\n\n')
 
                 # Check number of possible transitions for agent and total number of transitions in cell (type)
@@ -388,21 +360,21 @@ class BinaryTreeObservator(ObservationBuilder):
                 if position == agent.target and tot_dist < own_target_encountered:
                     own_target_encountered = tot_dist
                     # print('\n\nOWN TARGET ENCOUNTERED\n\n')
-                    exploring = False
+                    # exploring = False
 
                 # #############################
                 # #############################
                 if (position[0], position[1], direction) in visited:
                     last_is_terminal = True
                     # print('\n\n\n\n\n\n\n\n\n\n\n\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!ALREADY VISITED!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n\n\n\n\n\n\n\n\n\n\n')
-                    break
+                    # break
                 visited.add((position[0], position[1], direction))
 
                 # If the target node is encountered, pick that as node. (TODO Also, no further branching is possible.)
                 if np.array_equal(position, self.env.agents[handle].target):
                     last_is_target = True
                     # print('\n\nLAST IS TARGET\n\n')
-                    exploring = False
+                    # exploring = False
                     # break
 
                 # Check if crossing is found --> Not an unusable switch
@@ -422,7 +394,7 @@ class BinaryTreeObservator(ObservationBuilder):
                         # Dead-end!
                         last_is_dead_end = True
                         # print('\n\nDEAD END\n\n')
-                        exploring = False
+                        # exploring = False
 
                     if not last_is_dead_end:
                         # Keep walking through the tree along `direction`
@@ -436,6 +408,8 @@ class BinaryTreeObservator(ObservationBuilder):
                     # Switch detected
                     last_is_switch = True
                     exploring = False
+                    # print('\nADDING SWITCH NODE:', cell_transitions,
+                    #       '\nAT POSITION:', position)
                     # break
 
                 elif num_transitions == 0:
@@ -447,7 +421,7 @@ class BinaryTreeObservator(ObservationBuilder):
 
                 else:
                     exploring = False
-                    # print('TO CHECK WHY IT TERMINATED')
+                    print('TO CHECK WHY IT TERMINATED', flush=True)
 
             # `position` is either a terminal node or a switch
 
@@ -482,7 +456,9 @@ class BinaryTreeObservator(ObservationBuilder):
                 num_agents_opposite_direction=other_agent_opposite_direction,
                 num_agents_malfunctioning=malfunctioning_agent,
                 speed_min_fractional=min_fractional_speed,
-                num_agents_ready_to_depart=other_agent_ready_to_depart_encountered
+                num_agents_ready_to_depart=other_agent_ready_to_depart_encountered,
+                pos_x=position[0],
+                pos_y=position[1]
             )
 
             return node, position, direction
