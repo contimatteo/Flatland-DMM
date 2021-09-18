@@ -188,15 +188,20 @@ class MultiAgent(Agent):
 
                 all_done = False
 
-                done_dict_values_as_sum = 0
-                for agent_id in range(n_agents):
-                    done_dict_values_as_sum += int(done_dict.get(agent_id, False))
-                if done_dict_values_as_sum == n_agents:
+                if done_dict.get('__all__', False) is True:
                     all_done = True
 
-                if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
-                    ### force a terminal state.
-                    all_done = True
+                if all_done is False:
+                    done_dict_values_as_sum = 0
+                    for agent_id in range(n_agents):
+                        done_dict_values_as_sum += int(done_dict.get(agent_id, False))
+                    if done_dict_values_as_sum == n_agents:
+                        all_done = True
+
+                if all_done is False:
+                    if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
+                        ### force a terminal state.
+                        all_done = True
 
                 ### TRAINING
 
@@ -254,9 +259,12 @@ class MultiAgent(Agent):
                     episode_rewards_dict = None
 
         except KeyboardInterrupt:
-            # We catch keyboard interrupts here so that training can be be safely aborted.
-            # This is so common that we've built this right into this function, which ensures that
-            # the `on_train_end` method is properly called.
+            ### TODO: [@contimatteo] stop after twice {KeyboardInterrupt} errors
+            ### ....
+
+            ### We catch keyboard interrupts here so that training can be be safely aborted.
+            ### This is so common that we've built this right into this function, which ensures that
+            ### the `on_train_end` method is properly called.
             did_abort = True
 
         ### callback (call)
@@ -270,7 +278,6 @@ class MultiAgent(Agent):
         self,
         env,
         nb_episodes=1,
-        action_repetition=1,
         callbacks=None,
         visualize=True,
         nb_max_episode_steps=None,
@@ -415,15 +422,20 @@ class MultiAgent(Agent):
 
                 all_done = False
 
-                done_dict_values_as_sum = 0
-                for agent_id in range(n_agents):
-                    done_dict_values_as_sum += int(done_dict.get(agent_id, False))
-                if done_dict_values_as_sum == n_agents:
+                if done_dict.get('__all__', False) is True:
                     all_done = True
 
-                if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
-                    ### force a terminal state.
-                    all_done = True
+                if all_done is False:
+                    done_dict_values_as_sum = 0
+                    for agent_id in range(n_agents):
+                        done_dict_values_as_sum += int(done_dict.get(agent_id, False))
+                    if done_dict_values_as_sum == n_agents:
+                        all_done = True
+
+                if all_done is False:
+                    if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
+                        ### force a terminal state.
+                        all_done = True
 
                 ### TESTING
 
