@@ -40,6 +40,7 @@ class Runner():
         visualize = False
         nb_steps = Configs.TRAIN_N_STEPS
         verbose = Configs.DQN_AGENT_TRAIN_VERBOSE
+        max_episode_steps = Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE
 
         env = prepare_env()
         callbacks = prepare_callbacks()
@@ -50,12 +51,20 @@ class Runner():
             print()
             print("##############################################################################")
             print(f"ATTEMPT {attempt+1}/{Configs.TRAIN_N_ATTEMPTS}")
-            agent.fit(env, nb_steps, visualize=visualize, callbacks=callbacks, verbose=verbose)
+            agent.fit(
+                env,
+                nb_steps,
+                verbose=verbose,
+                visualize=visualize,
+                callbacks=callbacks,
+                nb_max_episode_steps=max_episode_steps,
+            )
 
     def test(self):
         visualize = False
         nb_episodes = Configs.TEST_N_ATTEMPTS
         verbose = Configs.DQN_AGENT_TEST_VERBOSE
+        max_episode_steps = Configs.TEST_N_MAX_STEPS_FOR_EPISODE
 
         env = prepare_env()
         callbacks = prepare_callbacks()
@@ -63,5 +72,10 @@ class Runner():
         agent = self._prepare_agent(env)
 
         agent.test(
-            env, nb_episodes=nb_episodes, visualize=visualize, callbacks=callbacks, verbose=verbose
+            env,
+            verbose=verbose,
+            visualize=visualize,
+            callbacks=callbacks,
+            nb_episodes=nb_episodes,
+            nb_max_episode_steps=max_episode_steps,
         )

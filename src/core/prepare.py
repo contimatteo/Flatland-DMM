@@ -1,5 +1,7 @@
 from typing import Tuple, List
 
+from datetime import datetime
+from pathlib import Path
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
 from flatland.envs.malfunction_generators import ParamMalfunctionGen
@@ -19,6 +21,7 @@ from rl.policy import BoltzmannQPolicy
 from rl.policy import MaxBoltzmannQPolicy
 from rl.policy import BoltzmannGumbelQPolicy
 from rl.memory import SequentialMemory
+from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.optimizer_v2 import optimizer_v2
 
@@ -115,10 +118,14 @@ def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
 def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
     callbacks = []
 
-    # env_name = "local"
-    # checkpoint_weights_filename = './tmp/dqn_' + env_name + '_weights_{step}.h5f'
-    # log_filename = 'tmp/dqn_{}_log.json'.format(env_name)
-    # callbacks += [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=500)]
+    # log_filename = './tmp/logs/dqn/'
+    # Path(log_filename).mkdir(parents=True, exist_ok=True)
+    # log_filename += '{}.json'.format(datetime.now()) # .strftime("%s"))
+    # Path(log_filename).touch(exist_ok=True)
     # callbacks += [FileLogger(log_filename, interval=100)]
+
+    interval = 1000
+    interval_checkpoint_weights_filepath = './tmp/weights/sequential-1/intervals/{step}.h5f'
+    callbacks += [ModelIntervalCheckpoint(interval_checkpoint_weights_filepath, interval=interval)]
 
     return callbacks
