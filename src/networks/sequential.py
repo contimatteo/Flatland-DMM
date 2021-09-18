@@ -11,6 +11,9 @@ LEARNING_RATE = 0.01
 
 
 class SequentialNetwork(BaseNetwork):
+    def name(self) -> str:
+        return 'sequential-1'
+
     @property
     def input_nodes(self) -> int:
         return self._observations_shape[0]
@@ -31,10 +34,6 @@ class SequentialNetwork(BaseNetwork):
         model = Sequential()
 
         model.add(Flatten(input_shape=(1, self.input_nodes)))
-        model.add(Dense(512, activation="relu"))
-        model.add(Dense(256, activation="relu"))
-        model.add(Dense(128, activation="relu"))
-        model.add(Dense(64, activation="relu"))
         model.add(Dense(32, activation="relu"))
         model.add(Dense(16, activation="relu"))
         model.add(Dense(8, activation="relu"))
@@ -43,12 +42,3 @@ class SequentialNetwork(BaseNetwork):
         print(model.summary())
 
         return model
-
-    # def compile(self) -> Sequential:
-    #     model = Sequential()
-    #     model.add(Flatten(input_shape=(1, ) + (self.input_nodes, )))
-    #     model.add(Dense(self.input_nodes, input_dim=self.input_dim, activation="relu"))
-    #     model.add(Dense(10, activation="relu"))
-    #     model.add(Dense(self.output_nodes))
-    #     model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss=mean_squared_error)
-    #     return model

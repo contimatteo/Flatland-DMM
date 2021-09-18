@@ -19,7 +19,14 @@ class BaseNetwork(abc.ABC):
     def keras_model(self) -> int:
         return self._keras_model
 
+    def load_weights(self):
+        pass 
+
     ###
+
+    @abc.abstractproperty
+    def name(self) -> str:
+        raise NotImplementedError('`name` property not implemented.')
 
     @abc.abstractproperty
     def input_nodes(self) -> int:
