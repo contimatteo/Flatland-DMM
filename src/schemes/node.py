@@ -12,7 +12,6 @@ class Node:
     # only added node_code: check tree_observator (I'm going to update it) for usage
     def __init__(
         self,
-        node_code=0,
         dist_own_target_encountered=np.inf,
         dist_other_target_encountered=np.inf,
         dist_other_agent_encountered=np.inf,
@@ -25,8 +24,10 @@ class Node:
         num_agents_malfunctioning=0,
         speed_min_fractional=1.,
         num_agents_ready_to_depart=0,
-        forward_child=None,
-        turn_child=None
+        pos_x=0,
+        pos_y=0,
+        left_child=None,
+        right_child=None
     ):
         self.dist_min_to_target = dist_min_to_target
         self.dist_other_agent_encountered = dist_other_agent_encountered
@@ -35,44 +36,55 @@ class Node:
         self.dist_potential_conflict = dist_potential_conflict
         self.dist_to_next_branch = dist_to_next_branch
         self.dist_unusable_switch = dist_unusable_switch
-        self.forward_child = forward_child
-        self.node_code = node_code
+        self.left_child = left_child
         self.num_agents_malfunctioning = num_agents_malfunctioning
         self.num_agents_opposite_direction = num_agents_opposite_direction
         self.num_agents_ready_to_depart = num_agents_ready_to_depart
         self.num_agents_same_direction = num_agents_same_direction
+        self.pos_x = pos_x
+        self.pos_y = pos_y
         self.speed_min_fractional = speed_min_fractional
-        self.turn_child = turn_child
+        self.right_child = right_child
 
     @staticmethod
     def get_n_of_features():
         ### ISSUE: [@contimatteo] this MUST be changed!
-        return Configs.OBS_TREE_N_NODES
-        # return len(Node().__dict__) - 2
+        # return Configs.OBS_TREE_N_NODES
+        return len(Node().__dict__) - 2
 
     def get_attribute_list(self, attr_list=[]):
         # attr_list is supposed to be a list of str (attribute names)
         # if no attr_list is given, all numerical attributes are given, sorted
         if not attr_list:
             attr_list = list(self.__dict__.keys())  # excluding children attributes
-            attr_list.remove('forward_child')
-            attr_list.remove('turn_child')
+            attr_list.remove('left_child')
+            attr_list.remove('right_child')
             attr_list.sort()  # mantaining always the same order
 
         return [self.__dict__.get(attr, None) for attr in attr_list]
 
     # simply returns right and left child
     def get_childs(self):
-        return self.forward_child, self.turn_child
+        return self.left_child, self.right_child
 
     # returns a flattened array of node attributes
     # designed to be the input of the neural network
     def get_subtree_array(self, attr_list=[]):
         # attr_list is supposed to be a list of str (attribute names)
+
+        # only the first node is supposed to have only one child
+        if not self.left_child:
+            assert self.right_child is not None
+            subtree_list = [1]
+            subtree_list += self.right_child.get_attribute_list(attr_list)
+            last = [self.right_child]
+        else:
+            subtree_list = [0]
+            subtree_list += self.get_attribute_list(attr_list)
+            last = [self]
+
         # if no attr_list is given, all numerical attributes are given
-        subtree_list = self.get_attribute_list(attr_list)
         visited = []
-        last = [self]
         while True:
             for n in last:
                 child_list = [
@@ -94,5 +106,12 @@ class Node:
         # removing inf
         subtree_array[subtree_array == -np.inf] = 0
         subtree_array[subtree_array == np.inf] = 0
+
+        if len(subtree_array) != Configs.OBS_TREE_NODE_N_FEATURES * Configs.OBS_TREE_N_NODES + 1:
+            print('\nnumber of node features:', Node.get_n_of_features(),
+                  '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES,
+                  '\nobs len:', len(subtree_array),
+                  '\nexpected len:', Configs.OBS_TREE_NODE_N_FEATURES * Configs.OBS_TREE_N_NODES + 1)
+            assert len(subtree_array) == Configs.OBS_TREE_NODE_N_FEATURES * Configs.OBS_TREE_N_NODES + 1
 
         return subtree_array
