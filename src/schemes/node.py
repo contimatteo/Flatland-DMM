@@ -48,6 +48,7 @@ class Node:
     def get_n_of_features():
         ### ISSUE: [@contimatteo] this MUST be changed!
         return Configs.OBS_TREE_N_NODES
+        # return len(Node().__dict__) - 2
 
     def get_attribute_list(self, attr_list=[]):
         # attr_list is supposed to be a list of str (attribute names)
