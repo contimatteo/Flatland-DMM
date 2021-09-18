@@ -135,7 +135,7 @@ class MultiAgent(Agent):
                     ### action (forward step) and then use the reward to improve (backward step).
                     if env._env.get_info()['action_required2'][agent_id]:
                         self.meaningful.append(agent_id)
-                        act = self.forward(observations_dict.get(agent_id))
+                        act = self.forward(observations_dict.get(agent_id), agent_id)
                     else:
                         act = HighLevelAction.RIGHT_ORIENTED.value
 
@@ -235,7 +235,7 @@ class MultiAgent(Agent):
                     ### always non-terminal by convention.
 
                     for agent_id in self.meaningful:
-                        self.forward(observations_dict.get(agent_id))
+                        self.forward(observations_dict.get(agent_id), agent_id)
 
                         ### This episode is finished, report and reset.
                         episode_logs = {
@@ -251,7 +251,8 @@ class MultiAgent(Agent):
                     ### TODO: reason about calling this for each agent.
                     ### TODO: ask to @davide why he have put {False} in the {terminal} parameter.
                     ### TODO: answer to @matteo: I don't know
-                    self.backward([0. for _ in self.meaningful], terminal=False)
+                    all_terminal = {i: False for i in range(len(observations_dict.keys()))}
+                    self.backward([0. for _ in self.meaningful], terminal=all_terminal)
 
                     episode += 1
                     observations_dict = None
@@ -371,7 +372,7 @@ class MultiAgent(Agent):
                     ### callback (call)
                     callbacks.on_step_begin(episode_step, logs={'agent': agent_id})
 
-                    act = self.forward(observations_dict.get(agent_id))
+                    act = self.forward(observations_dict.get(agent_id), agent_id)
 
                     if self.processor is not None:
                         act = self.processor.process_action(act)
@@ -462,7 +463,7 @@ class MultiAgent(Agent):
             ### the *next* state, that is the state of the newly reset environment, is
             ### always non-terminal by convention.
             for agent_id in range(n_agents):
-                self.forward(observations_dict.get(agent_id))
+                self.forward(observations_dict.get(agent_id), agent_id)
 
                 ### report end of episode.
                 episode_logs = {
@@ -476,7 +477,8 @@ class MultiAgent(Agent):
 
             ### TODO: reason about calling this for each agent.
             ### TODO: ask to @davide why he have put {False} in the {terminal} parameter.
-            self.backward(0., terminal=False)
+            all_terminal = {i: False for i in range(len(observations_dict.keys()))}
+            self.backward(0., terminal=all_terminal)
 
         ### callback (call)
         callbacks.on_train_end()

@@ -1,12 +1,22 @@
 import warnings
+from copy import deepcopy
 
+import numpy as np
 import tensorflow.keras.backend as K
+
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Lambda, Input, Layer, Dense
 
+import configs as Configs
+
+from core.optimizers import AdditionalUpdatesOptimizer
 from marl.core import MultiAgent
 from rl.policy import EpsGreedyQPolicy, GreedyQPolicy
-from rl.util import *
+from rl.util import get_object_config
+from rl.util import get_soft_target_model_updates
+from rl.util import clone_model
+from rl.util import huber_loss
+
 
 ###
 
@@ -58,7 +68,7 @@ class AbstractMultiDQNAgent(MultiAgent):
         # Parameters.
         self.nb_actions = nb_actions
         self.gamma = gamma
-        self.batch_size = batch_size
+        # self.batch_size = batch_size
         self.nb_steps_warmup = nb_steps_warmup
         self.train_interval = train_interval
         self.memory_interval = memory_interval
@@ -66,8 +76,13 @@ class AbstractMultiDQNAgent(MultiAgent):
         self.delta_clip = delta_clip
         self.custom_model_objects = custom_model_objects
 
-        # Related objects.
-        self.memory = memory
+        ### Related objects.
+        # self.memory = memory
+        self.agents_memory = {}
+        for agent_id in range(Configs.N_AGENTS):
+            self.agents_memory[agent_id] = deepcopy(memory) 
+
+        self.batch_size = batch_size * Configs.N_AGENTS
 
         # State.
         self.compiled = False
@@ -102,7 +117,8 @@ class AbstractMultiDQNAgent(MultiAgent):
             'memory_interval': self.memory_interval,
             'target_model_update': self.target_model_update,
             'delta_clip': self.delta_clip,
-            'memory': get_object_config(self.memory),
+            ### 'memory': get_object_config(self.memory),
+            'memory': get_object_config(self.agents_memory[0]),
         }
 
 
@@ -267,9 +283,13 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
     def update_target_model_hard(self):
         self.target_model.set_weights(self.model.get_weights())
 
-    def forward(self, observation):
-        # Select an action.
-        state = self.memory.get_recent_state(observation)
+    def forward(self, observation, agent_id):
+        assert agent_id in self.agents_memory
+
+        ### Select an action.
+        # state = self.memory.get_recent_state(observation)
+        state = self.agents_memory[agent_id].get_recent_state(observation)
+        
         q_values = self.compute_q_values(state)
         if self.training:
             action = self.policy.select_action(q_values=q_values)
@@ -288,11 +308,13 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         # Store most recent experience in memory.
         if self.step % self.memory_interval == 0:
 
-            for agent in range(len(self.recent_observation)):
-                obs = self.recent_observation[agent]
-                action = self.recent_action[agent]
-                reward = self.recent_reward[agent]
-                self.memory.append(obs, action, reward, terminal, training=self.training)
+            for agent_id in range(len(self.recent_observation)):
+                # obs = self.recent_observation[agent_id]
+                obs = { 'agent': agent_id, 'obs': self.recent_observation[agent_id] }
+                action = self.recent_action[agent_id]
+                reward = self.recent_reward[agent_id]
+                done = terminal[agent_id] is True if agent_id in terminal else False
+                self.agents_memory[agent_id].append(obs, action, reward, terminal = done, training=self.training)
 
             self.recent_observation = []
             self.recent_action = []
@@ -306,7 +328,14 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
         # Train the network on a single stochastic batch.
         if self.step > self.nb_steps_warmup and self.step % self.train_interval == 0:
-            experiences = self.memory.sample(self.batch_size)
+            # experiences = self.memory.sample(self.batch_size)
+            # assert len(experiences) == self.batch_size
+
+            experiences = []
+            for agent_id in range(Configs.N_AGENTS):
+                exp = self.agents_memory[agent_id].sample(int(self.batch_size / Configs.N_AGENTS))
+                assert len(exp) == int(self.batch_size / Configs.N_AGENTS)
+                experiences += exp
             assert len(experiences) == self.batch_size
 
             # Start by extracting the necessary parameters (we use a vectorized implementation).
@@ -316,8 +345,9 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             terminal1_batch = []
             state1_batch = []
             for e in experiences:
-                state0_batch.append(e.state0)
-                state1_batch.append(e.state1)
+                assert e.state0[0]['agent'] == e.state1[0]['agent']
+                state0_batch.append([e.state0[0]['obs']])
+                state1_batch.append([e.state1[0]['obs']])
                 reward_batch.append(e.reward)
                 action_batch.append(e.action)
                 terminal1_batch.append(0. if e.terminal1 else 1.)

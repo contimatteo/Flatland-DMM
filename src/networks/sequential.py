@@ -34,6 +34,10 @@ class SequentialNetwork(BaseNetwork):
         model = Sequential()
 
         model.add(Flatten(input_shape=(1, self.input_nodes)))
+        model.add(Dense(512, activation="relu"))
+        model.add(Dense(256, activation="relu"))
+        model.add(Dense(128, activation="relu"))
+        model.add(Dense(64, activation="relu"))
         model.add(Dense(32, activation="relu"))
         model.add(Dense(16, activation="relu"))
         model.add(Dense(8, activation="relu"))

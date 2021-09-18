@@ -1,7 +1,7 @@
 from typing import Tuple, List
 
-from datetime import datetime
-from pathlib import Path
+# from datetime import datetime
+# from pathlib import Path
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
 from flatland.envs.malfunction_generators import ParamMalfunctionGen
@@ -81,7 +81,7 @@ def prepare_network(
     env: MarlEnvironment
 ) -> Tuple[BaseNetwork, optimizer_v2.OptimizerV2, List[str]]:
     network = SequentialNetwork(env.observation_space.shape, env.action_space.n)
-    optimizer = Adam(learning_rate=Configs.DQN_AGENT_LEARNING_RATE)
+    optimizer = Adam()
     metrics = ['mae']
 
     return network, optimizer, metrics

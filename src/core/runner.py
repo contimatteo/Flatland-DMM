@@ -28,6 +28,7 @@ class Runner():
             nb_actions=nb_actions,
             model=network.keras_model,
             target_model_update=Configs.DQN_AGENT_TARGET_MODEL_UPDATE,
+            nb_steps_warmup=100,
         )
 
         agent.compile(optimizer, metrics=metrics)
@@ -47,18 +48,14 @@ class Runner():
 
         agent = self._prepare_agent(env)
 
-        for attempt in range(Configs.TRAIN_N_ATTEMPTS):
-            print()
-            print("##############################################################################")
-            print(f"ATTEMPT {attempt+1}/{Configs.TRAIN_N_ATTEMPTS}")
-            agent.fit(
-                env,
-                nb_steps,
-                verbose=verbose,
-                visualize=visualize,
-                callbacks=callbacks,
-                nb_max_episode_steps=max_episode_steps,
-            )
+        agent.fit(
+            env,
+            nb_steps,
+            verbose=verbose,
+            visualize=visualize,
+            callbacks=callbacks,
+            nb_max_episode_steps=max_episode_steps,
+        )
 
     def test(self):
         visualize = False
