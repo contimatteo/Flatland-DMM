@@ -152,7 +152,7 @@ class RailEnvWrapper:
         t = get_transitions(*pos, dir)
 
         # if more than one transition possible we are in switch
-        if np.count_nonzero(t) > 1 or agent.status == RailAgentStatus.READY_TO_DEPART:
+        if np.count_nonzero(t) > 1:
             return True
 
         # if here, then we are in a straight cell
