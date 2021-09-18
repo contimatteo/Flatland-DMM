@@ -19,9 +19,6 @@ class BaseNetwork(abc.ABC):
     def keras_model(self) -> int:
         return self._keras_model
 
-    def load_weights(self):
-        pass 
-
     ###
 
     @abc.abstractproperty
