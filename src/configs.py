@@ -1,4 +1,5 @@
 from typing import Mapping
+from schemes.node import Node
 
 #########
 ## APP ##
@@ -50,7 +51,7 @@ RAIL_ENV_REMOVE_AGENTS_AT_TARGET: bool = True
 ## EMULATOR ##
 ##############
 
-EMULATOR_ACTIVE: bool = False
+EMULATOR_ACTIVE: bool = True
 EMULATOR_WINDOW_WIDTH: int = 1200
 EMULATOR_WINDOW_HEIGHT: int = 1200
 EMULATOR_STEP_TIMEBREAK_SECONDS: int = 0.3
@@ -60,7 +61,8 @@ EMULATOR_STEP_TIMEBREAK_SECONDS: int = 0.3
 #########
 
 OBS_TREE_N_NODES: int = 1 + 2
-OBS_TREE_NODE_N_FEATURES: int = 13
+OBS_TREE_NODE_N_FEATURES: int = Node.get_n_of_features()
+OBS_LENGTH = OBS_TREE_NODE_N_FEATURES * OBS_TREE_N_NODES + 1
 
 ###############
 ## DQN-AGENT ##
