@@ -125,7 +125,8 @@ def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
     # callbacks += [FileLogger(log_filename, interval=100)]
 
     interval = 1000
-    interval_checkpoint_weights_filepath = './tmp/weights/sequential-1/intervals/{step}.h5f'
+    # interval_checkpoint_weights_filepath = './tmp/weights/intervals/sequential-1/{step}.h5f'
+    interval_checkpoint_weights_filepath = './tmp/cache/weights/sequential-1.h5f'
     callbacks += [ModelIntervalCheckpoint(interval_checkpoint_weights_filepath, interval=interval)]
 
     return callbacks

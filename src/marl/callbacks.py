@@ -435,7 +435,10 @@ class ModelIntervalCheckpoint(Callback):
             # Nothing to do.
             return
 
-        filepath = self.filepath.format(step=self.total_steps, **logs)
+        # filepath = self.filepath.format(step=self.total_steps, **logs)
+        filepath = self.filepath
+        
         if self.verbose > 0:
             print('Step {}: saving model to {}'.format(self.total_steps, filepath))
+
         self.model.save_weights(filepath, overwrite=True)
