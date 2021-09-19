@@ -81,7 +81,7 @@ def prepare_network(
 ) -> Tuple[BaseNetwork, optimizer_v2.OptimizerV2, List[str]]:
     network = SequentialNetwork(env.observation_space.shape, env.action_space.n)
     optimizer = Adam()
-    metrics = ['mae']
+    metrics = ['mae', 'accuracy']
 
     return network, optimizer, metrics
 

@@ -30,7 +30,7 @@ class Runner():
             nb_actions=nb_actions,
             model=network.keras_model,
             target_model_update=Configs.DQN_AGENT_TARGET_MODEL_UPDATE,
-            nb_steps_warmup=100,
+            nb_steps_warmup=Configs.TRAIN_N_STEPS_WARMUP,
         )
 
         agent.compile(optimizer, metrics=metrics)
@@ -44,6 +44,7 @@ class Runner():
         nb_steps = Configs.TRAIN_N_STEPS
         verbose = Configs.DQN_AGENT_TRAIN_VERBOSE
         max_episode_steps = Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE
+        log_interval= Configs.TRAIN_N_STEPS_WARMUP * Configs.N_AGENTS
 
         env = prepare_env()
         agent, network = self._prepare_agent(env)
@@ -59,9 +60,10 @@ class Runner():
             visualize=visualize,
             callbacks=callbacks,
             nb_max_episode_steps=max_episode_steps,
+            log_interval=log_interval,
         )
 
-        agent.save_weights(network.weights_file_url)
+        agent.save_weights(network.weights_file_url, overwrite=True)
 
     def test(self):
         visualize = False

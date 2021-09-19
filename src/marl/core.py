@@ -1,18 +1,20 @@
-import warnings
 from copy import deepcopy
 
 import numpy as np
-from flatland.core.grid.grid4_utils import get_new_position
-from flatland.envs.agent_utils import RailAgentStatus
-from tensorflow.keras.callbacks import History
 
+from tensorflow.keras.callbacks import History
 from rl.core import Agent
-from rl.callbacks import (
-    CallbackList, TestLogger, TrainEpisodeLogger, TrainIntervalLogger, Visualizer
-)
+from rl.callbacks import CallbackList
+from rl.callbacks import TestLogger
+# from rl.callbacks import TrainEpisodeLogger
+# from rl.callbacks import TrainIntervalLogger
+from rl.callbacks import Visualizer
+
+from marl.callbacks import TrainEpisodeLogger
+from marl.callbacks import TrainIntervalLogger
+from schemes.action import HighLevelAction
 
 ###
-from schemes.action import HighLevelAction
 
 
 class MultiAgent(Agent):

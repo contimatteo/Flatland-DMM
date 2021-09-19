@@ -263,7 +263,14 @@ class TrainIntervalLogger(Callback):
         """ Print metrics if interval is over """
         assert 'agent' in logs
         agent = logs['agent']
-        if self.step % self.interval == 0:
+
+        if self.step > 0 and self.step % self.interval == 0:
+            ### ISSUE: [@matteo] sometimes {metrics_names} is empty ...
+            ### INFO: I've tried to fix it with the following lines
+            if len(self.model.metrics_names) > 0:
+                self.metrics_names = self.model.metrics_names
+            assert len(self.metrics_names) > 0
+
             if len(self.episode_rewards.get(agent, [])) > 0:
                 metrics = np.array(self.metrics)
                 assert metrics.shape == (self.interval, len(self.metrics_names))
@@ -292,8 +299,8 @@ class TrainIntervalLogger(Callback):
                 print('')
             self.reset()
             print(
-                'Interval {} ({} steps performed)'.format(
-                    self.step // self.interval + 1, self.step
+                'Agent {} | Interval {} | Steps {}'.format(
+                    agent, self.step // self.interval + 1, self.step
                 )
             )
 
@@ -436,7 +443,7 @@ class ModelIntervalCheckpoint(Callback):
             return
 
         filepath = self.filepath.format(step=self.total_steps, **logs)
-        
+
         if self.verbose > 0:
             print('Step {}: saving model to {}'.format(self.total_steps, filepath))
 
