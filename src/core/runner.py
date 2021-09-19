@@ -30,10 +30,6 @@ class Runner():
     def __init__(self) -> None:
         Storage.initialize()
 
-        print()
-        print("Configs.OBS_TREE_N_NODES = ", Configs.OBS_TREE_N_NODES)
-        print()
-
     #
 
     def _prepare_agent(self, env):
