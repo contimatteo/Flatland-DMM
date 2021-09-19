@@ -11,7 +11,8 @@ LEARNING_RATE = 0.01
 
 
 class SequentialNetwork(BaseNetwork):
-    def name(self) -> str:
+    @property
+    def uuid(self) -> str:
         return 'sequential-1'
 
     @property

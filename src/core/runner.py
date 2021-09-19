@@ -1,16 +1,18 @@
 from __future__ import absolute_import, division, print_function
+from pathlib import Path
 
 import configs as Configs
 
 from core import prepare_env, prepare_memory, prepare_network, prepare_policy, prepare_callbacks
 from marl.dqn import DQNMultiAgent
+from utils import Storage
 
 ###
 
 
 class Runner():
     def __init__(self) -> None:
-        pass
+        Storage.initialize()
 
     #
 
@@ -33,7 +35,7 @@ class Runner():
 
         agent.compile(optimizer, metrics=metrics)
 
-        return agent
+        return agent, network
 
     #
 
@@ -44,9 +46,11 @@ class Runner():
         max_episode_steps = Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE
 
         env = prepare_env()
-        callbacks = prepare_callbacks()
+        agent, network = self._prepare_agent(env)
+        callbacks = prepare_callbacks([], network)
 
-        agent = self._prepare_agent(env)
+        if Path(network.weights_file_url).is_file() is True:
+            agent.load_weights(network.weights_file_url)
 
         agent.fit(
             env,
@@ -57,6 +61,8 @@ class Runner():
             nb_max_episode_steps=max_episode_steps,
         )
 
+        agent.save_weights(network.weights_file_url)
+
     def test(self):
         visualize = False
         nb_episodes = Configs.TEST_N_ATTEMPTS
@@ -64,9 +70,11 @@ class Runner():
         max_episode_steps = Configs.TEST_N_MAX_STEPS_FOR_EPISODE
 
         env = prepare_env()
-        callbacks = prepare_callbacks()
+        agent, network = self._prepare_agent(env)
+        callbacks = prepare_callbacks([], network)
 
-        agent = self._prepare_agent(env)
+        assert Path(network.weights_file_url).is_file() is True
+        agent.load_weights(network.weights_file_url)
 
         agent.test(
             env,

@@ -11,7 +11,6 @@ from flatland.envs.schedule_generators import ScheduleGenerator
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from rl.callbacks import Callback
 # from rl.callbacks import FileLogger
-# from rl.callbacks import ModelIntervalCheckpoint
 from rl.policy import Policy
 from rl.policy import LinearAnnealedPolicy
 from rl.policy import SoftmaxPolicy
@@ -115,7 +114,7 @@ def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
     return policy
 
 
-def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
+def prepare_callbacks(types: List[str], network: BaseNetwork) -> List[Callback]:
     callbacks = []
 
     # log_filename = './tmp/logs/dqn/'
@@ -124,9 +123,8 @@ def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
     # Path(log_filename).touch(exist_ok=True)
     # callbacks += [FileLogger(log_filename, interval=100)]
 
-    interval = 1000
-    # interval_checkpoint_weights_filepath = './tmp/weights/intervals/sequential-1/{step}.h5f'
-    interval_checkpoint_weights_filepath = './tmp/cache/weights/sequential-1.h5f'
-    callbacks += [ModelIntervalCheckpoint(interval_checkpoint_weights_filepath, interval=interval)]
+    interval=int(Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE)
+    weights_intervals_filepath = network.weights_intervals_file_url
+    callbacks += [ModelIntervalCheckpoint(weights_intervals_filepath, interval=interval)]
 
     return callbacks

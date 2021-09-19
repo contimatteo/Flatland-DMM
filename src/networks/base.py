@@ -3,6 +3,8 @@ import abc
 
 from tensorflow.keras import Sequential
 
+from utils import Storage
+
 ###
 
 
@@ -19,10 +21,28 @@ class BaseNetwork(abc.ABC):
     def keras_model(self) -> int:
         return self._keras_model
 
+    @property
+    def _weights_file_name(self) -> str:
+        return f"{self.uuid}.h5"
+
+    @property
+    def _weights_intervals_file_name(self) -> str:
+        return self.uuid + "-{step}.h5"
+
+    @property
+    def weights_file_url(self) -> str:
+        file_name = self._weights_file_name
+        return str(Storage.weights_folder().joinpath(file_name).absolute())
+
+    @property
+    def weights_intervals_file_url(self) -> str:
+        file_name = self._weights_intervals_file_name
+        return str(Storage.weights_intervals_folder().joinpath(file_name).absolute())
+
     ###
 
     @abc.abstractproperty
-    def name(self) -> str:
+    def uuid(self) -> str:
         raise NotImplementedError('`name` property not implemented.')
 
     @abc.abstractproperty

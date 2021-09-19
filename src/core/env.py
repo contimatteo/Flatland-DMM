@@ -2,7 +2,7 @@ from gym import Env, spaces
 
 import configs as Configs
 
-from utils.environment import RailEnvWrapper
+from utils import RailEnvWrapper
 
 ###
 
