@@ -46,41 +46,43 @@ class TFEnvironment(Environment):
         self._action_spec = dict(type='int', shape=(config.N_TRAINS,), num_values=3)
 
         # OTHER
+        self.reward = [0 for _ in range(config.N_TRAINS)]
         self.info = None
         self.done = False
         self.episode_count = 0
         self._step_count = 0
         self._visited_points = np.zeros((config.N_TRAINS, config.ENV_WIDTH, config.ENV_HEIGHT), dtype=np.bool)
-        self._regeneration_frequency = regeneration_frequency
+        self._switch_map = np.zeros((self._env.height, self._env.width), dtype=bool)
+        self._regeneration_frequency = regeneration_frequency if regeneration_frequency > 0 else 1
 
-    def states(self):
-        """Returns the state space specification"""
-        return TreeTensorObserver.obs_spec
-
-    def actions(self):
-        """Returns the action space specification"""
-        return self._action_spec
-
-    def max_episode_timesteps(self):
-        # Note: the max timesteps are defined in the environment construction
-        return super().max_episode_timesteps()
-
-    def close(self):
-        super().close()
+    # ----------------- RESET -----------------
 
     def reset(self, num_parallel=None):
         regenerate = self.episode_count % self._regeneration_frequency == 0
-        # Reset the environment and internal parameters
+        if regenerate:
+            print("============ REGENERATING ENVIRONMENT ============")
+
+        # Reset the environment
         obs, info = self._env.reset(activate_agents=True, regenerate_rail=regenerate, regenerate_schedule=regenerate)
+        # And the internal parameters
+        self.reward = [0 for _ in range(config.N_TRAINS)]
         self.info = info
         self.done = False
         self.episode_count += 1
         self._step_count = 0
+
         self._visited_points = np.zeros((config.N_TRAINS, config.ENV_WIDTH, config.ENV_HEIGHT), dtype=np.bool)
+        for row in range(self._env.height):
+            for col in range(self._env.width):
+                v = sum(np.array(self._env.get_valid_directions_on_grid(row, col), dtype=int))
+                self._switch_map[row, col] = v > 2
+
         # Renderer
         if self.renderer:
             self.renderer.reset()
         return obs
+
+    # ----------------- STEP / EXECUTE -----------------
 
     def execute(self, actions):
         # Convert the pseudo actions <0,1,2> into the real action dictionary {h: <0,...,4>}
@@ -89,7 +91,7 @@ class TFEnvironment(Environment):
         obs, reward_dict, done_dict, self.info = self._env.step(action_dict)
 
         # Reward determination
-        reward = sum([self._agent_reward(h) for h in self._env.get_agent_handles()])
+        self.reward = np.array([self._agent_reward(h, obs) for h in self._env.get_agent_handles()])
 
         # Rendering
         if self.renderer:
@@ -98,7 +100,29 @@ class TFEnvironment(Environment):
         # End of episode determination and time step returning
         self.done = done_dict['__all__']
         self._step_count += 1
-        return obs, self.done, reward
+        return obs, self.done, sum(self.reward)
+
+    # ----------------- REWARD -----------------
+
+    def _agent_reward(self, handle, obs):
+        agent = self._env.agents[handle]
+        reward = -1
+
+        if agent.status in (RailAgentStatus.DONE, RailAgentStatus.DONE_REMOVED):
+            reward += 1
+        else:
+            min_dist = self._obs_builder.dist_min_to_target[handle] / config.OBS_MAX_VALUE
+            reward *= 1 + min_dist
+
+        return reward
+
+    # ----------------- AUX -----------------
+
+    def is_agent_at_switch(self, handle):
+        pos = self._env.agents[handle].position
+        if pos is None:
+            return False
+        return self._switch_map[pos]
 
     def _convert_actions(self, pseudo_actions_tensor):
         def _convert(handle):
@@ -121,24 +145,19 @@ class TFEnvironment(Environment):
         # Iterate through the pseudo-action tensor, building the real action dict
         return {h: _convert(h) for h in range(len(pseudo_actions_tensor))}
 
-    def _agent_reward(self, handle):
-        agent = self._env.agents[handle]
-        reward = -1
+    # ----------------- OVERRIDES -----------------
 
-        if agent.status in (RailAgentStatus.DONE, RailAgentStatus.DONE_REMOVED):
-            # If the train has reached the target, increase the reward
-            reward += 50
-        else:
-            # Decrease the reward by the distance (manhattan) from its target
-            p, t = agent.position, agent.target
-            dist_from_target = abs(p[0] - t[0]) + abs(p[1] - t[1])
-            reward -= dist_from_target
+    def states(self):
+        """Returns the state space specification"""
+        return TreeTensorObserver.obs_spec
 
-            # Check if the agent is in an already visited point, to discourage "looping"
-            if self._visited_points[handle, p[0], p[1]]:
-                reward -= 20
-            self._visited_points[handle, p[0], p[1]] = True
+    def actions(self):
+        """Returns the action space specification"""
+        return self._action_spec
 
-            # print(agent.malfunction_data['malfunction'])
+    def max_episode_timesteps(self):
+        # Note: the max timesteps are defined in the environment construction
+        return super().max_episode_timesteps()
 
-        return reward
+    def close(self):
+        super().close()

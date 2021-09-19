@@ -12,14 +12,14 @@
 # importlib-metadata==0.23
 
 flatland-rl==2.2.2
-tensorflow==2.2.2
+tensorflow
+tensorforce==0.6.5
 
 #############################
 ## Not-Versioned
 
 keras-rl
 scikit-learn
-tensorforce
 
 #############################
 ## Dev
