@@ -5,10 +5,6 @@
     "seed": 1,
     "n_agents": 3,
 
-    "env": {
-      "type": "gym"
-    },
-
     "agent": {
       "type": "dqn",
       "dueling": false,
@@ -17,7 +13,9 @@
 
     "policy": {
       "type": "eps-greedy",
-      "parameters": {}
+      "parameters": {
+        "eps": 0.1
+      }
     },
 
     "network": {

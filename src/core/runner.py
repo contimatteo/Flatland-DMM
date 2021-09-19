@@ -30,6 +30,10 @@ class Runner():
     def __init__(self) -> None:
         Storage.initialize()
 
+        print()
+        print("Configs.OBS_TREE_N_NODES = ", Configs.OBS_TREE_N_NODES)
+        print()
+
     #
 
     def _prepare_agent(self, env):
@@ -37,7 +41,7 @@ class Runner():
 
         env = prepare_env()
         memory = prepare_memory()
-        policy = prepare_policy()
+        policy = prepare_policy(Configs.POLICY_TYPE, Configs.POLICY_PARAMETERS)
         network, optimizer, metrics = prepare_network(env)
 
         agent = DQNMultiAgent(

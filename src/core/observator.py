@@ -38,8 +38,6 @@ class BinaryTreeObservator(ObservationBuilder):
     For details about the features in the tree observation see the get() function.
     """
 
-    obs_length = Node.get_n_of_features() * Configs.OBS_TREE_N_NODES
-
     tree_explored_actions_char = ['F', 'T']  # F: forward; T: turn
 
     def __init__(self, max_memory: int, predictor: PredictionBuilder = None):

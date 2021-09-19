@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Any
 
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
@@ -86,26 +86,26 @@ def prepare_memory():
     return SequentialMemory(limit=Configs.DQN_AGENT_MEMORY_LIMIT, window_length=1)
 
 
-def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
+def prepare_policy(ctype: str, policy_params: Any) -> Policy:
     policy = None
 
-    if policy_type == "linear-annealed":
-        policy = LinearAnnealedPolicy(*args, **kwargs)
-    elif policy_type == "softmax":
-        policy = SoftmaxPolicy(*args, **kwargs)
-    elif policy_type == "eps-greedy":
-        policy = EpsGreedyQPolicy(*args, **kwargs)
-    elif policy_type == "greedy":
-        policy = GreedyQPolicy(*args, **kwargs)
-    elif policy_type == "boltzmann":
-        policy = BoltzmannQPolicy(*args, **kwargs)
-    elif policy_type == "max-boltzmann":
-        policy = MaxBoltzmannQPolicy(*args, **kwargs)
-    elif policy_type == "boltzmann-gumbel":
-        policy = BoltzmannGumbelQPolicy(*args, **kwargs)
+    if ctype == "linear-annealed":
+        policy = LinearAnnealedPolicy(**policy_params)
+    elif ctype == "softmax":
+        policy = SoftmaxPolicy(**policy_params)
+    elif ctype == "eps-greedy":
+        policy = EpsGreedyQPolicy(**policy_params)
+    elif ctype == "greedy":
+        policy = GreedyQPolicy(**policy_params)
+    elif ctype == "boltzmann":
+        policy = BoltzmannQPolicy(**policy_params)
+    elif ctype == "max-boltzmann":
+        policy = MaxBoltzmannQPolicy(**policy_params)
+    elif ctype == "boltzmann-gumbel":
+        policy = BoltzmannGumbelQPolicy(**policy_params)
 
     if policy is None:
-        raise Exception(f"invalid policy type '{policy_type}' value.")
+        raise Exception(f"invalid policy type '{ctype}' value.")
 
     return policy
 
