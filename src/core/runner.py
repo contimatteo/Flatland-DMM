@@ -1,11 +1,27 @@
 from __future__ import absolute_import, division, print_function
 from pathlib import Path
+from dotenv import load_dotenv
+
+import numpy as np
+import warnings
 
 from configs import configurator as Configs
-
-from core import prepare_env, prepare_memory, prepare_network, prepare_policy, prepare_callbacks
+from core import prepare_env
+from core import prepare_memory
+from core import prepare_network
+from core import prepare_policy
+from core import prepare_callbacks
 from marl.dqn import DQNMultiAgent
 from utils.storage import Storage
+
+###
+
+warnings.filterwarnings('ignore')
+
+load_dotenv()
+
+if Configs.APP_SEED is not None:
+    np.random.seed(Configs.APP_SEED)
 
 ###
 
@@ -44,7 +60,8 @@ class Runner():
         nb_steps = Configs.TRAIN_N_STEPS
         verbose = Configs.DQN_AGENT_TRAIN_VERBOSE
         max_episode_steps = Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE
-        log_interval= Configs.TRAIN_N_STEPS_WARMUP * Configs.N_AGENTS
+        # log_interval = Configs.TRAIN_N_STEPS_WARMUP * Configs.N_AGENTS
+        log_interval = Configs.TRAIN_LOG_INTERVAL
 
         env = prepare_env()
         agent, network = self._prepare_agent(env)
