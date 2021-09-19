@@ -34,10 +34,12 @@ class Runner():
 
     def _prepare_agent(self, env):
         nb_actions = Configs.N_ACTIONS
+        policy_type = Configs.POLICY_TYPE
+        policy_params = Configs.POLICY_PARAMETERS
 
         env = prepare_env()
         memory = prepare_memory()
-        policy = prepare_policy(Configs.POLICY_TYPE, Configs.POLICY_PARAMETERS)
+        policy = prepare_policy(policy_type, policy_params)
         network, optimizer, metrics = prepare_network(env)
 
         agent = DQNMultiAgent(

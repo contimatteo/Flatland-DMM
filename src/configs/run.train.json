@@ -1,23 +1,17 @@
 [
   {
     "uuid": "config-1",
-
     "seed": 1,
     "n_agents": 3,
-
     "agent": {
       "type": "dqn",
       "dueling": false,
       "parameters": {}
     },
-
     "policy": {
       "type": "eps-greedy",
-      "parameters": {
-        "eps": 0.1
-      }
+      "parameters": { "eps": 0.1 }
     },
-
     "network": {
       "type": "sequential-1",
       "compile": {
@@ -29,9 +23,7 @@
       },
       "parameters": {}
     },
-
     "train": {},
-
     "callbacks": [
       {
         "type": "file-logger",
