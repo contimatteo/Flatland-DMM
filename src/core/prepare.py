@@ -123,8 +123,8 @@ def prepare_callbacks(types: List[str], network: BaseNetwork) -> List[Callback]:
     # Path(log_filename).touch(exist_ok=True)
     # callbacks += [FileLogger(log_filename, interval=100)]
 
-    interval=int(Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE)
-    weights_intervals_filepath = network.weights_intervals_file_url
-    callbacks += [ModelIntervalCheckpoint(weights_intervals_filepath, interval=interval)]
+    # interval=int(Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE)
+    # weights_intervals_filepath = network.weights_intervals_file_url
+    # callbacks += [ModelIntervalCheckpoint(weights_intervals_filepath, interval=interval)]
 
     return callbacks
