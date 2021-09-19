@@ -1,6 +1,8 @@
 from typing import Tuple
 import abc
 
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Flatten
 from tensorflow.keras import Sequential
 
 from utils.storage import Storage
@@ -41,21 +43,31 @@ class BaseNetwork(abc.ABC):
 
     ###
 
+    @property
+    def input_nodes(self) -> int:
+        return self._observations_shape[0]
+
+    @property
+    def input_dim(self) -> int:
+        if len(self._observations_shape) > 1:
+            return self._observations_shape[1]
+        return 1
+
+    @property
+    def output_nodes(self) -> int:
+        return self._n_actions
+
+    def input_layer(self) -> Flatten:
+        return Flatten(input_shape=(1, self.input_nodes))
+
+    def output_layer(self, activation="linear") -> Dense:
+        return Dense(self.output_nodes, activation=activation)
+
+    #
+
     @abc.abstractproperty
     def uuid(self) -> str:
-        raise NotImplementedError('`name` property not implemented.')
-
-    @abc.abstractproperty
-    def input_nodes(self) -> int:
-        raise NotImplementedError('`input_nodes` property not implemented.')
-
-    @abc.abstractproperty
-    def input_dim(self) -> int:
-        raise NotImplementedError('`input_dim` property not implemented.')
-
-    @abc.abstractproperty
-    def output_nodes(self) -> int:
-        raise NotImplementedError('`output_nodes` property not implemented.')
+        raise NotImplementedError('`uuid` property not implemented.')
 
     @abc.abstractmethod
     def build_model(self) -> Sequential:
