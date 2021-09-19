@@ -7,7 +7,7 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Lambda, Input, Layer, Dense
 
-import configs as Configs
+from configs import configurator as Configs
 
 from core.optimizers import AdditionalUpdatesOptimizer
 from marl.core import MultiAgent

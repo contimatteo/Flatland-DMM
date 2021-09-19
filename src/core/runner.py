@@ -1,11 +1,11 @@
 from __future__ import absolute_import, division, print_function
 from pathlib import Path
 
-import configs as Configs
+from configs import configurator as Configs
 
 from core import prepare_env, prepare_memory, prepare_network, prepare_policy, prepare_callbacks
 from marl.dqn import DQNMultiAgent
-from utils import Storage
+from utils.storage import Storage
 
 ###
 

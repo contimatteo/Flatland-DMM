@@ -12,7 +12,7 @@ from rl.callbacks import Visualizer
 
 from marl.callbacks import TrainEpisodeLogger
 from marl.callbacks import TrainIntervalLogger
-from schemes.action import HighLevelAction
+from utils.action  import HighLevelAction
 
 ###
 

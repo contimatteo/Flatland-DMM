@@ -7,10 +7,10 @@ from flatland.core.grid.grid4_utils import get_new_position
 from flatland.envs.rail_env import RailEnv, EnvAgent, Grid4TransitionsEnum, RailAgentStatus
 from flatland.utils.rendertools import AgentRenderVariant, RenderTool
 
-import configs as Configs
+from configs import configurator as Configs
 
-from schemes.action import HighLevelAction
-from schemes.node import Node
+from utils.action import HighLevelAction
+from utils.obs_node import Node
 
 ###
 

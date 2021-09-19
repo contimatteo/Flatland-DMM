@@ -3,7 +3,7 @@ import abc
 
 from tensorflow.keras import Sequential
 
-from utils import Storage
+from utils.storage import Storage
 
 ###
 

@@ -1,8 +1,8 @@
 from gym import Env, spaces
 
-import configs as Configs
+from configs import configurator as Configs
 
-from utils import RailEnvWrapper
+from utils.environment import RailEnvWrapper
 
 ###
 

@@ -1,0 +1,44 @@
+[
+  {
+    "uuid": "config-1",
+
+    "seed": 1,
+    "n_agents": 3,
+
+    "env": {
+      "type": "gym"
+    },
+
+    "agent": {
+      "type": "dqn",
+      "dueling": false,
+      "parameters": {}
+    },
+
+    "policy": {
+      "type": "eps-greedy",
+      "parameters": {}
+    },
+
+    "network": {
+      "type": "sequential-1",
+      "compile": {
+        "optimizer": {
+          "type": "adam",
+          "parameters": {}
+        },
+        "metrics": ["mae"]
+      },
+      "parameters": {}
+    },
+
+    "train": {},
+
+    "callbacks": [
+      {
+        "type": "file-logger",
+        "parameters": {}
+      }
+    ]
+  }
+]

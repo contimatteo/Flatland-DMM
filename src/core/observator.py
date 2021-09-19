@@ -1,9 +1,8 @@
-import random
 from copy import deepcopy
 from typing import Optional, List, Dict
 
-import configs as Configs
 import numpy as np
+
 from flatland.core.env import Environment
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.core.env_prediction_builder import PredictionBuilder
@@ -12,7 +11,8 @@ from flatland.core.grid.grid_utils import coordinate_to_position
 from flatland.envs.agent_utils import RailAgentStatus
 from flatland.utils.ordered_set import OrderedSet
 
-from schemes.node import Node
+from configs import configurator as Configs
+from utils.obs_node import Node
 
 ###
 

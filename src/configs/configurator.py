@@ -1,5 +1,6 @@
 from typing import Mapping
-from schemes.node import Node
+
+from utils.obs_node import Node
 
 #########
 ## APP ##
@@ -55,7 +56,7 @@ RAIL_ENV_REMOVE_AGENTS_AT_TARGET: bool = True
 EMULATOR_ACTIVE: bool = False
 EMULATOR_WINDOW_WIDTH: int = 1200
 EMULATOR_WINDOW_HEIGHT: int = 1200
-EMULATOR_STEP_TIMEBREAK_SECONDS: int = 0.3
+EMULATOR_STEP_TIMEBREAK_SECONDS: int = 0
 
 #########
 ## OBS ##

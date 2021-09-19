@@ -2,7 +2,7 @@ from typing import Dict
 
 import numpy as np
 
-import configs as Configs
+from configs import configurator as Configs
 
 ###
 

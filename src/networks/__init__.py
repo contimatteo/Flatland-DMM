@@ -1,2 +1,2 @@
 from .base import BaseNetwork
-from .sequential import SequentialNetwork
+from .sequential_1 import SequentialNetwork1

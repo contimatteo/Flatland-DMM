@@ -1,7 +1,5 @@
 from typing import Tuple, List
 
-# from datetime import datetime
-# from pathlib import Path
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
 from flatland.envs.malfunction_generators import ParamMalfunctionGen
@@ -10,7 +8,6 @@ from flatland.envs.rail_generators import RailGen
 from flatland.envs.schedule_generators import ScheduleGenerator
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from rl.callbacks import Callback
-# from rl.callbacks import FileLogger
 from rl.policy import Policy
 from rl.policy import LinearAnnealedPolicy
 from rl.policy import SoftmaxPolicy
@@ -20,18 +17,17 @@ from rl.policy import BoltzmannQPolicy
 from rl.policy import MaxBoltzmannQPolicy
 from rl.policy import BoltzmannGumbelQPolicy
 from rl.memory import SequentialMemory
-from tensorflow.keras.callbacks import ModelCheckpoint
 from tensorflow.keras.optimizers import Adam
 from tensorflow.python.keras.optimizer_v2 import optimizer_v2
 
-import configs as Configs
+from configs import configurator as Configs
 
 from core import MarlEnvironment
+from core import BinaryTreeObservator
 from marl.callbacks import FileLogger
 from marl.callbacks import ModelIntervalCheckpoint
 from networks import BaseNetwork
-from networks import SequentialNetwork
-from observators import BinaryTreeObservator
+from networks import SequentialNetwork1
 
 ###
 
@@ -79,7 +75,7 @@ def prepare_env() -> MarlEnvironment:
 def prepare_network(
     env: MarlEnvironment
 ) -> Tuple[BaseNetwork, optimizer_v2.OptimizerV2, List[str]]:
-    network = SequentialNetwork(env.observation_space.shape, env.action_space.n)
+    network = SequentialNetwork1(env.observation_space.shape, env.action_space.n)
     optimizer = Adam()
     metrics = ['mae', 'accuracy']
 

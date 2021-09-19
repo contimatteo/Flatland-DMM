@@ -3,7 +3,7 @@ import numpy as np
 
 from dotenv import load_dotenv
 
-import configs as Configs
+from configs import configurator as Configs
 
 from core import Runner
 
