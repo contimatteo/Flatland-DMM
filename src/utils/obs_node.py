@@ -48,8 +48,6 @@ class Node:
 
     @staticmethod
     def get_n_of_features():
-        ### ISSUE: [@contimatteo] this MUST be changed!
-        # return Configs.OBS_TREE_N_NODES
         return len(Node().__dict__) - 2
 
     def get_attribute_list(self, attr_list=[]):
@@ -107,11 +105,11 @@ class Node:
         subtree_array[subtree_array == -np.inf] = 0
         subtree_array[subtree_array == np.inf] = 0
 
-        if len(subtree_array) != Configs.OBS_TREE_NODE_N_FEATURES * Configs.OBS_TREE_N_NODES + 1:
+        if len(subtree_array) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
             print('\nnumber of node features:', Node.get_n_of_features(),
                   '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES,
                   '\nobs len:', len(subtree_array),
-                  '\nexpected len:', Configs.OBS_TREE_NODE_N_FEATURES * Configs.OBS_TREE_N_NODES + 1)
-            assert len(subtree_array) == Configs.OBS_TREE_NODE_N_FEATURES * Configs.OBS_TREE_N_NODES + 1
+                  '\nexpected len:', (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1))
+            assert len(subtree_array) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
 
         return subtree_array

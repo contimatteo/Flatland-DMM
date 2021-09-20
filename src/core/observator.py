@@ -501,3 +501,9 @@ class BinaryTreeObservator(ObservationBuilder):
 
     def _reverse_dir(self, direction):
         return int((direction + 2) % 4)
+
+
+    def get_observations_len(self) -> int:
+        n_nodes = Configs.OBS_TREE_N_NODES
+        node_n_features = Node.get_n_of_features()
+        return int(node_n_features * n_nodes + 1)

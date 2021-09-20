@@ -1,34 +1,72 @@
 [
   {
-    "uuid": "config-1",
     "seed": 1,
-    "n_agents": 3,
-    "agent": {
-      "type": "dqn",
-      "dueling": false,
-      "parameters": {}
+    "debug": true,
+    "n_agents": 2,
+    "config_uuid": "config-1",
+
+    "rail-env": {
+      "map_width": 28,
+      "map_height": 21,
+      "n_cities": 2,
+      "max_rails_in_city": 1,
+      "max_rails_between_cities": 1,
+      "cities_grid_distribution": false,
+      "malfunction_rate": 0.0001,
+      "malfunction_min_duration": 15,
+      "malfunction_max_duration": 50
     },
+
+    "emulator": {
+      "active": false,
+      "window_width": 1200,
+      "window_height": 1200,
+      "step_timebreak_seconds": 0
+    },
+
+    "observator": {
+      "n_nodes": 3
+    },
+
     "policy": {
       "type": "eps-greedy",
       "parameters": { "eps": 0.1 }
     },
+
+    "agent": {
+      "type": "dqn",
+      "memory_limit": 10000,
+      "parameters": {
+        "dueling_type": "avg",
+        "nb_steps_warmup": 100,
+        "target_model_update": 50,
+        "enable_double_dqn": false,
+        "enable_dueling_network": false
+      }
+    },
+
     "network": {
       "type": "sequential-1",
-      "compile": {
-        "optimizer": {
-          "type": "adam",
-          "parameters": {}
-        },
-        "metrics": ["mae"]
-      },
-      "parameters": {}
-    },
-    "train": {},
-    "callbacks": [
-      {
-        "type": "file-logger",
-        "parameters": {}
+      "parameters": {},
+      "metrics": ["mae"],
+      "optimizer": {
+        "type": "adam",
+        "parameters": {"learning_rate": 0.001}
       }
-    ]
+    },
+
+    "train": {
+      "verbose": 1,
+      "n_min_attempts": 500,
+      "log_interval": 500,
+      "nb_max_episode_steps": 2000,
+
+      "callbacks": [
+        {
+          "type": "file-logger",
+          "parameters": {}
+        }
+      ]
+    }
   }
 ]

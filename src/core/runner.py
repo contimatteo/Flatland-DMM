@@ -11,6 +11,8 @@ from core import prepare_memory
 from core import prepare_network
 from core import prepare_policy
 from core import prepare_callbacks
+from core import prepare_optimizer
+from core import prepare_metrics
 from marl.dqn import DQNMultiAgent
 from utils.storage import Storage
 
@@ -20,8 +22,7 @@ warnings.filterwarnings('ignore')
 
 load_dotenv()
 
-if Configs.APP_SEED is not None:
-    np.random.seed(Configs.APP_SEED)
+np.random.seed(Configs.SEED)
 
 ###
 
@@ -33,22 +34,19 @@ class Runner():
     #
 
     def _prepare_agent(self, env):
-        nb_actions = Configs.N_ACTIONS
-        policy_type = Configs.POLICY_TYPE
-        policy_params = Configs.POLICY_PARAMETERS
-
         env = prepare_env()
+        policy = prepare_policy()
         memory = prepare_memory()
-        policy = prepare_policy(policy_type, policy_params)
-        network, optimizer, metrics = prepare_network(env)
+        metrics = prepare_metrics()
+        network = prepare_network(env)
+        optimizer = prepare_optimizer()
 
         agent = DQNMultiAgent(
             policy=policy,
             memory=memory,
-            nb_actions=nb_actions,
+            nb_actions=Configs.N_ACTIONS,
             model=network.keras_model,
-            target_model_update=Configs.DQN_AGENT_TARGET_MODEL_UPDATE,
-            nb_steps_warmup=Configs.TRAIN_N_STEPS_WARMUP,
+            **Configs.AGENT_PARAMS,
         )
 
         agent.compile(optimizer, metrics=metrics)
@@ -58,13 +56,6 @@ class Runner():
     #
 
     def train(self) -> None:
-        visualize = False
-        nb_steps = Configs.TRAIN_N_STEPS
-        verbose = Configs.DQN_AGENT_TRAIN_VERBOSE
-        max_episode_steps = Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE
-        # log_interval = Configs.TRAIN_N_STEPS_WARMUP * Configs.N_AGENTS
-        log_interval = Configs.TRAIN_LOG_INTERVAL
-
         env = prepare_env()
         agent, network = self._prepare_agent(env)
         callbacks = prepare_callbacks([], network)
@@ -74,22 +65,17 @@ class Runner():
 
         agent.fit(
             env,
-            nb_steps,
-            verbose=verbose,
-            visualize=visualize,
+            Configs.TRAIN_N_STEPS,
+            visualize=False,
             callbacks=callbacks,
-            nb_max_episode_steps=max_episode_steps,
-            log_interval=log_interval,
+            verbose=Configs.TRAIN_VERBOSE,
+            log_interval=Configs.TRAIN_LOG_INTERVAL,
+            nb_max_episode_steps=Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE,
         )
 
         agent.save_weights(network.weights_file_url, overwrite=True)
 
     def test(self):
-        visualize = False
-        nb_episodes = Configs.TEST_N_ATTEMPTS
-        verbose = Configs.DQN_AGENT_TEST_VERBOSE
-        max_episode_steps = Configs.TEST_N_MAX_STEPS_FOR_EPISODE
-
         env = prepare_env()
         agent, network = self._prepare_agent(env)
         callbacks = prepare_callbacks([], network)
@@ -99,9 +85,9 @@ class Runner():
 
         agent.test(
             env,
-            verbose=verbose,
-            visualize=visualize,
+            visualize=False,
             callbacks=callbacks,
-            nb_episodes=nb_episodes,
-            nb_max_episode_steps=max_episode_steps,
+            verbose=Configs.TEST_VERBOSE,
+            nb_episodes=Configs.TEST_N_ATTEMPTS,
+            nb_max_episode_steps=Configs.TEST_N_MAX_STEPS_FOR_EPISODE,
         )
