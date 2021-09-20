@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from configs import configurator as Configurator
@@ -10,11 +11,11 @@ def train(config_filepath: str = None):
     configs = []
 
     if config_filepath is None:
-        root_dir = Path(__file__).parent.parent
+        root_dir = Path(os.path.abspath(__file__)).parent
         default_config_filepath = str(root_dir.joinpath('configs/run.train.json').absolute())
         configs = Configurator.get_configs_from_file(default_config_filepath)
 
-    if len(configs) == 0:
+    if configs is None or len(configs) == 0:
         Configurator.reset()
         
         runner = Runner()
