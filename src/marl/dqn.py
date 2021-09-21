@@ -80,7 +80,7 @@ class AbstractMultiDQNAgent(MultiAgent):
         # self.memory = memory
         self.agents_memory = {}
         for agent_id in range(Configs.N_AGENTS):
-            self.agents_memory[agent_id] = deepcopy(memory) 
+            self.agents_memory[agent_id] = deepcopy(memory)
 
         self.batch_size = batch_size * Configs.N_AGENTS
 
@@ -289,7 +289,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         ### Select an action.
         # state = self.memory.get_recent_state(observation)
         state = self.agents_memory[agent_id].get_recent_state(observation)
-        
+
         q_values = self.compute_q_values(state)
         if self.training:
             action = self.policy.select_action(q_values=q_values)
@@ -310,11 +310,13 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
             for agent_id in range(len(self.recent_observation)):
                 # obs = self.recent_observation[agent_id]
-                obs = { 'agent': agent_id, 'obs': self.recent_observation[agent_id] }
+                obs = {'agent': agent_id, 'obs': self.recent_observation[agent_id]}
                 action = self.recent_action[agent_id]
                 reward = self.recent_reward[agent_id]
                 done = terminal[agent_id] is True if agent_id in terminal else False
-                self.agents_memory[agent_id].append(obs, action, reward, terminal = done, training=self.training)
+                self.agents_memory[agent_id].append(
+                    obs, action, reward, terminal=done, training=self.training
+                )
 
             self.recent_observation = []
             self.recent_action = []
@@ -328,9 +330,6 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
         # Train the network on a single stochastic batch.
         if self.step > self.nb_steps_warmup and self.step % self.train_interval == 0:
-            # experiences = self.memory.sample(self.batch_size)
-            # assert len(experiences) == self.batch_size
-
             experiences = []
             for agent_id in range(Configs.N_AGENTS):
                 exp = self.agents_memory[agent_id].sample(int(self.batch_size / Configs.N_AGENTS))
@@ -428,19 +427,22 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
     @property
     def metrics_names(self):
-        # Throw away individual losses and replace output name since this is hidden from the user.
-        assert len(self.trainable_model.output_names) == 2
-        dummy_output_name = self.trainable_model.output_names[1]
-        model_metrics = [
-            name for idx, name in enumerate(self.trainable_model.metrics_names)
-            if idx not in (1, 2)
-        ]
-        model_metrics = [name.replace(dummy_output_name + '_', '') for name in model_metrics]
+        def m():
+            # Throw away individual losses and replace output name since this is hidden from the user.
+            assert len(self.trainable_model.output_names) == 2
+            dummy_output_name = self.trainable_model.output_names[1]
+            model_metrics = [
+                name for idx, name in enumerate(self.trainable_model.metrics_names)
+                if idx not in (1, 2)
+            ]
+            model_metrics = [name.replace(dummy_output_name + '_', '') for name in model_metrics]
 
-        names = model_metrics + self.policy.metrics_names[:]
-        if self.processor is not None:
-            names += self.processor.metrics_names[:]
-        return names
+            names = model_metrics + self.policy.metrics_names[:]
+            if self.processor is not None:
+                names += self.processor.metrics_names[:]
+            return names
+
+        return m()
 
     @property
     def policy(self):

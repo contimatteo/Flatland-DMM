@@ -124,6 +124,8 @@ class MultiAgent(Agent):
 
                 n_agents = len(observations_dict)
 
+                callbacks.set_model(self)
+
                 ### GET ACTIONS
 
                 actions_dict = {}

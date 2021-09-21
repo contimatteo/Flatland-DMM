@@ -248,6 +248,10 @@ class TrainIntervalLogger(Callback):
         self.info_names = None
         self.episode_rewards = {}
 
+    def set_model(self, model):
+        self.model = model
+        self.metrics_names = self.model.metrics_names
+
     def on_train_begin(self, logs):
         """ Initialize training statistics at beginning of training """
         self.train_start = timeit.default_timer()
@@ -267,8 +271,8 @@ class TrainIntervalLogger(Callback):
         if self.step > 0 and self.step % self.interval == 0:
             ### ISSUE: [@matteo] sometimes {metrics_names} is empty ...
             ### INFO: I've tried to fix it with the following lines
-            if len(self.model.metrics_names) > 0:
-                self.metrics_names = self.model.metrics_names
+            # if len(self.model.metrics_names) > 0:
+            # self.metrics_names = self.model.metrics_names
             assert len(self.metrics_names) > 0
 
             if len(self.episode_rewards.get(agent, [])) > 0:

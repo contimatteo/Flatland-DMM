@@ -9,7 +9,7 @@ import json
 
 N_ACTIONS: int = 3
 
-OBS_TREE_N_NODES: int = 12
+OBS_TREE_N_NODES: int = 25
 
 RAIL_ENV_SPEED_RATION_MAP: Mapping[float, float] = {
     1.: 0.25,  # Fast passenger train
