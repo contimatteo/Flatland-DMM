@@ -2,6 +2,8 @@ import abc
 
 from pathlib import Path
 
+from configs import configurator as Configs
+
 ###
 
 
@@ -22,7 +24,9 @@ class Storage():
 
     @staticmethod
     def _cache_dir() -> Path:
-        return Storage._tmp_dir().joinpath('cache')
+        return Storage._tmp_dir().joinpath(
+            'cache/{}/agents-{}'.format(Configs.CONFIG_UUID, Configs.N_AGENTS)
+        )
 
     @staticmethod
     def _weights_dir() -> Path:

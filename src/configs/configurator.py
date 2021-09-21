@@ -4,12 +4,12 @@ import warnings
 
 import json
 
-from utils.obs_node import Node
-
 ###################################################################################################
 ###################################################################################################
 
 N_ACTIONS: int = 3
+
+OBS_TREE_N_NODES: int = 12
 
 RAIL_ENV_SPEED_RATION_MAP: Mapping[float, float] = {
     1.: 0.25,  # Fast passenger train
@@ -40,8 +40,6 @@ EMULATOR_ACTIVE: bool = None
 EMULATOR_WINDOW_WIDTH: int = None
 EMULATOR_WINDOW_HEIGHT: int = None
 EMULATOR_STEP_TIMEBREAK_SECONDS: int = None
-
-OBS_TREE_N_NODES: int = None
 
 POLICY_TYPE: str = None
 POLICY_PARAMS: dict = None
@@ -93,7 +91,6 @@ def reset():
     global RAIL_ENV_MAX_RAILS_BETWEEN_CITIES, RAIL_ENV_CITIES_GRID_DISTRIBUTION
     global RAIL_ENV_MALFUNCTION_RATE, RAIL_ENV_MALFUNCTION_MIN_DURATION, RAIL_ENV_MALFUNCTION_MAX_DURATION
     global EMULATOR_ACTIVE, EMULATOR_WINDOW_WIDTH, EMULATOR_WINDOW_HEIGHT, EMULATOR_STEP_TIMEBREAK_SECONDS
-    global OBS_TREE_N_NODES
     global POLICY_TYPE, POLICY_PARAMS
     global AGENT_TYPE, AGENT_MEMORY_LIMIT, AGENT_PARAMS
     global NN_TYPE, NN_PARAMS, NN_METRICS, NN_OPTIMIZER_TYPE, NN_OPTIMIZER_PARAMS
@@ -122,8 +119,6 @@ def reset():
     EMULATOR_WINDOW_WIDTH = 1200
     EMULATOR_WINDOW_HEIGHT = 1200
     EMULATOR_STEP_TIMEBREAK_SECONDS = 0
-
-    OBS_TREE_N_NODES = 1 + 2
 
     POLICY_TYPE = 'eps-greedy'
     POLICY_PARAMS = {'eps': 0.05}
@@ -162,7 +157,6 @@ def load_configs(configurations):
     global RAIL_ENV_MAX_RAILS_BETWEEN_CITIES, RAIL_ENV_CITIES_GRID_DISTRIBUTION
     global RAIL_ENV_MALFUNCTION_RATE, RAIL_ENV_MALFUNCTION_MIN_DURATION, RAIL_ENV_MALFUNCTION_MAX_DURATION
     global EMULATOR_ACTIVE, EMULATOR_WINDOW_WIDTH, EMULATOR_WINDOW_HEIGHT, EMULATOR_STEP_TIMEBREAK_SECONDS
-    global OBS_TREE_N_NODES
     global POLICY_TYPE, POLICY_PARAMS
     global AGENT_TYPE, AGENT_MEMORY_LIMIT, AGENT_PARAMS
     global NN_TYPE, NN_PARAMS, NN_METRICS, NN_OPTIMIZER_TYPE, NN_OPTIMIZER_PARAMS
@@ -198,9 +192,6 @@ def load_configs(configurations):
         EMULATOR_WINDOW_WIDTH = configurations['emulator']['window_width']
         EMULATOR_WINDOW_HEIGHT = configurations['emulator']['window_height']
         EMULATOR_STEP_TIMEBREAK_SECONDS = configurations['emulator']['step_timebreak_seconds']
-
-    if 'observator' in configurations:
-        OBS_TREE_N_NODES = configurations['observator']['n_nodes']
 
     if 'policy' in configurations:
         POLICY_TYPE = configurations['policy']['type']
