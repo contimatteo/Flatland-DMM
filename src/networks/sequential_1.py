@@ -21,7 +21,6 @@ class SequentialNetwork1(BaseNetwork):
     def build_model(self) -> Sequential:
         model = Sequential()
 
-        # model.add(Flatten(input_shape=(1, self.input_nodes)))
         model.add(self.input_layer())
 
         model.add(Dense(512, activation="relu"))
@@ -33,7 +32,6 @@ class SequentialNetwork1(BaseNetwork):
         model.add(Dense(8, activation="relu"))
 
         model.add(self.output_layer())
-        # model.add(Dense(self.output_nodes, activation="linear"))
 
         print(model.summary())
 
