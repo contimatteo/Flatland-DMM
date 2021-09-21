@@ -43,7 +43,7 @@ class RailEnvWrapper:
         if Configs.EMULATOR_ACTIVE is True:
             self._emulator = RenderTool(
                 self._rail_env,
-                show_debug=Configs.APP_DEBUG,
+                show_debug=Configs.DEBUG,
                 screen_width=Configs.EMULATOR_WINDOW_WIDTH,
                 screen_height=Configs.EMULATOR_WINDOW_HEIGHT,
                 agent_render_variant=AgentRenderVariant.AGENT_SHOWS_OPTIONS_AND_BOX,
