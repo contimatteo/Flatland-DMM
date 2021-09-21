@@ -130,3 +130,7 @@ dmypy.json
 .vscode/
 .idea/
 /experiments/
+
+# Wandb
+
+src/wandb/

@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 import numpy as np
 import warnings
+import wandb
 
 from configs import configurator as Configs
 from core import prepare_env
@@ -23,6 +24,9 @@ warnings.filterwarnings('ignore')
 load_dotenv()
 
 np.random.seed(Configs.SEED)
+
+wandb.init(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
+# wandb.init(project='flatland', group=Configs.CONFIG_UUID, config={"hyper": "parameter"})
 
 ###
 

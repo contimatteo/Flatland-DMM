@@ -20,6 +20,7 @@ from rl.memory import SequentialMemory
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.optimizers import SGD
 from tensorflow.python.keras.optimizer_v2 import optimizer_v2
+from wandb.keras import WandbCallback
 
 from configs import configurator as Configs
 
@@ -27,6 +28,7 @@ from core import MarlEnvironment
 from core import BinaryTreeObservator
 from marl.callbacks import FileLogger
 from marl.callbacks import ModelIntervalCheckpoint
+from marl.callbacks import WandbLogger
 from networks import BaseNetwork
 from networks import SequentialNetwork1
 
@@ -127,7 +129,7 @@ def prepare_policy() -> Policy:
     if ctype == "linear-annealed":
         policy = LinearAnnealedPolicy(**params)
     elif ctype == "softmax":
-        policy = SoftmaxPolicy(**params)
+        policy = SoftmaxPolicy()
     elif ctype == "eps-greedy":
         policy = EpsGreedyQPolicy(**params)
     elif ctype == "greedy":
@@ -147,6 +149,9 @@ def prepare_policy() -> Policy:
 
 def prepare_callbacks(types: List[str], network: BaseNetwork) -> List[Callback]:
     callbacks = []
+
+    callbacks += [WandbCallback()]
+    callbacks += [WandbLogger()]
 
     ### TODO: [@matteo]
 
