@@ -146,12 +146,12 @@ class RailEnvWrapper:
             obs_node = obs.get(agent_id)
             if not obs_node.left_child:
                 assert obs_node.right_child is not None
-                subtree_list = [1]
-                subtree_list += obs_node.right_child.get_attribute_list(attr_list)
+                first_val = [1]
+                subtree_list = [obs_node.right_child.get_attribute_dict(attr_list)]
                 last = [obs_node.right_child]
             else:
-                subtree_list = [0]
-                subtree_list += obs_node.get_attribute_list(attr_list)
+                first_val = [0]
+                subtree_list = [obs_node.get_attribute_dict(attr_list)]
                 last = [obs_node]
 
             ############################ REWARD PREPARATION ############################
@@ -167,7 +167,7 @@ class RailEnvWrapper:
             p = (obs_node.pos_x, obs_node.pos_y)
             t = agent.target
 
-            attractive_force = 0
+            attractive_force = TARGET_MASS / (last[0].dist_min_to_target * last[0].dist_min_to_target)
             repulsive_force = 0
 
             unusuable_stiches = [0, 0]
@@ -187,7 +187,7 @@ class RailEnvWrapper:
             ############################# NODE EXPLORATION #############################
             # if no attr_list is given, all numerical attributes are given
             visited = []
-            count = 0
+            count = 1
             while True:
                 # the loop is repeated for each depth of tree, starting from 0
                 for i in range(len(last)):
@@ -199,7 +199,8 @@ class RailEnvWrapper:
 
 
                     # observation process
-                    l = [attr for child in child_list for attr in child.get_attribute_list(attr_list)]
+                    l = [child.get_attribute_dict(attr_list) for child in child_list]
+                    # l = [attr for child in child_list for attr in child.get_attribute_list(attr_list)]
                     subtree_list += l
 
                     # reward compute
@@ -232,22 +233,40 @@ class RailEnvWrapper:
 
                 unusuable_stiches = [unusuable_stiches[i // 2] for i in range(len(unusuable_stiches) * 2)]
 
-            #################################### CONCLUSIVE OBSERVATION TRANSFORMATION / NORMALIZATION
+            #################################### CONCLUSIVE OBSERVATION TRANSFORMATION
             # transforming into array
-            subtree_array = np.array(subtree_list)
+            # subtree_array = np.array(subtree_list)
 
             # removing inf
-            subtree_array[subtree_array == -np.inf] = 0
-            subtree_array[subtree_array == np.inf] = 0
+            # subtree_array[subtree_array == -np.inf] = 0
+            # subtree_array[subtree_array == np.inf] = 0
+            ########################### NORMALIZATION
+            node_list = []
+            test_count = 0
+            assert len(subtree_list) == Configs.OBS_TREE_N_NODES
+            for node in subtree_list:
+                normalization_dict = self.get_normalization_dict(node)
+                assert len(node) == Node.get_n_of_features()
+                for attr in node:
+                    test_count += 1
+                    if node[attr] == np.inf: node[attr] = normalization_dict[attr]
 
-            if len(subtree_array) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
+                    node_list.append(node[attr] / normalization_dict[attr])
+                    assert len(node_list) == test_count
+                    assert test_count <= (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES)
+
+            assert len(node_list) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES)
+            node_list = first_val + node_list
+
+            if len(node_list) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
                 print('\nnumber of node features:', Node.get_n_of_features(),
                       '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES,
-                      '\nobs len:', len(subtree_array),
+                      '\nobs len:', len(node_list),
                       '\nexpected len:', Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
-                assert len(subtree_array) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
+            assert len(node_list) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
 
-            obs[agent_id] = subtree_array
+            obs[agent_id] = np.array(node_list)
+            node_list = []
 
             #################################### CONCLUSIVE REWARD TRANSFORMATION / NORMALIZATION
 
@@ -255,12 +274,38 @@ class RailEnvWrapper:
             reward += avg_attractive_force - repulsive_force
             rewards[agent_id] = reward
 
+
         info['action_required2'] = {agent_id: self.action_required(agent_id) for agent_id in
                                               range(self._rail_env.get_num_agents())}
 
         return obs, rewards, info
 
+    def get_normalization_dict(self, node_dict):
 
+        branch_length = node_dict.get("dist_to_next_branch") or 1
+
+        max_n_agents = node_dict.get("num_agents_same_direction") + node_dict.get("num_agents_opposite_direction") or 1
+
+        normalization_dict = {
+            "dist_own_target_encountered": branch_length,
+            "dist_other_target_encountered": branch_length,
+            "dist_other_agent_encountered": branch_length,
+            "dist_potential_conflict": branch_length,
+            "dist_unusable_switch": node_dict.get("tot_unusable_switch") or 1,
+            "tot_unusable_switch": branch_length,
+            "dist_to_next_branch": Configs.RAIL_ENV_MAP_WIDTH + Configs.RAIL_ENV_MAP_HEIGHT,
+            "dist_min_to_target": Configs.RAIL_ENV_MAP_WIDTH + Configs.RAIL_ENV_MAP_HEIGHT,
+            "target_reached": 1,
+            "num_agents_same_direction": branch_length,
+            "num_agents_opposite_direction": branch_length,
+            "num_agents_malfunctioning": max_n_agents,
+            "speed_min_fractional": 1,
+            "num_agents_ready_to_depart": max_n_agents,
+            "pos_x": Configs.RAIL_ENV_MAP_WIDTH,
+            "pos_y": Configs.RAIL_ENV_MAP_HEIGHT,
+        }
+
+        return normalization_dict
 
     def processor_action(self, high_actions):
         low_actions = {}

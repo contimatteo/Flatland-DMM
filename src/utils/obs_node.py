@@ -66,6 +66,17 @@ class Node:
 
         return [self.__dict__.get(attr, None) for attr in attr_list]
 
+    def get_attribute_dict(self, attr_list=[]):
+        if not attr_list:
+            attr_list = list(self.__dict__.keys())  # excluding children attributes
+            attr_list.remove('left_child')
+            attr_list.remove('right_child')
+            attr_list.sort()  # mantaining always the same order
+            assert len(attr_list)==Node.get_n_of_features()
+
+        return {attr: self.__dict__.get(attr, None) for attr in attr_list}
+
+
     # simply returns right and left child
     def get_childs(self):
         return self.left_child, self.right_child
