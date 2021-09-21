@@ -16,9 +16,11 @@ class Node:
         dist_other_target_encountered=np.inf,
         dist_other_agent_encountered=np.inf,
         dist_potential_conflict=np.inf,
-        dist_unusable_switch=np.inf,
+        dist_unusable_switch=0,
+        tot_unusable_switch=0,
         dist_to_next_branch=np.inf,
         dist_min_to_target=np.inf,
+        target_reached=0,
         num_agents_same_direction=0,
         num_agents_opposite_direction=0,
         num_agents_malfunctioning=0,
@@ -45,6 +47,8 @@ class Node:
         self.pos_y = pos_y
         self.speed_min_fractional = speed_min_fractional
         self.right_child = right_child
+        self.tot_unusable_switch = tot_unusable_switch
+        self.target_reached = target_reached
 
     @staticmethod
     def get_n_of_features():
@@ -58,8 +62,20 @@ class Node:
             attr_list.remove('left_child')
             attr_list.remove('right_child')
             attr_list.sort()  # mantaining always the same order
+            assert len(attr_list)==Node.get_n_of_features()
 
         return [self.__dict__.get(attr, None) for attr in attr_list]
+
+    def get_attribute_dict(self, attr_list=[]):
+        if not attr_list:
+            attr_list = list(self.__dict__.keys())  # excluding children attributes
+            attr_list.remove('left_child')
+            attr_list.remove('right_child')
+            attr_list.sort()  # mantaining always the same order
+            assert len(attr_list)==Node.get_n_of_features()
+
+        return {attr: self.__dict__.get(attr, None) for attr in attr_list}
+
 
     # simply returns right and left child
     def get_childs(self):
