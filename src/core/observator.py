@@ -142,15 +142,18 @@ class BinaryTreeObservator(ObservationBuilder):
             dist_other_agent_encountered=0,
             dist_potential_conflict=0,
             dist_unusable_switch=0,
+            tot_unusable_switch=0,
             dist_to_next_branch=0,
             dist_min_to_target=distance_map[(handle, *agent_virtual_position, agent.direction)],
+            target_reached=0,
             num_agents_same_direction=0,
             num_agents_opposite_direction=0,
             num_agents_malfunctioning=agent.malfunction_data['malfunction'],
             speed_min_fractional=agent.speed_data['speed'],
             num_agents_ready_to_depart=0,
             pos_x=agent_virtual_position[0],
-            pos_y=agent_virtual_position[1]
+            pos_y=agent_virtual_position[1],
+
         )
 
         # if in straight, the first node is not saved
@@ -179,7 +182,6 @@ class BinaryTreeObservator(ObservationBuilder):
                 if num_transitions == 1:
                     orientation = np.argmax(possible_transitions)
 
-                dir_enum = enumerate([(i + orientation) % 4 for i in range(0, 4)])
                 direction_to_node_pos = {}
                 for i, branch_direction in enumerate([(orientation + i) % 4 for i in range(0, 4)]):
 
@@ -236,7 +238,7 @@ class BinaryTreeObservator(ObservationBuilder):
             if not queue:
                 print('!!!!!!!!!expanded all the tree!!!!!!!!!\n')
 
-        return root_node_observation.get_subtree_array()
+        return root_node_observation
 
     def _explore_branch(self, handle, position, direction, tot_dist):
 
@@ -252,7 +254,8 @@ class BinaryTreeObservator(ObservationBuilder):
         other_agent_encountered = np.inf
         other_target_encountered = np.inf
         potential_conflict = np.inf
-        unusable_switch = np.inf
+        unusable_switch = 0
+        tot_unusable_switch = 0
         other_agent_same_direction = 0
         other_agent_opposite_direction = 0
         malfunctioning_agent = 0
@@ -391,8 +394,11 @@ class BinaryTreeObservator(ObservationBuilder):
                 num_transitions = np.count_nonzero(cell_transitions)
 
                 # Detect Switches that can only be used by other agents.
-                if total_transitions > 2 > num_transitions and tot_dist < unusable_switch:
-                    unusable_switch = tot_dist
+                if total_transitions > 2 > num_transitions:
+                    tot_unusable_switch += 1
+
+                    if other_agent_opposite_direction == 0:
+                        unusable_switch += 1
 
                 if num_transitions == 1:
                     # Check if dead-end, or if we can go forward along direction
@@ -450,6 +456,9 @@ class BinaryTreeObservator(ObservationBuilder):
                 dist_min_to_target = abs(self.env.agents[handle].target[0] - position[0]) + \
                                      abs(self.env.agents[handle].target[1] - position[1])
 
+            min_fractional_speed = min_fractional_speed / agent.speed_data['speed']
+            if min_fractional_speed > 1: min_fractional_speed = 1
+
             # TreeObsForRailEnv.Node
             node = Node(
                 dist_own_target_encountered=own_target_encountered,
@@ -465,7 +474,9 @@ class BinaryTreeObservator(ObservationBuilder):
                 speed_min_fractional=min_fractional_speed,
                 num_agents_ready_to_depart=other_agent_ready_to_depart_encountered,
                 pos_x=position[0],
-                pos_y=position[1]
+                pos_y=position[1],
+                tot_unusable_switch=tot_unusable_switch,
+                target_reached=int(last_is_target)
             )
 
             return node, position, direction
