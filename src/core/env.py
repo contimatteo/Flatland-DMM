@@ -28,7 +28,8 @@ class MarlEnvironment(Env):
 
     @property
     def observation_space(self):
-        return spaces.Box(low=-1, high=1000, shape=(Configs.OBS_LENGTH, ))
+        obs_shape = (self.observator.get_observations_len(), )
+        return spaces.Box(low=-1, high=1000, shape=obs_shape)
 
     #
 

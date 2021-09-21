@@ -38,8 +38,6 @@ class BinaryTreeObservator(ObservationBuilder):
     For details about the features in the tree observation see the get() function.
     """
 
-    obs_length = Node.get_n_of_features() * Configs.OBS_TREE_N_NODES
-
     tree_explored_actions_char = ['F', 'T']  # F: forward; T: turn
 
     def __init__(self, max_memory: int, predictor: PredictionBuilder = None):
@@ -181,6 +179,19 @@ class BinaryTreeObservator(ObservationBuilder):
                 if num_transitions == 1:
                     orientation = np.argmax(possible_transitions)
 
+                dir_enum = enumerate([(i + orientation) % 4 for i in range(0, 4)])
+                direction_to_node_pos = {}
+                for i, branch_direction in enumerate([(orientation + i) % 4 for i in range(0, 4)]):
+
+                    if possible_transitions[branch_direction]:
+                        if i==0:
+                            direction_to_node_pos['right'] = i
+                        elif i==1:
+                            direction_to_node_pos['left'] = direction_to_node_pos['right']
+                            direction_to_node_pos['right'] = i
+                        elif i==3:
+                            direction_to_node_pos['left'] = i
+
                 # enumerating direction with respect to [forward, right, back, left]
                 for i, branch_direction in enumerate([(orientation + i) % 4 for i in range(0, 4)]):
 
@@ -194,15 +205,11 @@ class BinaryTreeObservator(ObservationBuilder):
                         )
 
                         # check if node_observed is forward
-                        if i == 0:
-                            node.right_child = deepcopy(node_observed)
+                        if i == direction_to_node_pos.get('left', None):
+                            node.left_child = node_observed
                         # check if node_observed is right
-                        elif i == 1:
-                            node.left_child = deepcopy(node.right_child)
-                            node.right_child = deepcopy(node_observed)
-                        # node is left
-                        else:
-                            node.left_child = deepcopy(node_observed)
+                        elif i == direction_to_node_pos.get('right', None):
+                            node.right_child = node_observed
 
                         # print(1)
 
@@ -503,3 +510,9 @@ class BinaryTreeObservator(ObservationBuilder):
 
     def _reverse_dir(self, direction):
         return int((direction + 2) % 4)
+
+
+    def get_observations_len(self) -> int:
+        n_nodes = Configs.OBS_TREE_N_NODES
+        node_n_features = Node.get_n_of_features()
+        return int(node_n_features * n_nodes + 1)

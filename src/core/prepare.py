@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Any
 
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
@@ -18,6 +18,7 @@ from rl.policy import MaxBoltzmannQPolicy
 from rl.policy import BoltzmannGumbelQPolicy
 from rl.memory import SequentialMemory
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import SGD
 from tensorflow.python.keras.optimizer_v2 import optimizer_v2
 
 from configs import configurator as Configs
@@ -38,7 +39,7 @@ def _prepare_observator() -> ObservationBuilder:
 
 def _prepare_rail_generator() -> RailGen:
     return sparse_rail_generator(
-        seed=Configs.APP_SEED,
+        seed=Configs.SEED,
         max_num_cities=Configs.RAIL_ENV_N_CITIES,
         grid_mode=Configs.RAIL_ENV_CITIES_GRID_DISTRIBUTION,
         max_rails_between_cities=Configs.RAIL_ENV_MAX_RAILS_BETWEEN_CITIES,
@@ -72,46 +73,82 @@ def prepare_env() -> MarlEnvironment:
     )
 
 
-def prepare_network(
-    env: MarlEnvironment
-) -> Tuple[BaseNetwork, optimizer_v2.OptimizerV2, List[str]]:
-    network = SequentialNetwork1(env.observation_space.shape, env.action_space.n)
-    optimizer = Adam()
-    metrics = ['mae', 'accuracy']
+def prepare_network(env: MarlEnvironment) -> BaseNetwork:
+    network = None
 
-    return network, optimizer, metrics
+    ctype = Configs.NN_TYPE
+    params = Configs.NN_PARAMS
+
+    if ctype == "sequential-1":
+        network = SequentialNetwork1(env.observation_space.shape, env.action_space.n, **params)
+
+    if network is None:
+        raise Exception(f"invalid network type '{ctype}' value.")
+
+    return network
+
+
+def prepare_optimizer() -> optimizer_v2.OptimizerV2:
+    optimizer = None
+
+    ctype = Configs.NN_OPTIMIZER_TYPE
+    params = Configs.NN_OPTIMIZER_PARAMS
+
+    if ctype == "adam":
+        optimizer = Adam(**params)
+    elif ctype == 'sgd':
+        optimizer = SGD(**params)
+
+    if optimizer is None:
+        raise Exception(f"invalid optimizer type '{ctype}' value.")
+
+    return optimizer
+
+
+def prepare_metrics() -> List[str]:
+    metrics = Configs.NN_METRICS
+
+    if 'mae' not in metrics:
+        metrics += ['mae']
+
+    return metrics
 
 
 def prepare_memory():
-    return SequentialMemory(limit=Configs.DQN_AGENT_MEMORY_LIMIT, window_length=1)
+    return SequentialMemory(limit=Configs.AGENT_MEMORY_LIMIT, window_length=1)
 
 
-def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
+def prepare_policy() -> Policy:
     policy = None
 
-    if policy_type == "linear-annealed":
-        policy = LinearAnnealedPolicy(*args, **kwargs)
-    elif policy_type == "softmax":
-        policy = SoftmaxPolicy(*args, **kwargs)
-    elif policy_type == "eps-greedy":
-        policy = EpsGreedyQPolicy(*args, **kwargs)
-    elif policy_type == "greedy":
-        policy = GreedyQPolicy(*args, **kwargs)
-    elif policy_type == "boltzmann":
-        policy = BoltzmannQPolicy(*args, **kwargs)
-    elif policy_type == "max-boltzmann":
-        policy = MaxBoltzmannQPolicy(*args, **kwargs)
-    elif policy_type == "boltzmann-gumbel":
-        policy = BoltzmannGumbelQPolicy(*args, **kwargs)
+    ctype = Configs.POLICY_TYPE
+    params = Configs.POLICY_PARAMS
+
+    if ctype == "linear-annealed":
+        policy = LinearAnnealedPolicy(**params)
+    elif ctype == "softmax":
+        policy = SoftmaxPolicy(**params)
+    elif ctype == "eps-greedy":
+        policy = EpsGreedyQPolicy(**params)
+    elif ctype == "greedy":
+        policy = GreedyQPolicy(**params)
+    elif ctype == "boltzmann":
+        policy = BoltzmannQPolicy(**params)
+    elif ctype == "max-boltzmann":
+        policy = MaxBoltzmannQPolicy(**params)
+    elif ctype == "boltzmann-gumbel":
+        policy = BoltzmannGumbelQPolicy(**params)
 
     if policy is None:
-        raise Exception(f"invalid policy type '{policy_type}' value.")
+        raise Exception(f"invalid policy type '{ctype}' value.")
 
     return policy
 
 
 def prepare_callbacks(types: List[str], network: BaseNetwork) -> List[Callback]:
     callbacks = []
+
+    ### TODO: [@matteo]
 
     # log_filename = './tmp/logs/dqn/'
     # Path(log_filename).mkdir(parents=True, exist_ok=True)

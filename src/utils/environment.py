@@ -35,7 +35,7 @@ class RailEnvWrapper:
             # malfunction_generator_and_process_data=None,
             malfunction_generator=self._malfunction_generator,
             remove_agents_at_target=Configs.RAIL_ENV_REMOVE_AGENTS_AT_TARGET,
-            random_seed=Configs.APP_SEED,
+            random_seed=Configs.SEED,
             # record_steps=False,
             # close_following=True
         )
