@@ -166,9 +166,12 @@ def load_configs(configurations):
 
     ###
 
-    DEBUG = bool(configurations['debug'])
-    N_AGENTS = configurations['n_agents']
-    CONFIG_UUID = configurations['config_uuid']
+    if 'debug' in configurations:
+        DEBUG = bool(configurations['debug'])
+    if 'n_agents' in configurations:
+        N_AGENTS = configurations['n_agents']
+    if 'config_uuid' in configurations:
+        CONFIG_UUID = configurations['config_uuid']
 
     assert isinstance(DEBUG, bool)
     assert isinstance(N_AGENTS, int) and N_AGENTS > 0

@@ -12,7 +12,7 @@ def run(config_filepath: str = None):
 
     if config_filepath is None:
         root_dir = Path(os.path.abspath(__file__)).parent
-        default_config_filepath = str(root_dir.joinpath('configs/run.train.json').absolute())
+        default_config_filepath = str(root_dir.joinpath('configs/run.test.json').absolute())
         configs = Configurator.get_configs_from_file(default_config_filepath)
 
     if configs is None or len(configs) == 0:
@@ -25,8 +25,9 @@ def run(config_filepath: str = None):
         if 'test' in configs:
             runner.test()
     else:
+        Configurator.reset()
+        
         for config in configs:
-            Configurator.reset()
             Configurator.load_configs(config)
 
             runner = Runner()

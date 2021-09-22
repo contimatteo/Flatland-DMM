@@ -1,3 +1,4 @@
+from copy import deepcopy
 import time
 import numpy as np
 
@@ -130,7 +131,9 @@ class RailEnvWrapper:
     def step(self, high_actions: Dict[int, int]) -> Tuple[Dict[int, Node], Dict[int, float]]:
         low_actions = self.processor_action(high_actions)
 
-        observations, rewards, self._done, info = self._rail_env.step(low_actions)
+        observations, rewards, done, info = self._rail_env.step(low_actions)
+
+        self._done = deepcopy(done)
 
         observations, rewards, self._info = self.processor_step(observations, info)
 
@@ -143,10 +146,16 @@ class RailEnvWrapper:
     def processor_step(self, obs, info, attr_list=[]):
         rewards = {}
         for agent_id in range(len(obs)):
+            obs_node = obs.get(agent_id)
+            TARGET_MASS = 1000
+
+            if obs_node is None:
+                rewards[agent_id] = TARGET_MASS * 2
+                continue
+
             ########################## OBSERVATION PREPARATION ##########################
             # attr_list is supposed to be a list of str (attribute names)
             # only the first node is supposed to have only one child
-            obs_node = obs.get(agent_id)
             if not obs_node.left_child:
                 assert obs_node.right_child is not None
                 first_val = [1]
@@ -160,19 +169,21 @@ class RailEnvWrapper:
             ############################ REWARD PREPARATION ############################
 
             reward = 0
-            TARGET_MASS = 1000
             AGENT_MASS = 1
             agent = self.get_agent(agent_id)
 
             if agent.status == RailAgentStatus.DONE:
-                reward += 10000
+                reward += TARGET_MASS * 2
 
             p = (obs_node.pos_x, obs_node.pos_y)
             t = agent.target
 
-            attractive_force = TARGET_MASS / (
-                last[0].dist_min_to_target * last[0].dist_min_to_target
-            )
+            if last[0].dist_min_to_target == 0:
+                attractive_force = TARGET_MASS * 2
+            else:
+                attractive_force = TARGET_MASS / (
+                    last[0].dist_min_to_target * last[0].dist_min_to_target
+                )
             repulsive_force = 0
 
             unusuable_stiches = [0, 0]
@@ -335,10 +346,16 @@ class RailEnvWrapper:
         get_transitions = self._rail_env.rail.get_transitions
 
         agent = self.get_agent(idx_agent)
-        pos = self.get_agent_position(agent)
-        dir = self.get_agent_direction(agent)
 
-        t = get_transitions(*pos, dir)
+        if agent.status == RailAgentStatus.DONE:
+            return True
+        elif agent.status == RailAgentStatus.DONE_REMOVED:
+            return False
+
+        pos = self.get_agent_position(agent)
+        direction = self.get_agent_direction(agent)
+
+        t = get_transitions(*pos, direction)
 
         # if more than one transition possible we are in switch
         if np.count_nonzero(t) > 1:
@@ -347,10 +364,10 @@ class RailEnvWrapper:
         # if here, then we are in a straight cell
         # check if next is a switch
 
-        dir = t.index(1)
-        pos = get_new_position(pos, dir)
+        direction = t.index(1)
+        pos = get_new_position(pos, direction)
 
-        t = get_transitions(*pos, dir)
+        t = get_transitions(*pos, direction)
 
         # if more than one transition possible we are in switch
         if np.count_nonzero(t) > 1:

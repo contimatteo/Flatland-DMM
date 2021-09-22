@@ -17,7 +17,6 @@ from rl.util import get_soft_target_model_updates
 from rl.util import clone_model
 from rl.util import huber_loss
 
-
 ###
 
 
@@ -304,17 +303,17 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         return action
 
     def backward(self, rewards, terminal):
-
         self.recent_reward += rewards
         # Store most recent experience in memory.
         if self.step % self.memory_interval == 0:
+            assert len(self.recent_observation) > 0
 
             for agent_id in range(len(self.recent_observation)):
                 # obs = self.recent_observation[agent_id]
                 obs = {'agent': agent_id, 'obs': self.recent_observation[agent_id]}
                 action = self.recent_action[agent_id]
                 reward = self.recent_reward[agent_id]
-                done = terminal[agent_id] is True if agent_id in terminal else False
+                done = True if agent_id in terminal and terminal[agent_id] is True else False
                 self.agents_memory[agent_id].append(
                     obs, action, reward, terminal=done, training=self.training
                 )
