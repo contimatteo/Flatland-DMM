@@ -6,7 +6,6 @@ from tensorflow.keras.callbacks import History
 from rl.core import Agent
 from rl.callbacks import CallbackList
 from rl.callbacks import TrainIntervalLogger
-# from rl.callbacks import TrainEpisodeLogger
 from rl.callbacks import TestLogger
 
 from marl.callbacks import TrainEpisodeLogger
@@ -30,8 +29,7 @@ class MultiAgent(Agent):
             }
 
     def _run_callbacks(
-        self, verbose, callbacks, env, training, episode, steps, episode_steps, nb_steps,
-        nb_episodes, log_interval
+        self, verbose, callbacks, env, training, episode, steps, nb_steps, nb_episodes, log_interval
     ):
         callbacks_funcs = [] if not callbacks else callbacks[:]
 
@@ -74,14 +72,17 @@ class MultiAgent(Agent):
             ep_actions = self.callbacks_history[agent_id]['actions']
             ep_observations = self.callbacks_history[agent_id]['observations']
             ep_rewards = self.callbacks_history[agent_id]['rewards']
-            assert len(ep_observations) == episode_steps
             assert len(ep_observations) == len(ep_rewards)
             assert len(ep_observations) == len(ep_actions)
 
+            episode_steps = len(ep_observations)
+
             episode_reward = self.callbacks_history[agent_id]['episode_reward']
             target_reached = self.callbacks_history[agent_id]['target_reached']
+            target_reached_in_steps = self.callbacks_history[agent_id]['target_reached_in_steps']
             assert isinstance(episode_reward, float)
             assert isinstance(target_reached, bool)
+            assert isinstance(target_reached_in_steps, int)
 
             ep_metrics = self.callbacks_history[agent_id]['metrics']
 
@@ -125,6 +126,7 @@ class MultiAgent(Agent):
                     'nb_steps': steps,
                     'target_reached': 1 if target_reached is True else 0,
                     'episode_reward': episode_reward,
+                    'target_reached_in_steps': target_reached_in_steps,
                     'nb_episode_steps': episode_steps,
                 }
             )
@@ -222,6 +224,8 @@ class MultiAgent(Agent):
                 actions_dict = {}
 
                 for agent_id in agents_ids:
+                    ### This is were all of the work happens. We first perceive and compute the
+                    ### action (forward step) and then use the reward to improve (backward step).
                     act = self.forward(observations_dict.get(agent_id), agent_id)
 
                     if self.processor is not None:
@@ -292,15 +296,17 @@ class MultiAgent(Agent):
 
                 if len(agents_ids) > 0:
                     metrics = self.backward(rewards_dict, terminal=deepcopy(done_dict))
-                    # metrics = list(metrics)
-                    # if len(metrics) < 1:
-                    #     metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
-
-                metrics = np.array(metrics)
+                #     metrics = list(metrics)
+                #     if len(metrics) < 1:
+                #         metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
+                # metrics = np.array(metrics)
 
                 ### CALLBAKCS HISTORY
 
                 for agent_id in agents_ids:
+                    if observations_dict[agent_id] is None:
+                        continue
+
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
@@ -314,8 +320,9 @@ class MultiAgent(Agent):
                     if done_dict[agent_id] is True:
                         if self.callbacks_history[agent_id]['target_reached'] is False:
                             self.callbacks_history[agent_id]['target_reached'] = True
-                            self.callbacks_history[agent_id]['target_reached_in_steps'
-                                                             ] = episode_step
+                            self.callbacks_history[agent_id]['target_reached_in_steps'] = int(
+                                episode_step
+                            )
 
                 ###
 
@@ -339,11 +346,11 @@ class MultiAgent(Agent):
                         all_terminal = {i: False for i in agents_ids}
                         self.backward([0. for _ in agents_ids], terminal=all_terminal)
 
-                    ## CALLBACKS HISTORY
-                    # self._run_callbacks(
-                    #     verbose, callbacks, env, True, episode, int(self.step), episode_step,
-                    #     nb_steps, None, log_interval
-                    # )
+                    ### CALLBACKS HISTORY
+                    self._run_callbacks(
+                        verbose, callbacks, env, True, episode, self.step, nb_steps, None,
+                        log_interval
+                    )
 
                     ###
 
@@ -397,7 +404,6 @@ class MultiAgent(Agent):
         ###
 
         self.step = 0
-        n_agents = None
 
         for episode in range(nb_episodes):
             episode_step = 0
@@ -408,10 +414,12 @@ class MultiAgent(Agent):
 
             ### obtain the initial observation by resetting the environment.
             observations_dict = env.reset()
-            n_agents = len(observations_dict)
+            agents_ids = [
+                agent_id for (agent_id, obs) in observations_dict.items() if obs is not None
+            ]
 
             ### CALLBACK HISTORY
-            self._reset_callbacks_history(n_agents)
+            self._reset_callbacks_history(agents_ids)
 
             observations_dict = deepcopy(observations_dict)
             if self.processor is not None:
@@ -423,15 +431,16 @@ class MultiAgent(Agent):
 
             ### run the episode until we're done.
             while not all_done:
-                n_agents = len(observations_dict)
+                agents_ids = [
+                    agent_id for (agent_id, obs) in observations_dict.items() if obs is not None
+                ]
 
                 actions_dict = {}
 
-                for agent_id in range(n_agents):
+                for agent_id in agents_ids:
                     ### This is were all of the work happens. We first perceive and compute the
                     ### action (forward step) and then use the reward to improve (backward step).
-                    if env._env.get_info()['action_required2'][agent_id]:
-                        act = self.forward(observations_dict.get(agent_id), agent_id)
+                    act = self.forward(observations_dict.get(agent_id), agent_id)
 
                     if self.processor is not None:
                         act = self.processor.process_action(act)
@@ -453,9 +462,8 @@ class MultiAgent(Agent):
 
                 ### COLLECT INFO
 
-                accumulated_info = {}
-
-                # for agent_id in range(n_agents):
+                # accumulated_info = {}
+                # for agent_id in agents_ids:
                 # for key, value in info_dict.items():
                 #     if not np.isreal(value):
                 #         continue
@@ -465,7 +473,7 @@ class MultiAgent(Agent):
 
                 ### COLLECT REWARDS
 
-                for agent_id in range(n_agents):
+                for agent_id in agents_ids:
                     episode_rewards_dict[
                         agent_id] = episode_rewards_dict.get(agent_id, 0) + rewards_dict[agent_id]
 
@@ -476,25 +484,43 @@ class MultiAgent(Agent):
                 if done_dict.get('__all__', False) is True:
                     all_done = True
 
-                if all_done is False:
-                    done_dict_values_as_sum = 0
-                    for agent_id in range(n_agents):
-                        done_dict_values_as_sum += int(done_dict.get(agent_id, False))
-                    if done_dict_values_as_sum == n_agents:
-                        all_done = True
+                # if all_done is False:
+                #     done_dict_values_as_sum = 0
+                #     for agent_id in agents_ids:
+                #         done_dict_values_as_sum += int(done_dict.get(agent_id, False))
+                #     if done_dict_values_as_sum == len(agents_ids):
+                #         all_done = True
 
                 if all_done is False:
                     if nb_max_episode_steps and episode_step >= nb_max_episode_steps - 1:
                         ### force a terminal state.
                         all_done = True
 
+                # if all_done is False:
+                #     try:
+                #         if episode_step + 1 >= env._env._rail_env._max_episode_steps:
+                #             ### force a terminal state.
+                #             all_done = True
+                #     except Exception:
+                #         pass
+
                 ### TESTING
 
-                metrics = self.backward(rewards_dict, terminal=done_dict)
+                metrics = []
+
+                if len(agents_ids) > 0:
+                    metrics = self.backward(rewards_dict, terminal=done_dict)
+                    metrics = list(metrics)
+                    if len(metrics) < 1:
+                        metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
+                metrics = np.array(metrics)
 
                 ### CALLBAKCS HISTORY
 
-                for agent_id in range(n_agents):
+                for agent_id in agents_ids:
+                    if observations_dict[agent_id] is None:
+                        continue
+
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
@@ -508,15 +534,20 @@ class MultiAgent(Agent):
                     if done_dict[agent_id] is True:
                         if self.callbacks_history[agent_id]['target_reached'] is False:
                             self.callbacks_history[agent_id]['target_reached'] = True
-                            self.callbacks_history[agent_id]['target_reached_in_steps'
-                                                             ] = episode_step
+                            self.callbacks_history[agent_id]['target_reached_in_steps'] = int(
+                                episode_step
+                            )
 
                 episode_step += 1
                 self.step += 1
 
             ###
 
-            for agent_id in range(n_agents):
+            agents_ids = [
+                agent_id for (agent_id, obs) in observations_dict.items() if obs is not None
+            ]
+
+            for agent_id in agents_ids:
                 self.forward(observations_dict.get(agent_id), agent_id)
 
             ### We are in a terminal state but the agent hasn't yet seen it. We therefore
@@ -524,13 +555,13 @@ class MultiAgent(Agent):
             ### resetting the environment. We need to pass in `terminal=False` here since
             ### the *next* state, that is the state of the newly reset environment, is
             ### always non-terminal by convention.
-            all_terminal = {i: False for i in range(n_agents)}
-            self.backward([0. for _ in range(n_agents)], terminal=all_terminal)
+            if len(agents_ids) > 0:
+                all_terminal = {i: False for i in agents_ids}
+                self.backward([0. for _ in agents_ids], terminal=all_terminal)
 
             ### CALLBACKS HISTORY
             self._run_callbacks(
-                verbose, callbacks, env, False, episode, self.step, episode_step, None, nb_episodes,
-                None
+                verbose, callbacks, env, False, episode, self.step, None, nb_episodes, None
             )
 
         return self.callbacks_history

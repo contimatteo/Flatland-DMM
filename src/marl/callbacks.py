@@ -87,6 +87,7 @@ class WandbLogger(KerasCallback):
                 # 'obs_max': np.max(self.observations[episode]),
                 'steps': logs['steps'],
                 'target_reached': logs['target_reached'],
+                'target_reached_in_steps': logs['target_reached_in_steps'],
                 'episode_reward': logs['episode_reward'],
                 **metrics_dict
             }
@@ -168,18 +169,18 @@ class TrainEpisodeLogger(KerasCallback):
 
         nb_step_digits = str(int(np.ceil(np.log10(self.params['nb_steps']))) + 1)
         # template = '{step: nb_step_digits}/{nb_steps}: episode: {episode}, duration: {duration:.3f}s, episode steps: {episode_steps}, steps per second: {sps:.0f}, episode reward: {episode_reward:.3f}, mean reward: {reward_mean:.3f} [{reward_min:.3f}, {reward_max:.3f}], mean action: {action_mean:.3f} [{action_min:.3f}, {action_max:.3f}], mean observation: {obs_mean:.3f} [{obs_min:.3f}, {obs_max:.3f}], {metrics}'
-        template = '(( episode: {episode}, step: {steps}/{nb_steps}   ---   duration: {duration:.3f}s,  episode_steps: {episode_steps}, sps: {sps:.0f}   ---   target_reached: {target_reached}, episode_reward: {episode_reward:.3f}, mean_reward: {reward_mean:.3f}   ---   metrics: {metrics} ))'
+        template = '(( episode: {episode}, step: {steps}/{nb_steps}, episode_steps: {episode_steps}   ---   target_reached: {target_reached}, target_reached_in_steps: {target_reached_in_steps}   ---   episode_reward: {episode_reward:.3f}, mean_reward: {reward_mean:.3f}   ---   metrics: {metrics} ))'
         variables = {
             # 'step': self.step,
             'nb_steps': self.params['nb_steps'],
             'episode': episode + 1,
-            'duration': duration,
+            # 'duration': duration,
             'episode_steps': episode_steps,
-            'sps': float(episode_steps) / duration,
+            # 'sps': float(episode_steps) / duration,
             # 'episode_reward_sum': np.sum(self.rewards[episode]),
             'reward_mean': np.mean(self.rewards[episode]),
-            'reward_min': np.min(self.rewards[episode]),
-            'reward_max': np.max(self.rewards[episode]),
+            # 'reward_min': np.min(self.rewards[episode]),
+            # 'reward_max': np.max(self.rewards[episode]),
             # 'action_mean': np.mean(self.actions[episode]),
             # 'action_min': np.min(self.actions[episode]),
             # 'action_max': np.max(self.actions[episode]),
@@ -188,6 +189,7 @@ class TrainEpisodeLogger(KerasCallback):
             # 'obs_max': np.max(self.observations[episode]),
             'steps': logs['steps'],
             'target_reached': logs['target_reached'],
+            'target_reached_in_steps': logs['target_reached_in_steps'],
             'episode_reward': logs['episode_reward'],
             'metrics': metrics_text,
         }
