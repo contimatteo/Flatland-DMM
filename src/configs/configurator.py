@@ -166,7 +166,7 @@ def load_configs(configurations):
 
     ###
 
-    DEBUG = bool(configurations['seed'])
+    DEBUG = bool(configurations['debug'])
     N_AGENTS = configurations['n_agents']
     CONFIG_UUID = configurations['config_uuid']
 
