@@ -33,6 +33,7 @@ from core import BinaryTreeObservator
 from marl.callbacks import WandbLogger
 from networks import BaseNetwork
 from networks import SequentialNetwork1
+from networks.conv1d_dense import Conv1DDenseNetwork
 
 ###
 
@@ -85,6 +86,8 @@ def prepare_network(env: MarlEnvironment) -> BaseNetwork:
 
     if ctype == "sequential-1":
         network = SequentialNetwork1(env.observation_space.shape, env.action_space.n, **params)
+    elif ctype == 'conv1d_dense':
+        network = Conv1DDenseNetwork(env.observation_space.shape, env.action_space.n, **params)
 
     if network is None:
         raise Exception(f"invalid network type '{ctype}' value.")
