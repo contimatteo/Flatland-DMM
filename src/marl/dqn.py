@@ -262,6 +262,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         ]
         trainable_model.compile(optimizer=optimizer, loss=losses, metrics=combined_metrics)
         self.trainable_model = trainable_model
+        self.trainable_model_metrics = metrics
 
         self.compiled = True
 

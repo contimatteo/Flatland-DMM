@@ -17,6 +17,8 @@ yapf
 numpy
 python-dotenv
 keras-rl2
+scikit-learn
+wandb
 
 #############################
 ## Versioned

@@ -7,17 +7,126 @@ from rl.core import Agent
 from rl.callbacks import CallbackList
 from rl.callbacks import TestLogger
 # from rl.callbacks import TrainEpisodeLogger
-# from rl.callbacks import TrainIntervalLogger
+from rl.callbacks import TrainIntervalLogger
 from rl.callbacks import Visualizer
 
 from marl.callbacks import TrainEpisodeLogger
-from marl.callbacks import TrainIntervalLogger
-from utils.action  import HighLevelAction
+# from marl.callbacks import TrainIntervalLogger
+from utils.action import HighLevelAction
 
 ###
 
 
 class MultiAgent(Agent):
+    def _reset_callbacks_history(self, n_agents):
+        for agent_id in range(n_agents):
+            self.callbacks_history[agent_id] = {
+                "actions": [],
+                "metrics": [],
+                "observations": [],
+                "rewards": [],
+                "episode_reward": None,
+                "target_reached": False,
+            }
+
+    def _run_callbacks(self, verbose, callbacks, log_interval, nb_steps, step, env, episode):
+        callbacks_funcs = [] if not callbacks else callbacks[:]
+
+        if verbose == 1:
+            callbacks_funcs += [TrainIntervalLogger(interval=log_interval)]
+        elif verbose > 1:
+            callbacks_funcs += [TrainEpisodeLogger()]
+        # if visualize:
+        #     callbacks_funcs += [Visualizer()]
+
+        history = History()
+        callbacks_funcs += [history]
+
+        ### create the callbacks handler
+        callbacks = CallbackList(callbacks=callbacks_funcs)
+
+        if hasattr(callbacks, 'set_model'):
+            callbacks.set_model(self)
+        if hasattr(callbacks, 'set_params'):
+            callbacks.set_params({'nb_steps': nb_steps})
+
+        callbacks._set_env(env)
+        callbacks.set_model(self)
+
+        ###
+
+        n_agents = len(self.callbacks_history.keys())
+
+        ###
+
+        ### train
+        self._on_train_begin()
+        callbacks.on_train_begin()
+
+        for agent_id in range(n_agents):
+            ep_actions = self.callbacks_history[agent_id]['actions']
+            ep_metrics = self.callbacks_history[agent_id]['metrics']
+            ep_observations = self.callbacks_history[agent_id]['observations']
+            ep_rewards = self.callbacks_history[agent_id]['rewards']
+            assert len(ep_observations) == len(ep_rewards)
+            assert len(ep_observations) == len(ep_actions)
+
+            episode_reward = self.callbacks_history[agent_id]['episode_reward']
+            target_reached = self.callbacks_history[agent_id]['target_reached']
+            assert isinstance(episode_reward, float)
+            assert isinstance(target_reached, bool)
+
+            episode_steps = len(ep_observations)
+
+            ### episode
+            callbacks.on_episode_begin(episode, logs={})
+
+            for episode_step in range(episode_steps):
+                observation = ep_observations[episode_step]
+                action = ep_actions[episode_step]
+                reward = ep_rewards[episode_step]
+                metrics = ep_metrics[episode_step]
+
+                assert isinstance(observation, (list, np.ndarray))
+                assert isinstance(action, (int, np.uint, np.int32, np.int64))
+                assert isinstance(reward, (float, np.float32, np.float64))
+                assert isinstance(metrics, (list, np.ndarray))
+
+                ### step
+                callbacks.on_step_begin(episode_step, logs={})
+
+                ### action
+                callbacks.on_action_begin(action, logs={})
+                callbacks.on_action_end(action, logs={})
+
+                ### step
+                callbacks.on_step_end(
+                    episode_step, {
+                        'action': action,
+                        'observation': observation,
+                        'reward': reward,
+                        'metrics': metrics,
+                        'episode': episode,
+                        'info': {},
+                    }
+                )
+
+            ### episode
+            callbacks.on_episode_end(
+                episode, {
+                    'nb_steps': step,
+                    'target_reached': target_reached,
+                    'episode_reward': episode_reward,
+                    'nb_episode_steps': episode_steps,
+                }
+            )
+
+        ### train
+        callbacks.on_train_end(logs={'did_abort': None})  # TODO: ...
+        self._on_train_end()
+
+    #
+
     def fit(
         self,
         env,
@@ -33,6 +142,8 @@ class MultiAgent(Agent):
         """
         """
         self.training = True
+
+        self.callbacks_history = {}
 
         ### VALIDATION
 
@@ -51,40 +162,7 @@ class MultiAgent(Agent):
             error_msg = 'Your tried to fit your agent but it hasn\'t been compiled yet.'
             raise RuntimeError(error_msg)
 
-        ### CALLBACKS
-
-        callbacks_funcs = [] if not callbacks else callbacks[:]
-
-        if verbose == 1:
-            callbacks_funcs += [TrainIntervalLogger(interval=log_interval)]
-        elif verbose > 1:
-            callbacks_funcs += [TrainEpisodeLogger()]
-        if visualize:
-            callbacks_funcs += [Visualizer()]
-
-        history = History()
-        callbacks_funcs += [history]
-
-        ### create the callbacks handler
-        callbacks = CallbackList(callbacks=callbacks_funcs)
-
-        if hasattr(callbacks, 'set_model'):
-            callbacks.set_model(self)
-        # else: callbacks._set_model(self)
-
-        callbacks._set_env(env)  # TODO: check this ...
-
-        params = {'nb_steps': nb_steps}
-        if hasattr(callbacks, 'set_params'):
-            callbacks.set_params(params)
-        # else: callbacks._set_params(params)
-
         ###
-
-        self._on_train_begin()
-
-        ### callback (call)
-        callbacks.on_train_begin()
 
         did_abort = False
         episode_step = None
@@ -104,12 +182,11 @@ class MultiAgent(Agent):
 
                     ### Obtain the initial observation by resetting the environment.
                     observations_dict = env.reset()
-
                     n_agents = len(observations_dict)
 
-                    for agent_id in range(n_agents):
-                        ### callback (call)
-                        callbacks.on_episode_begin(episode, logs={'agent': agent_id})
+                    ### CALLBACK HISTORY
+
+                    self._reset_callbacks_history(n_agents)
 
                     observations_dict = deepcopy(observations_dict)
                     if self.processor is not None:
@@ -124,17 +201,12 @@ class MultiAgent(Agent):
 
                 n_agents = len(observations_dict)
 
-                callbacks.set_model(self)
-
                 ### GET ACTIONS
 
                 actions_dict = {}
                 self.meaningful = []
 
                 for agent_id in range(n_agents):
-                    ### callback (call)
-                    callbacks.on_step_begin(episode_step, logs={'agent': agent_id})
-
                     ### This is were all of the work happens. We first perceive and compute the
                     ### action (forward step) and then use the reward to improve (backward step).
                     if env._env.get_info()['action_required2'][agent_id]:
@@ -146,9 +218,6 @@ class MultiAgent(Agent):
                     if self.processor is not None:
                         act = self.processor.process_action(act)
                     actions_dict[agent_id] = act
-
-                    ### callback (call)
-                    callbacks.on_action_begin(action=act)
 
                 ### APPLY ACTIONS
 
@@ -166,8 +235,7 @@ class MultiAgent(Agent):
 
                 ### COLLECT INFO
 
-                accumulated_info = {}
-
+                # accumulated_info = {}
                 # for agent_id in range(n_agents):
                 # for key, value in info_dict.items():
                 #     if not np.isreal(value):
@@ -181,12 +249,6 @@ class MultiAgent(Agent):
                 for agent_id in range(n_agents):
                     episode_rewards_dict[
                         agent_id] = episode_rewards_dict.get(agent_id, 0) + rewards_dict[agent_id]
-
-                ###
-
-                for agent_id in range(n_agents):
-                    ### callback (call)
-                    callbacks.on_action_end(actions_dict.get(agent_id))
 
                 ### STEP TERMINATION CONDITIONS
 
@@ -209,59 +271,56 @@ class MultiAgent(Agent):
 
                 ### TRAINING
 
-                ### TODO: reason about calling this for each agent.
                 meaningful_rewards = [rewards_dict[k] for k in self.meaningful]
                 metrics = self.backward(meaningful_rewards, terminal=done_dict)
 
-                ### METRICS
+                metrics = list(metrics)
+                if len(metrics) < 1:
+                    metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
+                metrics = np.array(metrics)
+
+                ### CALLBAKCS HISTORY
 
                 for agent_id in range(n_agents):
-                    step_logs = {
-                        'agent': agent_id,
-                        'action': actions_dict[agent_id],
-                        'observation': observations_dict[agent_id],
-                        'reward': rewards_dict[agent_id],
-                        'metrics': metrics,
-                        'episode': episode,
-                        'info': accumulated_info,
-                    }
-                    ### callback (call)
-                    callbacks.on_step_end(episode_step, step_logs)
+                    self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
+                        agent_id]
+                    self.callbacks_history[agent_id]['target_reached'] = done_dict[agent_id]
+                    self.callbacks_history[agent_id]['metrics'].append(metrics)
+
+                    self.callbacks_history[agent_id]['observations'].append(
+                        observations_dict[agent_id]
+                    )
+                    self.callbacks_history[agent_id]['actions'].append(actions_dict[agent_id])
+                    self.callbacks_history[agent_id]['rewards'].append(rewards_dict[agent_id])
 
                 episode_step += 1
                 self.step += 1
 
                 if all_done is True:
+                    for agent_id in self.meaningful:
+                        self.forward(observations_dict.get(agent_id), agent_id)
+
                     ### We are in a terminal state but the agent hasn't yet seen it. We therefore
                     ### perform one more forward-backward call and simply ignore the action before
                     ### resetting the environment. We need to pass in `terminal=False` here since
                     ### the *next* state, that is the state of the newly reset environment, is
                     ### always non-terminal by convention.
-
-                    for agent_id in self.meaningful:
-                        self.forward(observations_dict.get(agent_id), agent_id)
-
-                        ### This episode is finished, report and reset.
-                        episode_logs = {
-                            'agent': agent_id,
-                            'episode_reward': episode_rewards_dict[agent_id],
-                            'nb_episode_steps': episode_step,
-                            'nb_steps': self.step,
-                        }
-
-                        ### callback (call)
-                        callbacks.on_episode_end(episode, episode_logs)
-
-                    ### TODO: reason about calling this for each agent.
-                    ### TODO: ask to @davide why he have put {False} in the {terminal} parameter.
-                    ### TODO: answer to @matteo: I don't know
                     all_terminal = {i: False for i in range(len(observations_dict.keys()))}
                     self.backward([0. for _ in self.meaningful], terminal=all_terminal)
 
+                    ### CALLBACKS HISTORY
+
+                    self._run_callbacks(
+                        verbose, callbacks, log_interval, nb_steps, self.step, env, episode
+                    )
+
+                    ###
+
                     episode += 1
-                    observations_dict = None
                     episode_step = None
+                    observations_dict = None
                     episode_rewards_dict = None
+                    self.callbacks_history = {}
 
         except KeyboardInterrupt:
             ### TODO: [@contimatteo] stop after twice {KeyboardInterrupt} errors
@@ -272,12 +331,8 @@ class MultiAgent(Agent):
             ### the `on_train_end` method is properly called.
             did_abort = True
 
-        ### callback (call)
-        callbacks.on_train_end(logs={'did_abort': did_abort})
-
-        self._on_train_end()
-
-        return history
+        # return history
+        return self.callbacks_history
 
     def test(
         self,
