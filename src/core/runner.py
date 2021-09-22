@@ -25,8 +25,8 @@ load_dotenv()
 
 np.random.seed(Configs.SEED)
 
-wandb.init(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
-# wandb.init(project='flatland', group=Configs.CONFIG_UUID, config={"hyper": "parameter"})
+# wandb.init(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
+# wandb.init(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm', config={"hyper": "parameter"})
 
 ###
 
