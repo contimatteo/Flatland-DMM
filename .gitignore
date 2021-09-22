@@ -133,4 +133,5 @@ dmypy.json
 
 # Wandb
 
+wandb/
 src/wandb/
