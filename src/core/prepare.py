@@ -34,6 +34,7 @@ from marl.callbacks import WandbLogger
 from networks import BaseNetwork
 from networks import SequentialNetwork1
 from networks import SequentialNetwork2
+from networks import Conv1DDenseNetwork
 
 ###
 
@@ -87,6 +88,8 @@ def prepare_network(env: MarlEnvironment) -> BaseNetwork:
         network = SequentialNetwork1(env.observation_space.shape, env.action_space.n, **params)
     elif ctype == "sequential-2":
         network = SequentialNetwork2(env.observation_space.shape, env.action_space.n, **params)
+    elif ctype == 'conv1d_dense':
+        network = Conv1DDenseNetwork(env.observation_space.shape, env.action_space.n, **params)
 
     if network is None:
         raise Exception(f"invalid network type '{ctype}' value.")
