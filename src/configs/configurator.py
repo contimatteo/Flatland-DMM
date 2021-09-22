@@ -9,7 +9,7 @@ import json
 
 N_ACTIONS: int = 3
 
-OBS_TREE_N_NODES: int = 15
+OBS_TREE_N_NODES: int = 17
 
 RAIL_ENV_SPEED_RATION_MAP: Mapping[float, float] = {
     1.: 0.25,  # Fast passenger train
@@ -21,7 +21,6 @@ RAIL_ENV_REMOVE_AGENTS_AT_TARGET: bool = True
 
 ###
 
-SEED: int = None
 DEBUG: bool = None
 N_AGENTS: int = None
 CONFIG_UUID: str = None
@@ -87,7 +86,7 @@ def get_configs_from_file(filepath):
 
 
 def reset():
-    global SEED, DEBUG, N_AGENTS, CONFIG_UUID
+    global DEBUG, N_AGENTS, CONFIG_UUID
     global RAIL_ENV_MAP_WIDTH, RAIL_ENV_MAP_HEIGHT, RAIL_ENV_N_CITIES, RAIL_ENV_MAX_RAILS_IN_CITY
     global RAIL_ENV_MAX_RAILS_BETWEEN_CITIES, RAIL_ENV_CITIES_GRID_DISTRIBUTION
     global RAIL_ENV_MALFUNCTION_RATE, RAIL_ENV_MALFUNCTION_MIN_DURATION, RAIL_ENV_MALFUNCTION_MAX_DURATION
@@ -101,7 +100,6 @@ def reset():
 
     ###
 
-    SEED = 1
     DEBUG = False
     N_AGENTS = 2
     CONFIG_UUID = 'default'
@@ -154,7 +152,7 @@ def reset():
 
 
 def load_configs(configurations):
-    global SEED, DEBUG, N_AGENTS, CONFIG_UUID
+    global DEBUG, N_AGENTS, CONFIG_UUID
     global RAIL_ENV_MAP_WIDTH, RAIL_ENV_MAP_HEIGHT, RAIL_ENV_N_CITIES, RAIL_ENV_MAX_RAILS_IN_CITY
     global RAIL_ENV_MAX_RAILS_BETWEEN_CITIES, RAIL_ENV_CITIES_GRID_DISTRIBUTION
     global RAIL_ENV_MALFUNCTION_RATE, RAIL_ENV_MALFUNCTION_MIN_DURATION, RAIL_ENV_MALFUNCTION_MAX_DURATION
@@ -168,12 +166,10 @@ def load_configs(configurations):
 
     ###
 
-    SEED = configurations['seed']
     DEBUG = bool(configurations['seed'])
     N_AGENTS = configurations['n_agents']
     CONFIG_UUID = configurations['config_uuid']
 
-    assert isinstance(SEED, int) and SEED > 0
     assert isinstance(DEBUG, bool)
     assert isinstance(N_AGENTS, int) and N_AGENTS > 0
     assert isinstance(CONFIG_UUID, str)

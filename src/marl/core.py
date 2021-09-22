@@ -6,10 +6,10 @@ from tensorflow.keras.callbacks import History
 from rl.core import Agent
 from rl.callbacks import CallbackList
 from rl.callbacks import TrainIntervalLogger
-from rl.callbacks import TrainEpisodeLogger
+# from rl.callbacks import TrainEpisodeLogger
 from rl.callbacks import TestLogger
 
-# from marl.callbacks import TrainEpisodeLogger
+from marl.callbacks import TrainEpisodeLogger
 # from marl.callbacks import TrainIntervalLogger
 from utils.action import HighLevelAction
 
@@ -26,20 +26,22 @@ class MultiAgent(Agent):
                 "rewards": [],
                 "episode_reward": None,
                 "target_reached": False,
+                "target_reached_in_steps": 0,
             }
 
     def _run_callbacks(
-        self, verbose, callbacks, step, env, episode, training, nb_steps, nb_episodes, log_interval
+        self, verbose, callbacks, env, training, episode, steps, episode_steps, nb_steps,
+        nb_episodes, log_interval
     ):
         callbacks_funcs = [] if not callbacks else callbacks[:]
 
-        if verbose == 1:
-            callbacks_funcs += [TrainIntervalLogger(interval=log_interval)]
-        elif verbose > 1:
-            if training is True:
-                callbacks_funcs += [TrainEpisodeLogger()]
-            else:
-                callbacks_funcs += [TestLogger()]
+        # if verbose == 1:
+        #     callbacks_funcs += [TrainIntervalLogger(interval=log_interval)]
+        # elif verbose > 1:
+        if training is True:
+            callbacks_funcs += [TrainEpisodeLogger()]
+        else:
+            callbacks_funcs += [TestLogger()]
 
         history = History()
         callbacks_funcs += [history]
@@ -72,6 +74,7 @@ class MultiAgent(Agent):
             ep_actions = self.callbacks_history[agent_id]['actions']
             ep_observations = self.callbacks_history[agent_id]['observations']
             ep_rewards = self.callbacks_history[agent_id]['rewards']
+            assert len(ep_observations) == episode_steps
             assert len(ep_observations) == len(ep_rewards)
             assert len(ep_observations) == len(ep_actions)
 
@@ -81,8 +84,6 @@ class MultiAgent(Agent):
             assert isinstance(target_reached, bool)
 
             ep_metrics = self.callbacks_history[agent_id]['metrics']
-
-            episode_steps = len(ep_observations)
 
             ### episode
             callbacks.on_episode_begin(episode, logs={})
@@ -120,8 +121,8 @@ class MultiAgent(Agent):
             ### episode
             callbacks.on_episode_end(
                 episode, {
-                    'nb_steps': step,
-                    'target_reached': target_reached,
+                    'steps': steps,
+                    'target_reached': 1 if target_reached is True else 0,
                     'episode_reward': episode_reward,
                     'nb_episode_steps': episode_steps,
                 }
@@ -292,7 +293,6 @@ class MultiAgent(Agent):
                 for agent_id in range(n_agents):
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
-                    self.callbacks_history[agent_id]['target_reached'] = done_dict[agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
 
                     self.callbacks_history[agent_id]['observations'].append(
@@ -300,6 +300,12 @@ class MultiAgent(Agent):
                     )
                     self.callbacks_history[agent_id]['actions'].append(actions_dict[agent_id])
                     self.callbacks_history[agent_id]['rewards'].append(rewards_dict[agent_id])
+
+                    if done_dict[agent_id] is True:
+                        if self.callbacks_history[agent_id]['target_reached'] is False:
+                            self.callbacks_history[agent_id]['target_reached'] = True
+                            self.callbacks_history[agent_id]['target_reached_in_steps'
+                                                             ] = episode_step
 
                 ###
 
@@ -320,8 +326,8 @@ class MultiAgent(Agent):
 
                     ### CALLBACKS HISTORY
                     self._run_callbacks(
-                        verbose, callbacks, self.step, env, episode, True, nb_steps, -1,
-                        log_interval
+                        verbose, callbacks, env, True, episode, int(self.step), episode_step,
+                        nb_steps, None, log_interval
                     )
 
                     ###
@@ -482,7 +488,6 @@ class MultiAgent(Agent):
                 for agent_id in range(n_agents):
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
-                    self.callbacks_history[agent_id]['target_reached'] = done_dict[agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
 
                     self.callbacks_history[agent_id]['observations'].append(
@@ -490,6 +495,12 @@ class MultiAgent(Agent):
                     )
                     self.callbacks_history[agent_id]['actions'].append(actions_dict[agent_id])
                     self.callbacks_history[agent_id]['rewards'].append(rewards_dict[agent_id])
+
+                    if done_dict[agent_id] is True:
+                        if self.callbacks_history[agent_id]['target_reached'] is False:
+                            self.callbacks_history[agent_id]['target_reached'] = True
+                            self.callbacks_history[agent_id]['target_reached_in_steps'
+                                                             ] = episode_step
 
                 episode_step += 1
                 self.step += 1
@@ -509,7 +520,8 @@ class MultiAgent(Agent):
 
             ### CALLBACKS HISTORY
             self._run_callbacks(
-                verbose, callbacks, self.step, env, episode, False, episode_step, nb_episodes, -1
+                verbose, callbacks, env, False, episode, self.step, episode_step, None, nb_episodes,
+                None
             )
 
         return self.callbacks_history

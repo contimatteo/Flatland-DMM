@@ -33,6 +33,7 @@ from core import BinaryTreeObservator
 from marl.callbacks import WandbLogger
 from networks import BaseNetwork
 from networks import SequentialNetwork1
+from networks import SequentialNetwork2
 
 ###
 
@@ -43,7 +44,6 @@ def _prepare_observator() -> ObservationBuilder:
 
 def _prepare_rail_generator() -> RailGen:
     return sparse_rail_generator(
-        seed=Configs.SEED,
         max_num_cities=Configs.RAIL_ENV_N_CITIES,
         grid_mode=Configs.RAIL_ENV_CITIES_GRID_DISTRIBUTION,
         max_rails_between_cities=Configs.RAIL_ENV_MAX_RAILS_BETWEEN_CITIES,
@@ -85,6 +85,8 @@ def prepare_network(env: MarlEnvironment) -> BaseNetwork:
 
     if ctype == "sequential-1":
         network = SequentialNetwork1(env.observation_space.shape, env.action_space.n, **params)
+    elif ctype == "sequential-2":
+        network = SequentialNetwork2(env.observation_space.shape, env.action_space.n, **params)
 
     if network is None:
         raise Exception(f"invalid network type '{ctype}' value.")
@@ -163,7 +165,7 @@ def prepare_callbacks(training: bool) -> List[Callback]:
         ctype = callbacks_config['type']
         params = callbacks_config['parameters']
 
-        if ctype == 'wondb':
+        if ctype == 'wandb':
             callbacks += [
                 WandbLogger(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
             ]

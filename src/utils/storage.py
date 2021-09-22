@@ -10,7 +10,8 @@ from configs import configurator as Configs
 class Storage():
     @staticmethod
     def initialize() -> None:
-        Storage._weights_intervals_dir().mkdir(parents=True, exist_ok=True)
+        # Storage._weights_intervals_dir().mkdir(parents=True, exist_ok=True)
+        Storage._weights_dir().mkdir(parents=True, exist_ok=True)
 
     #
 

@@ -35,7 +35,6 @@ class RailEnvWrapper:
             # malfunction_generator_and_process_data=None,
             malfunction_generator=self._malfunction_generator,
             remove_agents_at_target=Configs.RAIL_ENV_REMOVE_AGENTS_AT_TARGET,
-            random_seed=Configs.SEED,
             # record_steps=False,
             # close_following=True
         )
@@ -116,15 +115,19 @@ class RailEnvWrapper:
             self._emulator.reset()
 
         observations, self._info = self._rail_env.reset()
-        self._info['action_required2'] = {agent_id: self.action_required(agent_id) for agent_id in
-                                              range(self._rail_env.get_num_agents())}
+        self._info['action_required2'] = {
+            agent_id: self.action_required(agent_id)
+            for agent_id in range(self._rail_env.get_num_agents())
+        }
 
-        obs = {agent_id: observations.get(agent_id).get_subtree_array() for agent_id in observations}
+        obs = {
+            agent_id: observations.get(agent_id).get_subtree_array()
+            for agent_id in observations
+        }
 
         return obs
 
     def step(self, high_actions: Dict[int, int]) -> Tuple[Dict[int, Node], Dict[int, float]]:
-
         low_actions = self.processor_action(high_actions)
 
         observations, rewards, self._done, info = self._rail_env.step(low_actions)
@@ -167,11 +170,12 @@ class RailEnvWrapper:
             p = (obs_node.pos_x, obs_node.pos_y)
             t = agent.target
 
-            attractive_force = TARGET_MASS / (last[0].dist_min_to_target * last[0].dist_min_to_target)
+            attractive_force = TARGET_MASS / (
+                last[0].dist_min_to_target * last[0].dist_min_to_target
+            )
             repulsive_force = 0
 
             unusuable_stiches = [0, 0]
-
             """
             # compute probability of conflict
             n_opp_l = last[0].left_child.num_agents_opposite_direction
@@ -196,7 +200,6 @@ class RailEnvWrapper:
                     child_list = [
                         child for child in node.get_childs() if child
                     ]  # get_childs() returns forward and turn child even if they are None
-
 
                     # observation process
                     l = [child.get_attribute_dict(attr_list) for child in child_list]
@@ -231,7 +234,9 @@ class RailEnvWrapper:
                 last = visited
                 visited = []
 
-                unusuable_stiches = [unusuable_stiches[i // 2] for i in range(len(unusuable_stiches) * 2)]
+                unusuable_stiches = [
+                    unusuable_stiches[i // 2] for i in range(len(unusuable_stiches) * 2)
+                ]
 
             #################################### CONCLUSIVE OBSERVATION TRANSFORMATION
             # transforming into array
@@ -249,7 +254,8 @@ class RailEnvWrapper:
                 assert len(node) == Node.get_n_of_features()
                 for attr in node:
                     test_count += 1
-                    if node[attr] == np.inf: node[attr] = normalization_dict[attr]
+                    if node[attr] == np.inf:
+                        node[attr] = normalization_dict[attr]
 
                     node_list.append(node[attr] / normalization_dict[attr])
                     assert len(node_list) == test_count
@@ -259,10 +265,12 @@ class RailEnvWrapper:
             node_list = first_val + node_list
 
             if len(node_list) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
-                print('\nnumber of node features:', Node.get_n_of_features(),
-                      '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES,
-                      '\nobs len:', len(node_list),
-                      '\nexpected len:', Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
+                print(
+                    '\nnumber of node features:', Node.get_n_of_features(),
+                    '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES, '\nobs len:',
+                    len(node_list), '\nexpected len:',
+                    Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1
+                )
             assert len(node_list) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
 
             obs[agent_id] = np.array(node_list)
@@ -274,9 +282,10 @@ class RailEnvWrapper:
             reward += avg_attractive_force - repulsive_force
             rewards[agent_id] = reward
 
-
-        info['action_required2'] = {agent_id: self.action_required(agent_id) for agent_id in
-                                              range(self._rail_env.get_num_agents())}
+        info['action_required2'] = {
+            agent_id: self.action_required(agent_id)
+            for agent_id in range(self._rail_env.get_num_agents())
+        }
 
         return obs, rewards, info
 
@@ -284,7 +293,8 @@ class RailEnvWrapper:
 
         branch_length = node_dict.get("dist_to_next_branch") or 1
 
-        max_n_agents = node_dict.get("num_agents_same_direction") + node_dict.get("num_agents_opposite_direction") or 1
+        max_n_agents = node_dict.get("num_agents_same_direction"
+                                     ) + node_dict.get("num_agents_opposite_direction") or 1
 
         normalization_dict = {
             "dist_own_target_encountered": branch_length,
@@ -345,6 +355,5 @@ class RailEnvWrapper:
         # if more than one transition possible we are in switch
         if np.count_nonzero(t) > 1:
             return True
-
 
         return False

@@ -22,8 +22,6 @@ warnings.filterwarnings('ignore')
 
 load_dotenv()
 
-np.random.seed(Configs.SEED)
-
 ###
 
 
