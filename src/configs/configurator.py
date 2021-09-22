@@ -64,6 +64,7 @@ TRAIN_CALLBACKS: list = None
 TEST_VERBOSE: int = None
 TEST_N_ATTEMPTS: int = None
 TEST_N_MAX_STEPS_FOR_EPISODE: int = None
+TEST_CALLBACKS: list = None
 
 ###################################################################################################
 ###################################################################################################
@@ -96,7 +97,7 @@ def reset():
     global NN_TYPE, NN_PARAMS, NN_METRICS, NN_OPTIMIZER_TYPE, NN_OPTIMIZER_PARAMS
     global TRAIN_VERBOSE, TRAIN_N_MIN_ATTEMPTS, TRAIN_LOG_INTERVAL
     global TRAIN_N_MAX_STEPS_FOR_EPISODE, TRAIN_N_STEPS, TRAIN_CALLBACKS
-    global TEST_VERBOSE, TEST_N_ATTEMPTS, TEST_N_MAX_STEPS_FOR_EPISODE
+    global TEST_VERBOSE, TEST_N_ATTEMPTS, TEST_N_MAX_STEPS_FOR_EPISODE, TEST_CALLBACKS
 
     ###
 
@@ -149,6 +150,7 @@ def reset():
     TEST_VERBOSE = 1
     TEST_N_ATTEMPTS = 5
     TEST_N_MAX_STEPS_FOR_EPISODE = 1500
+    TEST_CALLBACKS = []
 
 
 def load_configs(configurations):
@@ -162,7 +164,7 @@ def load_configs(configurations):
     global NN_TYPE, NN_PARAMS, NN_METRICS, NN_OPTIMIZER_TYPE, NN_OPTIMIZER_PARAMS
     global TRAIN_VERBOSE, TRAIN_N_MIN_ATTEMPTS, TRAIN_LOG_INTERVAL
     global TRAIN_N_MAX_STEPS_FOR_EPISODE, TRAIN_N_STEPS, TRAIN_CALLBACKS
-    global TEST_VERBOSE, TEST_N_ATTEMPTS, TEST_N_MAX_STEPS_FOR_EPISODE
+    global TEST_VERBOSE, TEST_N_ATTEMPTS, TEST_N_MAX_STEPS_FOR_EPISODE, TEST_CALLBACKS
 
     ###
 
@@ -217,3 +219,9 @@ def load_configs(configurations):
         TRAIN_N_MAX_STEPS_FOR_EPISODE = configurations['train']['nb_max_episode_steps']
         TRAIN_CALLBACKS = configurations['train']['callbacks']
         TRAIN_N_STEPS = int(TRAIN_N_MIN_ATTEMPTS * TRAIN_N_MAX_STEPS_FOR_EPISODE)
+
+    if 'test' in configurations:
+        TEST_N_ATTEMPTS = configurations['test']['n_attempts']
+        TEST_VERBOSE = configurations['test']['verbose']
+        TEST_N_MAX_STEPS_FOR_EPISODE = configurations['test']['nb_max_episode_steps']
+        TEST_CALLBACKS = configurations['test']['callbacks']

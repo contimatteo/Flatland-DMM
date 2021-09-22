@@ -8,6 +8,8 @@ from flatland.envs.rail_generators import RailGen
 from flatland.envs.schedule_generators import ScheduleGenerator
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from rl.callbacks import Callback
+from rl.callbacks import TrainEpisodeLogger
+from rl.callbacks import TestLogger
 from rl.policy import Policy
 from rl.policy import LinearAnnealedPolicy
 from rl.policy import SoftmaxPolicy
@@ -147,22 +149,23 @@ def prepare_policy() -> Policy:
     return policy
 
 
-def prepare_callbacks(types: List[str], network: BaseNetwork) -> List[Callback]:
+def prepare_callbacks(training: bool) -> List[Callback]:
+    callbacks_configs = []
+
+    if training is True:
+        callbacks_configs = Configs.TRAIN_CALLBACKS
+    else:
+        callbacks_configs = Configs.TEST_CALLBACKS
+
     callbacks = []
 
-    # callbacks += [WandbCallback()]
-    callbacks += [WandbLogger(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')]
+    for callbacks_config in callbacks_configs:
+        ctype = callbacks_config['type']
+        params = callbacks_config['parameters']
 
-    ### TODO: [@matteo]
-
-    # log_filename = './tmp/logs/dqn/'
-    # Path(log_filename).mkdir(parents=True, exist_ok=True)
-    # log_filename += '{}.json'.format(datetime.now()) # .strftime("%s"))
-    # Path(log_filename).touch(exist_ok=True)
-    # callbacks += [FileLogger(log_filename, interval=100)]
-
-    # interval=int(Configs.TRAIN_N_MAX_STEPS_FOR_EPISODE)
-    # weights_intervals_filepath = network.weights_intervals_file_url
-    # callbacks += [ModelIntervalCheckpoint(weights_intervals_filepath, interval=interval)]
+        if ctype == 'wondb':
+            callbacks += [
+                WandbLogger(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
+            ]
 
     return callbacks

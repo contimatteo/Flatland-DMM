@@ -4,7 +4,6 @@ from dotenv import load_dotenv
 
 import numpy as np
 import warnings
-import wandb
 
 from configs import configurator as Configs
 from core import prepare_env
@@ -24,9 +23,6 @@ warnings.filterwarnings('ignore')
 load_dotenv()
 
 np.random.seed(Configs.SEED)
-
-# wandb.init(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
-# wandb.init(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm', config={"hyper": "parameter"})
 
 ###
 
@@ -62,7 +58,7 @@ class Runner():
     def train(self) -> None:
         env = prepare_env()
         agent, network = self._prepare_agent(env)
-        callbacks = prepare_callbacks([], network)
+        callbacks = prepare_callbacks(training=True)
 
         if Path(network.weights_file_url).is_file() is True:
             agent.load_weights(network.weights_file_url)
@@ -82,7 +78,7 @@ class Runner():
     def test(self):
         env = prepare_env()
         agent, network = self._prepare_agent(env)
-        callbacks = prepare_callbacks([], network)
+        callbacks = prepare_callbacks(training=False)
 
         assert Path(network.weights_file_url).is_file() is True
         agent.load_weights(network.weights_file_url)
