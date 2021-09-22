@@ -3,7 +3,7 @@
     "seed": 1,
     "debug": true,
     "n_agents": 2,
-    "config_uuid": "config-1",
+    "config_uuid": "training-prova-1",
 
     "rail-env": {
       "map_width": 28,

@@ -182,7 +182,7 @@ class BinaryTreeObservator(ObservationBuilder):
                 if num_transitions == 1:
                     orientation = np.argmax(possible_transitions)
 
-                direction_to_node_pos = {}
+                direction_to_node_pos = {'left': None, 'right': None}
                 for i, branch_direction in enumerate([(orientation + i) % 4 for i in range(0, 4)]):
 
                     if possible_transitions[branch_direction]:
