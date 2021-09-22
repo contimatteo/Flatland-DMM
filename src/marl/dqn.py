@@ -156,6 +156,8 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
                 f'Model output "{model.output}" has invalid shape. DQN expects a model that has one dimension for each action, in this case {self.nb_actions}.'
             )
 
+        self.training_steps_count = 0
+
         # Parameters.
         self.enable_double_dqn = enable_double_dqn
         self.enable_dueling_network = enable_dueling_network
@@ -285,6 +287,8 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
     def forward(self, observation, agent_id):
         assert agent_id in self.agents_memory
+        assert observation is not None
+        assert len(observation) > 0
 
         ### Select an action.
         # state = self.memory.get_recent_state(observation)
@@ -300,12 +304,17 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         self.recent_observation.append(observation)
         self.recent_action.append(action)
 
+        self.training_steps_count += 1
+
         return action
 
     def backward(self, rewards, terminal):
+        # step = self.step
+        step = self.training_steps_count
+
         self.recent_reward += rewards
         # Store most recent experience in memory.
-        if self.step % self.memory_interval == 0:
+        if step % self.memory_interval == 0:
             assert len(self.recent_observation) > 0
 
             for agent_id in range(len(self.recent_observation)):
@@ -329,7 +338,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             return metrics
 
         # Train the network on a single stochastic batch.
-        if self.step > self.nb_steps_warmup and self.step % self.train_interval == 0:
+        if step > self.nb_steps_warmup and step % self.train_interval == 0:
             experiences = []
             for agent_id in range(Configs.N_AGENTS):
                 exp = self.agents_memory[agent_id].sample(int(self.batch_size / Configs.N_AGENTS))
@@ -416,7 +425,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             if self.processor is not None:
                 metrics += self.processor.metrics
 
-        if self.target_model_update >= 1 and self.step % self.target_model_update == 0:
+        if self.target_model_update >= 1 and step % self.target_model_update == 0:
             self.update_target_model_hard()
 
         return metrics

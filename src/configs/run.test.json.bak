@@ -17,7 +17,7 @@
     },
 
     "emulator": {
-      "active": false,
+      "active": true,
       "window_width": 1200,
       "window_height": 1200,
       "step_timebreak_seconds": 0
@@ -57,6 +57,19 @@
       "log_interval": 500,
       "nb_max_episode_steps": 1000,
       "callbacks": []
+    }
+  },
+  {
+    "test": {
+      "verbose": 2,
+      "n_attempts": 1,
+      "nb_max_episode_steps": 1000,
+      "callbacks": [
+        {
+          "type": "wandb",
+          "parameters": {}
+        }
+      ]
     }
   }
 ]

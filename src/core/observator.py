@@ -124,9 +124,9 @@ class BinaryTreeObservator(ObservationBuilder):
             agent.status = RailAgentStatus.DONE
         else:
             # agent.initial_position != agent.target and agent.status == RailAgentStatus.DONE_REMOVED
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!STOPPING SEARCH!!!!!!!!!!!!!!!!!!!!!!!!!')
-            print('agent status:', agent.status)
-            print('agent initial pos:', agent.position, '\ntarget position:', agent.target)
+            # print('!!!!!!!!!!!!!!!!!!!!!!!!!STOPPING SEARCH!!!!!!!!!!!!!!!!!!!!!!!!!')
+            # print('agent status:', agent.status)
+            # print('agent initial pos:', agent.position, '\ntarget position:', agent.target)
             return None
 
         # Here information about the agent itself is stored
@@ -216,9 +216,10 @@ class BinaryTreeObservator(ObservationBuilder):
                         # print(1)
 
                         if not node_observed:
-                            print(
-                                '!!!!!!!!!!!!!!!!!!!!!!!!!OBSERVED NONE NODE!!!!!!!!!!!!!!!!!!!!!!!!!'
-                            )
+                            pass
+                            # print(
+                            #     '!!!!!!!!!!!!!!!!!!!!!!!!!OBSERVED NONE NODE!!!!!!!!!!!!!!!!!!!!!!!!!'
+                            # )
                         n_added_nodes += 1
 
                         # check if we reached self.max_memory
@@ -230,13 +231,14 @@ class BinaryTreeObservator(ObservationBuilder):
 
 
             # outside while
-            print('outside while without raising an error\nnumber of added nodes:', n_added_nodes)
+            # print('outside while without raising an error\nnumber of added nodes:', n_added_nodes)
 
         except MaxNodeMemory:
             pass
         else:
             if not queue:
-                print('!!!!!!!!!expanded all the tree!!!!!!!!!\n')
+                pass
+                # print('!!!!!!!!!expanded all the tree!!!!!!!!!\n')
 
         return root_node_observation
 
@@ -434,7 +436,7 @@ class BinaryTreeObservator(ObservationBuilder):
 
                 else:
                     exploring = False
-                    print('TO CHECK WHY IT TERMINATED', flush=True)
+                    # print('TO CHECK WHY IT TERMINATED', flush=True)
 
             # `position` is either a terminal node or a switch
 

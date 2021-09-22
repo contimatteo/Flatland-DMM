@@ -278,14 +278,23 @@ class MultiAgent(Agent):
                         ### force a terminal state.
                         all_done = True
 
+                # if all_done is False:
+                #     try:
+                #         if episode_step + 1 >= env._env._rail_env._max_episode_steps:
+                #             ### force a terminal state.
+                #             all_done = True
+                #     except Exception:
+                #         pass
+
                 ### TRAINING
 
                 metrics = []
 
-                metrics = self.backward(rewards_dict, terminal=deepcopy(done_dict))
-                # metrics = list(metrics)
-                # if len(metrics) < 1:
-                #     metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
+                if len(agents_ids) > 0:
+                    metrics = self.backward(rewards_dict, terminal=deepcopy(done_dict))
+                    # metrics = list(metrics)
+                    # if len(metrics) < 1:
+                    #     metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
 
                 metrics = np.array(metrics)
 
@@ -314,6 +323,10 @@ class MultiAgent(Agent):
                 self.step += 1
 
                 if all_done is True:
+                    agents_ids = [
+                        agent_id for (agent_id, obs) in observations_dict.items() if obs is not None
+                    ]
+
                     for agent_id in agents_ids:
                         self.forward(observations_dict.get(agent_id), agent_id)
 
@@ -322,14 +335,15 @@ class MultiAgent(Agent):
                     ### resetting the environment. We need to pass in `terminal=False` here since
                     ### the *next* state, that is the state of the newly reset environment, is
                     ### always non-terminal by convention.
-                    all_terminal = {i: False for i in agents_ids}
-                    self.backward([0. for _ in agents_ids], terminal=all_terminal)
+                    if len(agents_ids) > 0:
+                        all_terminal = {i: False for i in agents_ids}
+                        self.backward([0. for _ in agents_ids], terminal=all_terminal)
 
                     ## CALLBACKS HISTORY
-                    self._run_callbacks(
-                        verbose, callbacks, env, True, episode, int(self.step), episode_step,
-                        nb_steps, None, log_interval
-                    )
+                    # self._run_callbacks(
+                    #     verbose, callbacks, env, True, episode, int(self.step), episode_step,
+                    #     nb_steps, None, log_interval
+                    # )
 
                     ###
 

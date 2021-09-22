@@ -53,7 +53,8 @@ def _prepare_rail_generator() -> RailGen:
 
 
 def _prepare_schedule_generator() -> ScheduleGenerator:
-    return sparse_schedule_generator(Configs.RAIL_ENV_SPEED_RATION_MAP)
+    # return sparse_schedule_generator(Configs.RAIL_ENV_SPEED_RATION_MAP)
+    return None
 
 
 def _prepare_malfunction_generator() -> ParamMalfunctionGen:
