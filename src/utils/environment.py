@@ -272,16 +272,18 @@ class RailEnvWrapper:
                     assert test_count <= (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES)
 
             assert len(node_list) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES)
-            node_list = first_val + node_list
+            # node_list = first_val + node_list  # INFO: @bug
 
-            if len(node_list) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
+            # if len(node_list) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
+            if len(node_list) != self._observator.get_observations_len():
                 print(
                     '\nnumber of node features:', Node.get_n_of_features(),
                     '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES, '\nobs len:',
                     len(node_list), '\nexpected len:',
-                    Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1
+                    # Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1
+                    Node.get_n_of_features() * Configs.OBS_TREE_N_NODES
                 )
-            assert len(node_list) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
+            assert len(node_list) == self._observator.get_observations_len()
 
             obs[agent_id] = np.array(node_list)
             node_list = []

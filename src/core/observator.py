@@ -528,4 +528,4 @@ class BinaryTreeObservator(ObservationBuilder):
     def get_observations_len(self) -> int:
         n_nodes = Configs.OBS_TREE_N_NODES
         node_n_features = Node.get_n_of_features()
-        return int(node_n_features * n_nodes + 1)
+        return int(node_n_features * n_nodes)

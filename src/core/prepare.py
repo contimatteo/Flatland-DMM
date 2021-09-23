@@ -89,7 +89,7 @@ def prepare_network(env: MarlEnvironment) -> BaseNetwork:
         network = SequentialNetwork1(env.observation_space.shape, env.action_space.n, **params)
     elif ctype == "sequential-2":
         network = SequentialNetwork2(env.observation_space.shape, env.action_space.n, **params)
-    elif ctype == 'conv1d_dense':
+    elif ctype == 'conv-1':
         network = Conv1DDenseNetwork(env.observation_space.shape, env.action_space.n, **params)
 
     if network is None:

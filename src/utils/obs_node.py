@@ -1,8 +1,10 @@
-from typing import Dict
-
 import numpy as np
 
 from configs import configurator as Configs
+import numpy as np
+
+from configs import configurator as Configs
+
 
 ###
 
@@ -11,25 +13,25 @@ class Node:
     # we have the same properties given by flatland in the namedtuple
     # only added node_code: check tree_observator (I'm going to update it) for usage
     def __init__(
-        self,
-        dist_own_target_encountered=np.inf,
-        dist_other_target_encountered=np.inf,
-        dist_other_agent_encountered=np.inf,
-        dist_potential_conflict=np.inf,
-        dist_unusable_switch=0,
-        tot_unusable_switch=0,
-        dist_to_next_branch=np.inf,
-        dist_min_to_target=np.inf,
-        target_reached=0,
-        num_agents_same_direction=0,
-        num_agents_opposite_direction=0,
-        num_agents_malfunctioning=0,
-        speed_min_fractional=1.,
-        num_agents_ready_to_depart=0,
-        pos_x=0,
-        pos_y=0,
-        left_child=None,
-        right_child=None
+            self,
+            dist_own_target_encountered=np.inf,
+            dist_other_target_encountered=np.inf,
+            dist_other_agent_encountered=np.inf,
+            dist_potential_conflict=np.inf,
+            dist_unusable_switch=0,
+            tot_unusable_switch=0,
+            dist_to_next_branch=np.inf,
+            dist_min_to_target=np.inf,
+            target_reached=0,
+            num_agents_same_direction=0,
+            num_agents_opposite_direction=0,
+            num_agents_malfunctioning=0,
+            speed_min_fractional=1.,
+            num_agents_ready_to_depart=0,
+            pos_x=0,
+            pos_y=0,
+            left_child=None,
+            right_child=None
     ):
         self.dist_min_to_target = dist_min_to_target
         self.dist_other_agent_encountered = dist_other_agent_encountered
@@ -62,7 +64,7 @@ class Node:
             attr_list.remove('left_child')
             attr_list.remove('right_child')
             attr_list.sort()  # mantaining always the same order
-            assert len(attr_list)==Node.get_n_of_features()
+            assert len(attr_list) == Node.get_n_of_features()
 
         return [self.__dict__.get(attr, None) for attr in attr_list]
 
@@ -72,10 +74,9 @@ class Node:
             attr_list.remove('left_child')
             attr_list.remove('right_child')
             attr_list.sort()  # mantaining always the same order
-            assert len(attr_list)==Node.get_n_of_features()
+            assert len(attr_list) == Node.get_n_of_features()
 
         return {attr: self.__dict__.get(attr, None) for attr in attr_list}
-
 
     # simply returns right and left child
     def get_childs(self):
@@ -89,11 +90,13 @@ class Node:
         # only the first node is supposed to have only one child
         if not self.left_child:
             assert self.right_child is not None
-            subtree_list = [1]
+            # subtree_list = [1]
+            subtree_list = []
             subtree_list += self.right_child.get_attribute_list(attr_list)
             last = [self.right_child]
         else:
-            subtree_list = [0]
+            # subtree_list = [0]
+            subtree_list = []
             subtree_list += self.get_attribute_list(attr_list)
             last = [self]
 
@@ -121,11 +124,16 @@ class Node:
         subtree_array[subtree_array == -np.inf] = 0
         subtree_array[subtree_array == np.inf] = 0
 
-        if len(subtree_array) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
+        # if len(subtree_array) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1):
+        #     print('\nnumber of node features:', Node.get_n_of_features(),
+        #           '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES,
+        #           '\nobs len:', len(subtree_array),
+        #           '\nexpected len:', (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1))
+        #     assert len(subtree_array) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
+        if len(subtree_array) != (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES):
             print('\nnumber of node features:', Node.get_n_of_features(),
                   '\nnumber of nodes per obs:', Configs.OBS_TREE_N_NODES,
                   '\nobs len:', len(subtree_array),
-                  '\nexpected len:', (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1))
-            assert len(subtree_array) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES + 1)
-
+                  '\nexpected len:', (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES))
+            assert len(subtree_array) == (Node.get_n_of_features() * Configs.OBS_TREE_N_NODES)
         return subtree_array
