@@ -116,6 +116,8 @@ class RailEnvWrapper:
             self._emulator.reset()
 
         observations, self._info = self._rail_env.reset()
+        self._rail_env._max_episode_steps = None
+
         self._info['action_required2'] = {
             agent_id: self.action_required(agent_id)
             for agent_id in range(self._rail_env.get_num_agents())
