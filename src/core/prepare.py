@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Tuple, List, Any
 
 from flatland.core.env_observation_builder import ObservationBuilder
 from flatland.envs.malfunction_generators import MalfunctionParameters
@@ -8,8 +8,8 @@ from flatland.envs.rail_generators import RailGen
 from flatland.envs.schedule_generators import ScheduleGenerator
 from flatland.envs.schedule_generators import sparse_schedule_generator
 from rl.callbacks import Callback
-from rl.callbacks import FileLogger
-from rl.callbacks import ModelIntervalCheckpoint
+from rl.callbacks import TrainEpisodeLogger
+from rl.callbacks import TestLogger
 from rl.policy import Policy
 from rl.policy import LinearAnnealedPolicy
 from rl.policy import SoftmaxPolicy
@@ -20,14 +20,21 @@ from rl.policy import MaxBoltzmannQPolicy
 from rl.policy import BoltzmannGumbelQPolicy
 from rl.memory import SequentialMemory
 from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.optimizers import SGD
 from tensorflow.python.keras.optimizer_v2 import optimizer_v2
+# from wandb.keras import WandbCallback
 
-import configs as Configs
+from configs import configurator as Configs
 
 from core import MarlEnvironment
+from core import BinaryTreeObservator
+# from marl.callbacks import FileLogger
+# from marl.callbacks import ModelIntervalCheckpoint
+from marl.callbacks import WandbLogger
 from networks import BaseNetwork
-from networks import SequentialNetwork
-from observators import BinaryTreeObservator
+from networks import SequentialNetwork1
+from networks import SequentialNetwork2
+from networks import Conv1DDenseNetwork
 
 ###
 
@@ -38,7 +45,6 @@ def _prepare_observator() -> ObservationBuilder:
 
 def _prepare_rail_generator() -> RailGen:
     return sparse_rail_generator(
-        seed=Configs.APP_SEED,
         max_num_cities=Configs.RAIL_ENV_N_CITIES,
         grid_mode=Configs.RAIL_ENV_CITIES_GRID_DISTRIBUTION,
         max_rails_between_cities=Configs.RAIL_ENV_MAX_RAILS_BETWEEN_CITIES,
@@ -47,7 +53,8 @@ def _prepare_rail_generator() -> RailGen:
 
 
 def _prepare_schedule_generator() -> ScheduleGenerator:
-    return sparse_schedule_generator(Configs.RAIL_ENV_SPEED_RATION_MAP)
+    # return sparse_schedule_generator(Configs.RAIL_ENV_SPEED_RATION_MAP)
+    return None
 
 
 def _prepare_malfunction_generator() -> ParamMalfunctionGen:
@@ -72,51 +79,99 @@ def prepare_env() -> MarlEnvironment:
     )
 
 
-def prepare_network(
-    env: MarlEnvironment
-) -> Tuple[BaseNetwork, optimizer_v2.OptimizerV2, List[str]]:
-    network = SequentialNetwork(env.observation_space.shape, env.action_space.n)
-    optimizer = Adam(learning_rate=Configs.DQN_AGENT_LEARNING_RATE)
-    metrics = ['mae']
+def prepare_network(env: MarlEnvironment) -> BaseNetwork:
+    network = None
 
-    return network, optimizer, metrics
+    ctype = Configs.NN_TYPE
+    params = Configs.NN_PARAMS
+
+    if ctype == "sequential-1":
+        network = SequentialNetwork1(env.observation_space.shape, env.action_space.n, **params)
+    elif ctype == "sequential-2":
+        network = SequentialNetwork2(env.observation_space.shape, env.action_space.n, **params)
+    elif ctype == 'conv-1':
+        network = Conv1DDenseNetwork(env.observation_space.shape, env.action_space.n, **params)
+
+    if network is None:
+        raise Exception(f"invalid network type '{ctype}' value.")
+
+    return network
+
+
+def prepare_optimizer() -> optimizer_v2.OptimizerV2:
+    optimizer = None
+
+    ctype = Configs.NN_OPTIMIZER_TYPE
+    params = Configs.NN_OPTIMIZER_PARAMS
+
+    if ctype == "adam":
+        optimizer = Adam(**params)
+    elif ctype == 'sgd':
+        optimizer = SGD(**params)
+
+    if optimizer is None:
+        raise Exception(f"invalid optimizer type '{ctype}' value.")
+
+    return optimizer
+
+
+def prepare_metrics() -> List[str]:
+    metrics = Configs.NN_METRICS
+
+    if 'mae' not in metrics:
+        metrics += ['mae']
+
+    return metrics
 
 
 def prepare_memory():
-    return SequentialMemory(limit=Configs.DQN_AGENT_MEMORY_LIMIT, window_length=1)
+    return SequentialMemory(limit=Configs.AGENT_MEMORY_LIMIT, window_length=1)
 
 
-def prepare_policy(policy_type: str = "eps-greedy", *args, **kwargs) -> Policy:
+def prepare_policy() -> Policy:
     policy = None
 
-    if policy_type == "linear-annealed":
-        policy = LinearAnnealedPolicy(*args, **kwargs)
-    elif policy_type == "softmax":
-        policy = SoftmaxPolicy(*args, **kwargs)
-    elif policy_type == "eps-greedy":
-        policy = EpsGreedyQPolicy(*args, **kwargs)
-    elif policy_type == "greedy":
-        policy = GreedyQPolicy(*args, **kwargs)
-    elif policy_type == "boltzmann":
-        policy = BoltzmannQPolicy(*args, **kwargs)
-    elif policy_type == "max-boltzmann":
-        policy = MaxBoltzmannQPolicy(*args, **kwargs)
-    elif policy_type == "boltzmann-gumbel":
-        policy = BoltzmannGumbelQPolicy(*args, **kwargs)
+    ctype = Configs.POLICY_TYPE
+    params = Configs.POLICY_PARAMS
+
+    if ctype == "softmax":
+        policy = SoftmaxPolicy()
+    elif ctype == "eps-greedy":
+        policy = EpsGreedyQPolicy(**params)
+    elif ctype == "boltzmann":
+        policy = BoltzmannQPolicy(**params)
+    # elif ctype == "linear-annealed":
+    #     policy = LinearAnnealedPolicy(**params)
+    # elif ctype == "greedy":
+    #     policy = GreedyQPolicy(**params)
+    # elif ctype == "max-boltzmann":
+    #     policy = MaxBoltzmannQPolicy(**params)
+    # elif ctype == "boltzmann-gumbel":
+    #     policy = BoltzmannGumbelQPolicy(**params)
 
     if policy is None:
-        raise Exception(f"invalid policy type '{policy_type}' value.")
+        raise Exception(f"invalid policy type '{ctype}' value.")
 
     return policy
 
 
-def prepare_callbacks(callback_types: List[str] = []) -> List[Callback]:
+def prepare_callbacks(training: bool) -> List[Callback]:
+    callbacks_configs = []
+
+    if training is True:
+        callbacks_configs = Configs.TRAIN_CALLBACKS
+    else:
+        callbacks_configs = Configs.TEST_CALLBACKS
+
     callbacks = []
 
-    # env_name = "local"
-    # checkpoint_weights_filename = './tmp/dqn_' + env_name + '_weights_{step}.h5f'
-    # log_filename = 'tmp/dqn_{}_log.json'.format(env_name)
-    # callbacks += [ModelIntervalCheckpoint(checkpoint_weights_filename, interval=500)]
-    # callbacks += [FileLogger(log_filename, interval=100)]
+    for callbacks_config in callbacks_configs:
+        ctype = callbacks_config['type']
+        params = callbacks_config['parameters']
+
+        if ctype == 'wandb':
+            callbacks += [
+                WandbLogger(project='flatland', entity='flatland-dmm', **params)
+            ]
 
     return callbacks

@@ -1,7 +1,11 @@
 from typing import Tuple
 import abc
 
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Flatten
 from tensorflow.keras import Sequential
+
+from utils.storage import Storage
 
 ###
 
@@ -15,21 +19,55 @@ class BaseNetwork(abc.ABC):
 
     ###
 
-    @abc.abstractproperty
+    @property
+    def keras_model(self) -> int:
+        return self._keras_model
+
+    @property
+    def _weights_file_name(self) -> str:
+        return f"{self.uuid}.h5"
+
+    @property
+    def _weights_intervals_file_name(self) -> str:
+        return self.uuid + "-{step}.h5"
+
+    @property
+    def weights_file_url(self) -> str:
+        file_name = self._weights_file_name
+        return str(Storage.weights_folder().joinpath(file_name).absolute())
+
+    @property
+    def weights_intervals_file_url(self) -> str:
+        file_name = self._weights_intervals_file_name
+        return str(Storage.weights_intervals_folder().joinpath(file_name).absolute())
+
+    ###
+
+    @property
     def input_nodes(self) -> int:
-        raise NotImplementedError('`input_nodes` property not implemented.')
+        return self._observations_shape[0]
 
-    @abc.abstractproperty
+    @property
     def input_dim(self) -> int:
-        raise NotImplementedError('`input_dim` property not implemented.')
+        if len(self._observations_shape) > 1:
+            return self._observations_shape[1]
+        return 1
+
+    @property
+    def output_nodes(self) -> int:
+        return self._n_actions
+
+    def input_layer(self) -> Flatten:
+        return Flatten(input_shape=(1, self.input_nodes), name='flatten_input')
+
+    def output_layer(self, activation="linear") -> Dense:
+        return Dense(self.output_nodes, activation=activation, name='dense_output')
+
+    #
 
     @abc.abstractproperty
-    def output_nodes(self) -> int:
-        raise NotImplementedError('`output_nodes` property not implemented.')
-
-    # @abc.abstractmethod
-    # def compile(self) -> Model:
-    #     raise NotImplementedError('`compile` method not implemented.')
+    def uuid(self) -> str:
+        raise NotImplementedError('`uuid` property not implemented.')
 
     @abc.abstractmethod
     def build_model(self) -> Sequential:

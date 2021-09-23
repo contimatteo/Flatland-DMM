@@ -1,12 +1,21 @@
 import warnings
+from copy import deepcopy
 
+import numpy as np
 import tensorflow.keras.backend as K
+
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Lambda, Input, Layer, Dense
 
+from configs import configurator as Configs
+
+from core.optimizers import AdditionalUpdatesOptimizer
 from marl.core import MultiAgent
 from rl.policy import EpsGreedyQPolicy, GreedyQPolicy
-from rl.util import *
+from rl.util import get_object_config
+from rl.util import get_soft_target_model_updates
+from rl.util import clone_model
+from rl.util import huber_loss
 
 ###
 
@@ -58,7 +67,7 @@ class AbstractMultiDQNAgent(MultiAgent):
         # Parameters.
         self.nb_actions = nb_actions
         self.gamma = gamma
-        self.batch_size = batch_size
+        # self.batch_size = batch_size
         self.nb_steps_warmup = nb_steps_warmup
         self.train_interval = train_interval
         self.memory_interval = memory_interval
@@ -66,8 +75,13 @@ class AbstractMultiDQNAgent(MultiAgent):
         self.delta_clip = delta_clip
         self.custom_model_objects = custom_model_objects
 
-        # Related objects.
-        self.memory = memory
+        ### Related objects.
+        # self.memory = memory
+        self.agents_memory = {}
+        for agent_id in range(Configs.N_AGENTS):
+            self.agents_memory[agent_id] = deepcopy(memory)
+
+        self.batch_size = batch_size * Configs.N_AGENTS
 
         # State.
         self.compiled = False
@@ -102,7 +116,8 @@ class AbstractMultiDQNAgent(MultiAgent):
             'memory_interval': self.memory_interval,
             'target_model_update': self.target_model_update,
             'delta_clip': self.delta_clip,
-            'memory': get_object_config(self.memory),
+            ### 'memory': get_object_config(self.memory),
+            'memory': get_object_config(self.agents_memory[0]),
         }
 
 
@@ -140,6 +155,8 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             raise ValueError(
                 f'Model output "{model.output}" has invalid shape. DQN expects a model that has one dimension for each action, in this case {self.nb_actions}.'
             )
+
+        self.training_steps_count = 0
 
         # Parameters.
         self.enable_double_dqn = enable_double_dqn
@@ -206,7 +223,8 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         return config
 
     def compile(self, optimizer, metrics=[]):
-        metrics += [mean_q]  # register default metrics
+        if mean_q not in metrics:
+            metrics += [mean_q]  # register default metrics
 
         # We never train the target model, hence we can set the optimizer and loss arbitrarily.
         self.target_model = clone_model(self.model, self.custom_model_objects)
@@ -246,6 +264,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         ]
         trainable_model.compile(optimizer=optimizer, loss=losses, metrics=combined_metrics)
         self.trainable_model = trainable_model
+        self.trainable_model_metrics = metrics
 
         self.compiled = True
 
@@ -259,6 +278,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
     def reset_states(self):  # runned at the beginning of training before env.reset()
         self.recent_action = []
         self.recent_observation = []
+        self.recent_reward = []
         if self.compiled:
             self.model.reset_states()
             self.target_model.reset_states()
@@ -266,9 +286,15 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
     def update_target_model_hard(self):
         self.target_model.set_weights(self.model.get_weights())
 
-    def forward(self, observation):
-        # Select an action.
-        state = self.memory.get_recent_state(observation)
+    def forward(self, observation, agent_id):
+        assert agent_id in self.agents_memory
+        assert observation is not None
+        assert len(observation) > 0
+
+        ### Select an action.
+        # state = self.memory.get_recent_state(observation)
+        state = self.agents_memory[agent_id].get_recent_state(observation)
+
         q_values = self.compute_q_values(state)
         if self.training:
             action = self.policy.select_action(q_values=q_values)
@@ -279,24 +305,32 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         self.recent_observation.append(observation)
         self.recent_action.append(action)
 
+        self.training_steps_count += 1
+
         return action
 
-    def backward(self, reward_dict, terminal):
+    def backward(self, rewards, terminal):
+        # step = self.step
+        step = self.training_steps_count
+
+        self.recent_reward += rewards
         # Store most recent experience in memory.
-        if self.step % self.memory_interval == 0:
+        if step % self.memory_interval == 0:
+            assert len(self.recent_observation) > 0
 
-            ### TODO: [@contimatteo -> @davide] we have to find a better way for doing this ...
-            if reward_dict == 0.0:
-                reward_dict = dict(enumerate([0 for _ in range(len(self.recent_observation))])) 
-
-            for agent in range(len(self.recent_observation)):
-                obs = self.recent_observation[agent]
-                action = self.recent_action[agent]
-                reward = reward_dict[agent]
-                self.memory.append(obs, action, reward, terminal, training=self.training)
+            for agent_id in range(len(self.recent_observation)):
+                # obs = self.recent_observation[agent_id]
+                obs = {'agent': agent_id, 'obs': self.recent_observation[agent_id]}
+                action = self.recent_action[agent_id]
+                reward = self.recent_reward[agent_id]
+                done = True if agent_id in terminal and terminal[agent_id] is True else False
+                self.agents_memory[agent_id].append(
+                    obs, action, reward, terminal=done, training=self.training
+                )
 
             self.recent_observation = []
             self.recent_action = []
+            self.recent_reward = []
 
         metrics = [np.nan for _ in self.metrics_names]
         if not self.training:
@@ -305,8 +339,12 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             return metrics
 
         # Train the network on a single stochastic batch.
-        if self.step > self.nb_steps_warmup and self.step % self.train_interval == 0:
-            experiences = self.memory.sample(self.batch_size)
+        if step > self.nb_steps_warmup and step % self.train_interval == 0:
+            experiences = []
+            for agent_id in range(Configs.N_AGENTS):
+                exp = self.agents_memory[agent_id].sample(int(self.batch_size / Configs.N_AGENTS))
+                assert len(exp) == int(self.batch_size / Configs.N_AGENTS)
+                experiences += exp
             assert len(experiences) == self.batch_size
 
             # Start by extracting the necessary parameters (we use a vectorized implementation).
@@ -316,8 +354,9 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             terminal1_batch = []
             state1_batch = []
             for e in experiences:
-                state0_batch.append(e.state0)
-                state1_batch.append(e.state1)
+                assert e.state0[0]['agent'] == e.state1[0]['agent']
+                state0_batch.append([e.state0[0]['obs']])
+                state1_batch.append([e.state1[0]['obs']])
                 reward_batch.append(e.reward)
                 action_batch.append(e.action)
                 terminal1_batch.append(0. if e.terminal1 else 1.)
@@ -387,7 +426,7 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
             if self.processor is not None:
                 metrics += self.processor.metrics
 
-        if self.target_model_update >= 1 and self.step % self.target_model_update == 0:
+        if self.target_model_update >= 1 and step % self.target_model_update == 0:
             self.update_target_model_hard()
 
         return metrics
@@ -398,19 +437,23 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
 
     @property
     def metrics_names(self):
-        # Throw away individual losses and replace output name since this is hidden from the user.
-        assert len(self.trainable_model.output_names) == 2
-        dummy_output_name = self.trainable_model.output_names[1]
-        model_metrics = [
-            name for idx, name in enumerate(self.trainable_model.metrics_names)
-            if idx not in (1, 2)
-        ]
-        model_metrics = [name.replace(dummy_output_name + '_', '') for name in model_metrics]
+        def m():
+            # Throw away individual losses and replace output name since this is hidden from the user.
+            assert len(self.trainable_model.output_names) == 2
+            dummy_output_name = self.trainable_model.output_names[1]
+            model_metrics = [
+                name for idx, name in enumerate(self.trainable_model.metrics_names)
+                if idx not in (1, 2)
+            ]
+            model_metrics = [name.replace(dummy_output_name + '_', '') for name in model_metrics]
 
-        names = model_metrics + self.policy.metrics_names[:]
-        if self.processor is not None:
-            names += self.processor.metrics_names[:]
-        return names
+            names = model_metrics + self.policy.metrics_names[:]
+            if self.processor is not None:
+                names += self.processor.metrics_names[:]
+            return names
+
+        # return m()
+        return list(dict.fromkeys(m()))
 
     @property
     def policy(self):

@@ -1,6 +1,6 @@
 from gym import Env, spaces
 
-import configs as Configs
+from configs import configurator as Configs
 
 from utils.environment import RailEnvWrapper
 
@@ -28,7 +28,8 @@ class MarlEnvironment(Env):
 
     @property
     def observation_space(self):
-        return spaces.Box(low=-1, high=1000, shape=(39, ))
+        obs_shape = (self.observator.get_observations_len(), )
+        return spaces.Box(low=-1, high=1000, shape=obs_shape)
 
     #
 
