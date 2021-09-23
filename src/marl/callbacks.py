@@ -20,7 +20,7 @@ class WandbLogger(KerasCallback):
     """ Similar to TrainEpisodeLogger, but sends data to Weights & Biases to be visualized """
     def __init__(self, **kwargs):
         kwargs = {'anonymous': 'allow', **kwargs}
-        wandb.init(**kwargs)
+        wandb.init(reinit=True, **kwargs)
         self.episode_start = {}
         self.observations = {}
         self.rewards = {}
