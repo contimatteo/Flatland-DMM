@@ -58,10 +58,10 @@ class BaseNetwork(abc.ABC):
         return self._n_actions
 
     def input_layer(self) -> Flatten:
-        return Flatten(input_shape=(1, self.input_nodes))
+        return Flatten(input_shape=(1, self.input_nodes), name='flatten_input')
 
     def output_layer(self, activation="linear") -> Dense:
-        return Dense(self.output_nodes, activation=activation)
+        return Dense(self.output_nodes, activation=activation, name='dense_output')
 
     #
 
