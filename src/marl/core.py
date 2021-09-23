@@ -516,10 +516,10 @@ class MultiAgent(Agent):
 
                 if len(agents_ids) > 0:
                     metrics = self.backward(rewards_dict, terminal=done_dict)
-                #     metrics = list(metrics)
-                #     if len(metrics) < 1:
-                #         metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
-                # metrics = np.array(metrics)
+                    metrics = list(metrics)
+                    if len(metrics) < 1:
+                        metrics = [np.nan for _ in range(len(self.trainable_model_metrics) + 1)]
+                metrics = np.array(metrics)
 
                 ### CALLBAKCS HISTORY
 
