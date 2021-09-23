@@ -134,16 +134,16 @@ def prepare_policy() -> Policy:
     ctype = Configs.POLICY_TYPE
     params = Configs.POLICY_PARAMS
 
-    if ctype == "linear-annealed":
-        policy = LinearAnnealedPolicy(**params)
-    elif ctype == "softmax":
+    if ctype == "softmax":
         policy = SoftmaxPolicy()
     elif ctype == "eps-greedy":
         policy = EpsGreedyQPolicy(**params)
-    elif ctype == "greedy":
-        policy = GreedyQPolicy(**params)
     elif ctype == "boltzmann":
         policy = BoltzmannQPolicy(**params)
+    # elif ctype == "linear-annealed":
+    #     policy = LinearAnnealedPolicy(**params)
+    # elif ctype == "greedy":
+    #     policy = GreedyQPolicy(**params)
     # elif ctype == "max-boltzmann":
     #     policy = MaxBoltzmannQPolicy(**params)
     # elif ctype == "boltzmann-gumbel":

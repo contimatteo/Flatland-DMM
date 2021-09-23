@@ -1,8 +1,8 @@
 [
   {
     "debug": true,
-    "n_agents": 2,
-    "config_uuid": "prova-1",
+    "n_agents": 4,
+    "config_uuid": "prova",
 
     "rail-env": {
       "map_width": 28,
@@ -24,8 +24,8 @@
     },
 
     "policy": {
-      "type": "eps-greedy",
-      "parameters": { "eps": 0.1 }
+      "type": "boltzmann",
+      "parameters": {}
     },
 
     "agent": {
@@ -53,13 +53,13 @@
   {
     "train": {
       "verbose": 2,
-      "n_min_attempts": 5,
+      "n_min_attempts": 4,
       "log_interval": 250,
       "nb_max_episode_steps": 500,
       "callbacks": [
         {
           "type": "wandb",
-          "parameters": { "group": "train-prova-1" }
+          "parameters": { "group": "(train) prova" }
         }
       ]
     }
@@ -67,12 +67,12 @@
   {
     "test": {
       "verbose": 2,
-      "n_attempts": 1,
+      "n_attempts": 5,
       "nb_max_episode_steps": 500,
       "callbacks": [
         {
           "type": "wandb",
-          "parameters": { "group": "test-prova-1" }
+          "parameters": { "group": "(test) prova" }
         }
       ]
     }
