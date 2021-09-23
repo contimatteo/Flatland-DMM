@@ -80,7 +80,7 @@ class MultiAgent(Agent):
             episode_reward = self.callbacks_history[agent_id]['episode_reward']
             target_reached = self.callbacks_history[agent_id]['target_reached']
             target_reached_in_steps = self.callbacks_history[agent_id]['target_reached_in_steps']
-            assert isinstance(episode_reward, float)
+            assert isinstance(episode_reward, (int, float))
             assert isinstance(target_reached, bool)
             assert isinstance(target_reached_in_steps, int)
 
@@ -93,12 +93,12 @@ class MultiAgent(Agent):
                 observation = ep_observations[episode_step]
                 action = ep_actions[episode_step]
                 reward = ep_rewards[episode_step]
-                metrics = ep_metrics[episode_step] if ep_metrics is not None else []
+                metrics = ep_metrics[episode_step]
 
                 assert isinstance(observation, (list, np.ndarray))
                 assert isinstance(action, (int, np.uint, np.int32, np.int64))
-                assert isinstance(reward, (float, np.float32, np.float64))
-                assert isinstance(metrics, (list, np.ndarray))
+                assert isinstance(reward, (int, float, np.float32, np.float64))
+                assert isinstance(metrics, (list, np.ndarray)) and len(metrics) > 0
 
                 ### step
                 callbacks.on_step_begin(episode_step, logs={})
@@ -190,7 +190,6 @@ class MultiAgent(Agent):
             while self.step < nb_steps:
                 if observations_dict is None:
                     ### start of a new episode
-                    episode_rewards_dict = {}
                     episode_step = np.int16(0)
 
                     self.reset_states()
@@ -200,6 +199,10 @@ class MultiAgent(Agent):
                     agents_ids = [
                         agent_id for (agent_id, obs) in observations_dict.items() if obs is not None
                     ]
+
+                    episode_rewards_dict = {}
+                    for agent_id in agents_ids:
+                        episode_rewards_dict[agent_id] = 0
 
                     ### CALLBACK HISTORY
                     self._reset_callbacks_history(agents_ids)
@@ -260,8 +263,8 @@ class MultiAgent(Agent):
                 ### COLLECT REWARDS
 
                 for agent_id in agents_ids:
-                    episode_rewards_dict[
-                        agent_id] = episode_rewards_dict.get(agent_id, 0) + rewards_dict[agent_id]
+                    episode_rewards_dict[agent_id
+                                         ] = episode_rewards_dict[agent_id] + rewards_dict[agent_id]
 
                 ### STEP TERMINATION CONDITIONS
 
@@ -304,16 +307,14 @@ class MultiAgent(Agent):
                 ### CALLBAKCS HISTORY
 
                 for agent_id in agents_ids:
-                    if observations_dict[agent_id] is None:
-                        continue
+                    obs = observations_dict[agent_id]
+                    obs = obs if obs is not None else []
 
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
 
-                    self.callbacks_history[agent_id]['observations'].append(
-                        observations_dict[agent_id]
-                    )
+                    self.callbacks_history[agent_id]['observations'].append(obs)
                     self.callbacks_history[agent_id]['actions'].append(actions_dict[agent_id])
                     self.callbacks_history[agent_id]['rewards'].append(rewards_dict[agent_id])
 
@@ -410,7 +411,6 @@ class MultiAgent(Agent):
         for episode in range(nb_episodes):
             episode_step = 0
             actions_dict = {}
-            episode_rewards_dict = {}
 
             self.reset_states()
 
@@ -419,6 +419,10 @@ class MultiAgent(Agent):
             agents_ids = [
                 agent_id for (agent_id, obs) in observations_dict.items() if obs is not None
             ]
+
+            episode_rewards_dict = {}
+            for agent_id in agents_ids:
+                episode_rewards_dict[agent_id] = 0
 
             ### CALLBACK HISTORY
             self._reset_callbacks_history(agents_ids)
@@ -476,8 +480,8 @@ class MultiAgent(Agent):
                 ### COLLECT REWARDS
 
                 for agent_id in agents_ids:
-                    episode_rewards_dict[
-                        agent_id] = episode_rewards_dict.get(agent_id, 0) + rewards_dict[agent_id]
+                    episode_rewards_dict[agent_id
+                                         ] = episode_rewards_dict[agent_id] + rewards_dict[agent_id]
 
                 ### STEP TERMINATION CONDITIONS
 
@@ -520,16 +524,14 @@ class MultiAgent(Agent):
                 ### CALLBAKCS HISTORY
 
                 for agent_id in agents_ids:
-                    if observations_dict[agent_id] is None:
-                        continue
+                    obs = observations_dict[agent_id]
+                    obs = obs if obs is not None else []
 
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
 
-                    self.callbacks_history[agent_id]['observations'].append(
-                        observations_dict[agent_id]
-                    )
+                    self.callbacks_history[agent_id]['observations'].append(obs)
                     self.callbacks_history[agent_id]['actions'].append(actions_dict[agent_id])
                     self.callbacks_history[agent_id]['rewards'].append(rewards_dict[agent_id])
 
