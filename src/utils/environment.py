@@ -172,6 +172,7 @@ class RailEnvWrapper:
 
             reward = 0
             AGENT_MASS = 1
+            MAX_REWARD = 2 * TARGET_MASS
             agent = self.get_agent(agent_id)
 
             if agent.status == RailAgentStatus.DONE:
@@ -204,11 +205,11 @@ class RailEnvWrapper:
             ############################# NODE EXPLORATION #############################
             # if no attr_list is given, all numerical attributes are given
             visited = []
-            count = 1
+            prob = 1
             while True:
                 # the loop is repeated for each depth of tree, starting from 0
+                prob /= 2
                 for i in range(len(last)):
-                    count += 1
                     node = last[i]
                     child_list = [
                         child for child in node.get_childs() if child
@@ -222,11 +223,7 @@ class RailEnvWrapper:
                     # reward compute
                     # update attractive force
                     if node.dist_min_to_target == 0:
-                        attractive_force = TARGET_MASS * 2
-                    else:
-                        p = (node.pos_x, node.pos_y)
-                        dist_to_target = abs(p[0] - t[0]) + abs(p[1] - t[1])
-                        attractive_force += TARGET_MASS / (dist_to_target * dist_to_target)
+                        attractive_force += TARGET_MASS * 2 * prob
 
                     # update repulsive force
                     agent_dist = unusuable_stiches[i] + node.dist_unusable_switch
@@ -251,7 +248,7 @@ class RailEnvWrapper:
                     unusuable_stiches[i // 2] for i in range(len(unusuable_stiches) * 2)
                 ]
 
-            #################################### CONCLUSIVE OBSERVATION TRANSFORMATION
+            #################################### CONCLUSIVE OBSERVATION TRANSFORMATION / NORMALIZATION
             # transforming into array
             # subtree_array = np.array(subtree_list)
 
@@ -291,9 +288,15 @@ class RailEnvWrapper:
 
             #################################### CONCLUSIVE REWARD TRANSFORMATION / NORMALIZATION
 
-            avg_attractive_force = attractive_force / count
-            reward += avg_attractive_force - repulsive_force
+            if attractive_force > MAX_REWARD:
+                attractive_force = MAX_REWARD
+            if repulsive_force < - MAX_REWARD:
+                repulsive_force = - MAX_REWARD
+
+            reward += attractive_force - repulsive_force
+            reward /= MAX_REWARD
             rewards[agent_id] = reward
+            assert reward <= 1 and reward >=-1
 
         info['action_required2'] = {
             agent_id: self.action_required(agent_id)

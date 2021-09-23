@@ -223,7 +223,8 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
         return config
 
     def compile(self, optimizer, metrics=[]):
-        metrics += [mean_q]  # register default metrics
+        if mean_q not in metrics:
+            metrics += [mean_q]  # register default metrics
 
         # We never train the target model, hence we can set the optimizer and loss arbitrarily.
         self.target_model = clone_model(self.model, self.custom_model_objects)
@@ -451,7 +452,8 @@ class DQNMultiAgent(AbstractMultiDQNAgent):
                 names += self.processor.metrics_names[:]
             return names
 
-        return m()
+        # return m()
+        return list(dict.fromkeys(m()))
 
     @property
     def policy(self):
