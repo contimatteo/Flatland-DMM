@@ -1,8 +1,8 @@
 [
   {
     "debug": true,
-    "n_agents": 4,
-    "config_uuid": "prova",
+    "n_agents": 1,
+    "config_uuid": "DQN-Policy_eps-Network_seq1-Agents_1",
 
     "rail-env": {
       "map_width": 28,
@@ -12,8 +12,8 @@
       "max_rails_between_cities": 4,
       "cities_grid_distribution": false,
       "malfunction_rate": 0.0001,
-      "malfunction_min_duration": 15,
-      "malfunction_max_duration": 50
+      "malfunction_min_duration": 1,
+      "malfunction_max_duration": 5
     },
 
     "emulator": {
@@ -21,11 +21,6 @@
       "window_width": 1200,
       "window_height": 1200,
       "step_timebreak_seconds": 0
-    },
-
-    "policy": {
-      "type": "softmax",
-      "parameters": {}
     },
 
     "agent": {
@@ -40,8 +35,13 @@
       }
     },
 
+    "policy": {
+      "type": "eps-greedy",
+      "parameters": {}
+    },
+
     "network": {
-      "type": "sequential-2",
+      "type": "sequential-1",
       "parameters": {},
       "metrics": ["mae", "accuracy"],
       "optimizer": {
@@ -53,13 +53,13 @@
   {
     "train": {
       "verbose": 2,
-      "n_min_attempts": 4,
+      "n_min_attempts": 1000,
       "log_interval": 250,
       "nb_max_episode_steps": 500,
       "callbacks": [
         {
           "type": "wandb",
-          "parameters": { "group": "(train) prova" }
+          "parameters": { "group": "(train) DQN-Policy_eps-Network_seq1-Agents_1" }
         }
       ]
     }
@@ -67,12 +67,12 @@
   {
     "test": {
       "verbose": 2,
-      "n_attempts": 5,
+      "n_attempts": 100,
       "nb_max_episode_steps": 500,
       "callbacks": [
         {
           "type": "wandb",
-          "parameters": { "group": "(test) prova" }
+          "parameters": { "group": "(test) DQN-Policy_eps-Network_seq1-Agents_1" }
         }
       ]
     }
