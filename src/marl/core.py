@@ -1,17 +1,17 @@
 from copy import deepcopy
+from pathlib import Path
 
+import json
 import numpy as np
 
 from tensorflow.keras.callbacks import History
 from rl.core import Agent
 from rl.callbacks import CallbackList
-from rl.callbacks import TrainIntervalLogger
-# from rl.callbacks import TestLogger
 
+from configs import configurator as Configs
 from marl.callbacks import TrainEpisodeLogger
 from marl.callbacks import TestLogger
-# from marl.callbacks import TrainIntervalLogger
-from utils.action import HighLevelAction
+from utils.storage import Storage
 
 ###
 
@@ -24,6 +24,7 @@ class MultiAgent(Agent):
                 "metrics": [],
                 "observations": [],
                 "rewards": [],
+                "episode": None,
                 "episode_reward": None,
                 "target_reached": False,
                 "target_reached_in_steps": 2000,
@@ -97,7 +98,7 @@ class MultiAgent(Agent):
                 metrics = ep_metrics[episode_step]
 
                 assert isinstance(observation, (list, np.ndarray))
-                assert isinstance(action, (int, np.uint, np.int32, np.int64))
+                assert isinstance(action, (int, np.uint, np.int16, np.int32, np.int64))
                 assert isinstance(reward, (int, float, np.float32, np.float64))
                 assert isinstance(metrics, (list, np.ndarray)) and len(metrics) > 0
 
@@ -138,6 +139,47 @@ class MultiAgent(Agent):
             self._on_train_end()
         else:
             self._on_test_end()
+
+        target_reached_counter = 0
+        for agent_id in agents_ids:
+            if self.callbacks_history[agent_id]['target_reached'] is True:
+                target_reached_counter += 1
+        target_reached_percentage = (target_reached_counter / len(agents_ids)) * 100
+
+        self._store_episodes_log(training, episode, target_reached_percentage)
+
+    def _store_episodes_log(self, training: bool, episode, target_reached_percentage):
+        file_url = Storage.logs_folder().joinpath("{}.json".format(Configs.CONFIG_UUID))
+        file = Path(file_url)
+
+        if not file.is_file():
+            with open(file, 'w+', encoding='UTF-8') as file_stream:
+                json.dump({}, file_stream)
+
+        episodes_dict = None
+        with open(file, 'r', encoding='UTF-8') as file_stream:
+            episodes_dict = json.load(file_stream)
+
+        if 'train' not in episodes_dict:
+            episodes_dict['train'] = []
+        if 'test' not in episodes_dict:
+            episodes_dict['test'] = []
+
+        stage = 'train' if training is True else 'test'
+        episodes_dict[stage] += [[episode, round(target_reached_percentage, 2)]]
+
+        def convert(num):
+            if isinstance(num, (np.uint, np.int16, np.int32, np.int64)):
+                return int(num)
+            if isinstance(num, (np.float32, np.float64)):
+                return float(num)
+            print()
+            print("num = ", type(num), num)
+            print()
+            raise TypeError
+
+        with open(file, 'w', encoding='UTF-8') as file_stream:
+            json.dump(episodes_dict, file_stream, default=convert)
 
     #
 
@@ -311,6 +353,7 @@ class MultiAgent(Agent):
                     obs = observations_dict[agent_id]
                     obs = obs if obs is not None else []
 
+                    self.callbacks_history[agent_id]['episode'] = episode
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)
@@ -528,6 +571,7 @@ class MultiAgent(Agent):
                     obs = observations_dict[agent_id]
                     obs = obs if obs is not None else []
 
+                    self.callbacks_history[agent_id]['episode'] = episode
                     self.callbacks_history[agent_id]['episode_reward'] = episode_rewards_dict[
                         agent_id]
                     self.callbacks_history[agent_id]['metrics'].append(metrics)

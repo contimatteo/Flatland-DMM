@@ -11,6 +11,7 @@ class Storage():
     @staticmethod
     def initialize() -> None:
         # Storage._weights_intervals_dir().mkdir(parents=True, exist_ok=True)
+        Storage._logs_dir().mkdir(parents=True, exist_ok=True)
         Storage._weights_dir().mkdir(parents=True, exist_ok=True)
 
     #
@@ -22,6 +23,10 @@ class Storage():
     @staticmethod
     def _tmp_dir() -> Path:
         return Storage._root_dir().joinpath('tmp')
+
+    @staticmethod
+    def _logs_dir() -> Path:
+        return Storage._tmp_dir().joinpath('logs')
 
     @staticmethod
     def _cache_dir() -> Path:
@@ -38,6 +43,11 @@ class Storage():
         return Storage._weights_dir().joinpath('intervals')
 
     #
+
+    @staticmethod
+    def logs_folder() -> Path:
+        assert Storage._logs_dir().is_dir()
+        return Storage._logs_dir()
 
     @staticmethod
     def weights_folder() -> Path:
