@@ -144,10 +144,10 @@ def prepare_policy() -> Policy:
         policy = GreedyQPolicy(**params)
     elif ctype == "boltzmann":
         policy = BoltzmannQPolicy(**params)
-    elif ctype == "max-boltzmann":
-        policy = MaxBoltzmannQPolicy(**params)
-    elif ctype == "boltzmann-gumbel":
-        policy = BoltzmannGumbelQPolicy(**params)
+    # elif ctype == "max-boltzmann":
+    #     policy = MaxBoltzmannQPolicy(**params)
+    # elif ctype == "boltzmann-gumbel":
+    #     policy = BoltzmannGumbelQPolicy(**params)
 
     if policy is None:
         raise Exception(f"invalid policy type '{ctype}' value.")

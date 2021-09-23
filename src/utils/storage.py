@@ -31,7 +31,8 @@ class Storage():
     @staticmethod
     def _cache_dir() -> Path:
         return Storage._tmp_dir().joinpath(
-            'cache/{}/agents-{}'.format(Configs.CONFIG_UUID, Configs.N_AGENTS)
+            # 'cache/{}/agents-{}'.format(Configs.CONFIG_UUID, Configs.N_AGENTS)
+            'cache/{}'.format(Configs.CONFIG_UUID)
         )
 
     @staticmethod
