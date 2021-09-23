@@ -171,7 +171,7 @@ def prepare_callbacks(training: bool) -> List[Callback]:
 
         if ctype == 'wandb':
             callbacks += [
-                WandbLogger(project='flatland', group=Configs.CONFIG_UUID, entity='flatland-dmm')
+                WandbLogger(project='flatland', entity='flatland-dmm', **params)
             ]
 
     return callbacks

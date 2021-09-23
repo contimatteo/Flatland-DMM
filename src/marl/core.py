@@ -26,7 +26,7 @@ class MultiAgent(Agent):
                 "rewards": [],
                 "episode_reward": None,
                 "target_reached": False,
-                "target_reached_in_steps": 5000,
+                "target_reached_in_steps": 2000,
             }
 
     def _run_callbacks(
