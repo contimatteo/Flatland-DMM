@@ -6,9 +6,10 @@ from tensorflow.keras.callbacks import History
 from rl.core import Agent
 from rl.callbacks import CallbackList
 from rl.callbacks import TrainIntervalLogger
-from rl.callbacks import TestLogger
+# from rl.callbacks import TestLogger
 
 from marl.callbacks import TrainEpisodeLogger
+from marl.callbacks import TestLogger
 # from marl.callbacks import TrainIntervalLogger
 from utils.action import HighLevelAction
 
@@ -124,7 +125,7 @@ class MultiAgent(Agent):
                 episode, {
                     'steps': steps,
                     'nb_steps': steps,
-                    'target_reached': 1 if target_reached is True else 0,
+                    'target_reached': 1. if target_reached is True else 0.,
                     'episode_reward': episode_reward,
                     'target_reached_in_steps': target_reached_in_steps,
                     'nb_episode_steps': episode_steps,
