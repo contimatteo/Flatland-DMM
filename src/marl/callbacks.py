@@ -79,7 +79,7 @@ class WandbLogger(KerasCallback):
                 'reward_mean': np.mean(self.rewards[episode]),
                 'reward_min': np.min(self.rewards[episode]),
                 'reward_max': np.max(self.rewards[episode]),
-                # 'action_mean': np.mean(self.actions[episode]),
+                'action_mean': np.mean(self.actions[episode]),
                 # 'action_min': np.min(self.actions[episode]),
                 # 'action_max': np.max(self.actions[episode]),
                 # 'obs_mean': np.mean(self.observations[episode]),
