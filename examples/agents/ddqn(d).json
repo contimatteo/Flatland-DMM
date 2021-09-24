@@ -57,12 +57,7 @@
       "n_min_attempts": 1000,
       "log_interval": 250,
       "nb_max_episode_steps": 500,
-      "callbacks": [
-        {
-          "type": "wandb",
-          "parameters": { "group": "(train) DDQN(d)-Policy_boltz-Network_seq2-Agents_2" }
-        }
-      ]
+      "callbacks": []
     }
   },
 
@@ -71,12 +66,7 @@
       "verbose": 2,
       "n_attempts": 100,
       "nb_max_episode_steps": 500,
-      "callbacks": [
-        {
-          "type": "wandb",
-          "parameters": { "group": "(test) DDQN(d)-Policy_boltz-Network_seq2-Agents_2" }
-        }
-      ]
+      "callbacks": []
     }
   }
 ]
