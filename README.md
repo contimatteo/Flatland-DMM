@@ -4,7 +4,6 @@
 
 https://www.aicrowd.com/challenges/flatland-challenge
 
-<br/>
 
 ## Installation
 
@@ -28,16 +27,12 @@ $ pip install -U pyglet==1.5.11
 
 for more information about this problem look [here](https://github.com/openai/gym/issues/2101).
 
-<br/>
-
 
 ## Configuration File
 
 The base structure of the json configurations file can be found inside [this file](./src/configs/run.json).
 
 Look at the [examples](./examples) folder for more advanced configurations.
-
-<br/>
 
 
 ## Usage
