@@ -62,3 +62,12 @@ if you want to run the program with your custom configurations:
 ```
 $ python src/run.py --config "<your_file_path>.json"
 ```
+
+
+## Authors
+
+* **Conti Matteo** - [GitHub](https://github.com/contimatteo)
+* **Davide Sangiorgi** - [GitHub](https://github.com/DavideSangiorgi)
+* **Manuel Mariani** - [GitHub](https://github.com/manuel-mariani)
+
+See also the list of [contributors](https://github.com/contimatteo/Youtube-Music-Spider/graphs/contributors) who participated in this project.
