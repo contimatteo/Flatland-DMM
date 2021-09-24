@@ -14,7 +14,7 @@ def run(config_filepath: str = None):
 
     if config_filepath is None:
         config_filepath = './src/configs/run.json'
-    
+
     root_dir = Path(os.path.abspath(__file__)).parent.parent
     default_config_filepath = root_dir.joinpath(config_filepath)
     assert default_config_filepath.is_file() is True
@@ -49,7 +49,10 @@ def run(config_filepath: str = None):
 def parse_args():
     # Create the parser
     my_parser = argparse.ArgumentParser(
-        prog='Flatland-DMM', usage='%(prog)s [options] config-file', description='TODO: ...'
+        prog='Flatland-DMM',
+        usage='%(prog)s [options]',
+        description=
+        ' Executable for training/testing the behaviour of an arbitrary number of trains inside the Flatland rail environment.'
     )
 
     # Add the arguments

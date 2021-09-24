@@ -17,7 +17,7 @@
     },
 
     "emulator": {
-      "active": false,
+      "active": true,
       "window_width": 1200,
       "window_height": 1200,
       "step_timebreak_seconds": 0
