@@ -23,9 +23,9 @@ class SequentialNetwork2(BaseNetwork):
 
         model.add(self.input_layer())
 
-        model.add(Dense(256, name="dense_1", activation="relu"))
-        model.add(Dense(128, name="dense_2", activation="relu"))
-        model.add(Dense(256, name="dense_3", activation="relu"))
+        model.add(Dense(256, name="my_dense_1", activation="relu"))
+        model.add(Dense(128, name="my_dense_2", activation="relu"))
+        model.add(Dense(256, name="my_dense_3", activation="relu"))
 
         model.add(self.output_layer(activation='relu'))
 
