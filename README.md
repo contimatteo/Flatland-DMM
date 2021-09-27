@@ -1,19 +1,22 @@
 # DMM Flatland
 
+You can find the full report [here](./report/main.pdf).
+
 ## Challenge
 
 https://www.aicrowd.com/challenges/flatland-challenge
 
-
 ## Installation
 
-This project was tested only with the following `python` versions: 
+This project was tested only with the following `python` versions:
+
 ```
 $ Python 3.7.10
 $ Python 3.8.5
 ```
 
 for installing the dependencies:
+
 ```
 $ pip install -r requirements_cpu.txt
 ```
@@ -21,19 +24,18 @@ $ pip install -r requirements_cpu.txt
 ### OS Errors
 
 in case you have some errors during the rendering function, please run:
+
 ```
 $ pip install -U pyglet==1.5.11
 ```
 
 for more information about this problem look [here](https://github.com/openai/gym/issues/2101).
 
-
 ## Configuration File
 
 The base structure of the json configurations file can be found inside [this file](./src/configs/run.json).
 
 Look at the [examples](./examples) folder for more advanced configurations.
-
 
 ## Usage
 
@@ -49,25 +51,27 @@ $ python src/run.py -h
 ```
 
 for running the program with the default configurations:
+
 ```
 $ python src/run.py
 ```
 
 for running the program with one the pre-built examples:
+
 ```
 $ python src/run.py --config "./examples/agents/ddqn.json"
 ```
 
 if you want to run the program with your custom configurations:
+
 ```
 $ python src/run.py --config "<your_file_path>.json"
 ```
 
-
 ## Authors
 
-* **Matteo Conti** - [GitHub](https://github.com/contimatteo)
-* **Davide Sangiorgi** - [GitHub](https://github.com/DavideSangiorgi)
-* **Manuel Mariani** - [GitHub](https://github.com/manuel-mariani)
+- **Matteo Conti** - [GitHub](https://github.com/contimatteo)
+- **Davide Sangiorgi** - [GitHub](https://github.com/DavideSangiorgi)
+- **Manuel Mariani** - [GitHub](https://github.com/manuel-mariani)
 
 See also the list of [contributors](https://github.com/contimatteo/Flatland-DMM/graphs/contributors) who participated in this project.
