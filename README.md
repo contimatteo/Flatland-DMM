@@ -1,6 +1,6 @@
 # DMM Flatland
 
-You can find the full report [here](./report/main.pdf).
+You can find the full report [here](./docs/report/main.pdf).
 
 ## Challenge
 
