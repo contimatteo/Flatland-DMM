@@ -2,6 +2,8 @@
 
 You can find the full report [here](./docs/report/main.pdf).
 
+You can find the summary slides [here](./docs/pitch/main.pdf).
+
 ## Challenge
 
 https://www.aicrowd.com/challenges/flatland-challenge
