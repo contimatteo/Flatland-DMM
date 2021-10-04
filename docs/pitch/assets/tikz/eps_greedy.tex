@@ -1,0 +1,23 @@
+\begin{tikzpicture}[scale=0.8]
+    \begin{axis}[
+        mbarplot,
+        bar width=1cm,
+        ytick={1, 9},
+        yticklabels={$\epsilon$, $1-\epsilon$},
+        ylabel style={at={(0,0.5)}},
+        ybar=-1cm,
+        ymin=0, ymax=10,
+        xtick={1, 2},
+        xticklabels={Random, Best},
+        xmin=0, xmax=3,
+        grid=none,
+        ylabel={Probability},
+    ] 
+
+    \addplot plot coordinates {(1,1)};
+    \addplot plot coordinates {(2,9)};
+    \addplot[black,dotted, sharp plot,update limits=false,] coordinates {(0.1,1) (0.8,1) };
+    \addplot[black,dotted, sharp plot,update limits=false,] coordinates {(0.1,9) (1.8,9) };
+
+    \end{axis}
+\end{tikzpicture}

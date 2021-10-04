@@ -1,0 +1,28 @@
+\begin{tikzpicture}[scale=0.8]
+    \begin{axis}[
+        mlineplot,
+        %ytick={1, 9},
+        ylabel style={at={(0,0.5)}},
+        %ybar=-1cm,
+        ymin=0, ymax=1,
+        xlabel={Action},
+        xtick={0, 1, 2},
+        xmin=-0.2, xmax=2.2,
+        grid=none,
+        %area legend,
+        legend columns=1,
+        legend style={anchor=north, at={(0.9,1)}},
+    ] 
+    \addplot plot [smooth] coordinates {(0, 0.42) (1, 1) (2, 0.28)};
+    % t = 2
+    \addplot plot [smooth] coordinates {(0, 0.32) (1, 0.4) (2, 0.28)};
+    % t = 1
+    \addplot plot [smooth] coordinates {(0, 0.27) (1, 0.49) (2, 0.24)};
+    % t = 0.5
+    \addplot plot [smooth] coordinates {(0, 0.20) (1, 0.65) (2, 0.15)};
+    % t = 0.2
+    \addplot plot [smooth] coordinates {(0, 0.05) (1, 0.93) (2, 0.026)};
+    
+    \legend{Action Q-Values, P(a) $\tau = 2$, P(a) $\tau = 1$, P(a) $\tau = 0.5$, P(a) $\tau = 0.2$}
+    \end{axis}
+\end{tikzpicture}

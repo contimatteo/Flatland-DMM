@@ -1,6 +1,8 @@
 # DMM Flatland
 
-You can find the full report [here](./report/main.pdf).
+You can find the full report [here](./docs/report/main.pdf).
+
+You can find the summary slides [here](./docs/pitch/main.pdf).
 
 ## Challenge
 
