@@ -99,13 +99,17 @@
     \end{itemize}
 \end{frame}
 %%%
-\begin{frame}{Explored Branches}
-    \begin{figure}
-        \centering
-        \includegraphics[height=0.3\textwidth]{assets/environment/treeobs.png}
-        \caption*{Default Flatland \alert{Tree Observator}}
-    \end{figure}
+\begin{frame}{Custom Node}
+    The default node is a NamedTuple.
+    
+    To keep it clean and better organized we decided to introduce a \textbf{custom Node} class, with some methods for:
+    \begin{itemize}
+        \item listing numeric attributes
+        \item convert tree into array
+        \item normalize values
+    \end{itemize}
 \end{frame}
+
 
 %%%
 \begin{frame}{Search Strategy}
@@ -114,19 +118,6 @@
     Flatland switches often create railways which immediately merge again with the previous one. Those are really useful to avoid collision and traffic, but on the other hand we will have nodes explored twice during observation. 
 \end{frame}
 %branches%%
-\begin{frame}{Explored Branches}
-    Considering that in \alert{straightaways}:
-    \begin{itemize}
-        \item It's not optimal for a train to stop
-        \item Actions \texttt{LEFT} and \texttt{RIGHT} do not matter
-    \end{itemize}
-    We have improved the environment by \emph{requiring an action} only when a train is:
-    \begin{itemize}
-        \item At an intersection, allowing the choice of \textbf{direction}
-        \item Approaching an intersection, allowing the choice of \textbf{stopping}
-    \end{itemize}    
-\end{frame}
-
 %%%
 \begin{frame}{Explored Branches}
     Flatland switches allow \alert{only two} possible directions and, as already set in the default tree observator, we save only nodes corresponding to switches. 
@@ -146,18 +137,13 @@
 \end{frame}
 
 %%%
-\begin{frame}{Actions}
-    We defined an \alert{Environment Wrapper} that requires trains to provide actions only in proximity of rail switches:
+\begin{frame}{Explored Branches}
     \begin{figure}
         \centering
-        \includegraphics[width=0.45\textwidth]{assets/environment/switch_highlights.png}
-        \captionsetup{justification=centering}
-        \caption*{Railway sections where the train action is required. \\ \textcolor{Bittersweet}{In red: switches}\\ 
-        \textcolor{NavyBlue}{In blue: tiles before or after a switch}}
-        \label{fig:my_label}
+        \includegraphics[height=0.3\textwidth]{assets/environment/treeobs.png}
+        \caption*{Default Flatland \alert{Tree Observator}}
     \end{figure}
 \end{frame}
-
 
 %%%
 \begin{frame}{Actions}
