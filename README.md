@@ -6,6 +6,8 @@ You can find the summary slides [here](./docs/pitch/main.pdf).
 
 ## Challenge
 
+![](https://i.imgur.com/9cNtWjs.gif)
+
 https://www.aicrowd.com/challenges/flatland-challenge
 
 ## Installation
