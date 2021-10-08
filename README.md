@@ -1,12 +1,10 @@
 # DMM Flatland
 
-You can find the full report [here](./docs/report/main.pdf).
-
-You can find the summary slides [here](./docs/pitch/main.pdf).
-
-## Challenge
+## The Challenge
 
 ![](https://i.imgur.com/9cNtWjs.gif)
+
+*The Flatland Challenge is a competition to foster progress in multi-agent reinforcement learning for any re-scheduling problem (RSP). The challenge addresses a real-world problem faced by many transportation and logistics companies around the world (such as the Swiss Federal Railways, SBB. Different tasks related to RSP on a simplified 2D multi-agent railway simulation must be solved. Your contribution may shape the way modern traffic management systems (TMS) are implemented not only in railway but also in other areas of transportation and logistics. This will be the first of a series of challenges related to re-scheduling and complex transportation systems.*
 
 https://www.aicrowd.com/challenges/flatland-challenge
 
@@ -71,6 +69,12 @@ if you want to run the program with your custom configurations:
 ```
 $ python src/run.py --config "<your_file_path>.json"
 ```
+
+## Documentation
+
+You can find the full report of the project [here](./docs/report/main.pdf).
+
+You can find the summary slides [here](./docs/pitch/main.pdf).
 
 ## Authors
 
