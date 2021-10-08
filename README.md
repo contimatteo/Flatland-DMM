@@ -43,11 +43,11 @@ Look at the [examples](./examples) folder for more advanced configurations.
 
 ```
 $ python src/run.py -h
-    usage: Flatland-DMM [options]
+  usage: Flatland-DMM [options]
 
-    Executable for training/testing the behaviour of an arbitrary number of trains inside the Flatland rail environment.
+  Executable for training/testing the behaviour of an arbitrary number of trains inside the Flatland rail environment.
 
-    optional arguments:
+  optional arguments:
     -h, --help       show this help message and exit
     --config CONFIG  path of the json file with the running configurations.
 ```
